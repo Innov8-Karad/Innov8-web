@@ -40,7 +40,7 @@ export const announcementService = {
     } as Announcement;
   },
 
-  mapDocToAnnouncement(doc: any): Announcement {
+  mapDocToAnnouncement(doc: DocumentData): Announcement {
     const data = doc.data();
     return {
       id: doc.id,

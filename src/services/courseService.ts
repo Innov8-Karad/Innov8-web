@@ -30,6 +30,6 @@ export const courseService = {
       id: docRef.id,
       ...docData,
       createdAt: new Date()
-    } as any as Course;
+    } as unknown as Course;
   }
 };

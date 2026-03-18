@@ -4,9 +4,9 @@ import { userService } from '../services/userService';
 import { feeService } from '../services/feeService';
 import { examService } from '../services/examService';
 import { placementService } from '../services/placementService';
-import { DEFAULT_VALUES, DASHBOARD_METRICS } from '../constants';
+import { DEFAULT_VALUES, DASHBOARD_METRICS, ADMIN_USER_ID, FEE_STATUS } from '../constants';
 
-function StatCard({ title, value, icon: Icon, color, trend, loading }: { title: string, value: string, icon: any, color: string, trend?: string, loading?: boolean }) {
+function StatCard({ title, value, icon: Icon, color, trend, loading }: { title: string, value: string, icon: React.ElementType, color: string, trend?: string, loading?: boolean }) {
     const colorVar = `var(--${color})`;
     const rgbVar = `var(--${color}-rgb)`;
     
@@ -58,10 +58,10 @@ export default function Dashboard() {
                     placementService.fetchPlacementStats()
                 ]);
 
-                const totalFeesAmount = fees.filter(f => f.status === 'paid').reduce((acc, f) => acc + (f.amount || 0), 0);
+                const totalFeesAmount = fees.filter(f => f.status === FEE_STATUS.PAID).reduce((acc, f) => acc + (f.amount || 0), 0);
 
                 setStats({
-                    students: users.filter(u => u.id !== 'admin').length.toString(), 
+                    students: users.filter(u => u.id !== ADMIN_USER_ID).length.toString(), 
                     fees: `₹ ${(totalFeesAmount / 100000).toFixed(1)}L`,
                     exams: exams.length.toString(),
                     placements: placementsStats?.totalPlaced?.toString() || '0'

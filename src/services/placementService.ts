@@ -24,7 +24,7 @@ export const placementService = {
     } as SuccessStory));
   },
 
-  async createSuccessStory(data: any): Promise<SuccessStory> {
+  async createSuccessStory(data: Record<string, unknown>): Promise<SuccessStory> {
     const docData: DocumentData = {
       ...data,
       placedDate: Timestamp.now(),
@@ -32,11 +32,11 @@ export const placementService = {
     };
 
     const docRef = await addDoc(collection(db, COLLECTIONS.SUCCESS_STORIES), docData);
-    
+
     return {
       id: docRef.id,
       ...data,
       placedDate: new Date()
-    } as SuccessStory;
+    } as unknown as SuccessStory;
   }
 };

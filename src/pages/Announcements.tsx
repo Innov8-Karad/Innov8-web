@@ -1,8 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Plus, Bell, Megaphone, Trash2, Calendar } from 'lucide-react';
+import { Bell, Megaphone, Trash2, Calendar } from 'lucide-react';
 import { announcementService } from '../services/announcementService';
 import { PRIORITY_LEVELS, PRIORITY_COLORS, UI_STRINGS } from '../constants';
 import type { Announcement } from '../types';
+import PageHeader from '../components/PageHeader';
+import LoadingState from '../components/LoadingState';
+import ErrorAlert from '../components/ErrorAlert';
+import Modal from '../components/Modal';
 
 export default function AnnouncementsPage() {
     const [announcements, setAnnouncements] = useState<Announcement[]>([]);
@@ -56,29 +60,17 @@ export default function AnnouncementsPage() {
         return PRIORITY_COLORS[p as keyof typeof PRIORITY_COLORS] || PRIORITY_COLORS.DEFAULT;
     };
 
-    if (loading) return (
-        <div className="flex items-center justify-center h-full">
-            <div className="animate-pulse text-secondary">{UI_STRINGS.ANNOUNCEMENTS.LOADING}</div>
-        </div>
-    );
+    if (loading) return <LoadingState message={UI_STRINGS.ANNOUNCEMENTS.LOADING} />;
 
     return (
         <div>
-            {error && (
-                <div className="alert alert-error mb-4">
-                    {error}
-                </div>
-            )}
-            <div className="flex justify-between items-center" style={{ marginBottom: 'var(--space-lg)' }}>
-                <div>
-                    <h1>{UI_STRINGS.ANNOUNCEMENTS.TITLE}</h1>
-                    <p>{UI_STRINGS.ANNOUNCEMENTS.SUBTITLE}</p>
-                </div>
-                <button className="btn btn-primary" onClick={() => setShowModal(true)}>
-                    <Plus size={18} style={{ marginRight: '8px' }} />
-                    {UI_STRINGS.ANNOUNCEMENTS.NEW_BTN}
-                </button>
-            </div>
+            <ErrorAlert message={error} />
+            <PageHeader
+                title={UI_STRINGS.ANNOUNCEMENTS.TITLE}
+                subtitle={UI_STRINGS.ANNOUNCEMENTS.SUBTITLE}
+                actionLabel={UI_STRINGS.ANNOUNCEMENTS.NEW_BTN}
+                onAction={() => setShowModal(true)}
+            />
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 'var(--space-md)' }}>
                 {announcements.map(ann => (
@@ -104,7 +96,7 @@ export default function AnnouncementsPage() {
                                         <Calendar size={14} />
                                         {ann.createdAt.toLocaleDateString()}
                                         <span style={{ margin: '0 4px' }}>•</span>
-                                        Target: {ann.targetBatches.join(', ')}
+                                        {UI_STRINGS.ANNOUNCEMENTS.TARGET_LABEL}: {ann.targetBatches.join(', ')}
                                     </div>
                                 </div>
                                 <button className="icon-btn icon-btn-danger" title={UI_STRINGS.COMMON.DELETE}>
@@ -122,59 +114,45 @@ export default function AnnouncementsPage() {
                 )}
             </div>
 
-            {showModal && (
-                <div style={{
-                    position: 'fixed',
-                    top: 0, left: 0, right: 0, bottom: 0,
-                    backgroundColor: 'rgba(0,0,0,0.8)',
-                    backdropFilter: 'blur(4px)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: 100
-                }}>
-                    <div className="card" style={{ width: '100%', maxWidth: '500px' }}>
-                        <h2>{UI_STRINGS.ANNOUNCEMENTS.MODAL_TITLE}</h2>
-                        <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)', marginTop: 'var(--space-md)' }}>
-                            <div>
-                                <label>Title</label>
-                                <input
-                                    type="text"
-                                    value={newAnnouncement.title}
-                                    onChange={e => setNewAnnouncement({ ...newAnnouncement, title: e.target.value })}
-                                    required
-                                />
-                            </div>
-                            <div>
-                                <label>Content</label>
-                                <textarea
-                                    rows={4}
-                                    value={newAnnouncement.content}
-                                    onChange={e => setNewAnnouncement({ ...newAnnouncement, content: e.target.value })}
-                                    required
-                                />
-                            </div>
-                            <div className="flex gap-4">
-                                <div style={{ flex: 1 }}>
-                                    <label>Priority</label>
-                                    <select
-                                        value={newAnnouncement.priority}
-                                        onChange={e => setNewAnnouncement({ ...newAnnouncement, priority: e.target.value as any })}
-                                    >
-                                        <option value={PRIORITY_LEVELS.LOW}>Low</option>
-                                        <option value={PRIORITY_LEVELS.MEDIUM}>Medium</option>
-                                        <option value={PRIORITY_LEVELS.HIGH}>High</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div className="flex justify-end gap-2" style={{ marginTop: 'var(--space-md)' }}>
-                                <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>{UI_STRINGS.COMMON.CANCEL}</button>
-                                <button type="submit" className="btn btn-primary">{UI_STRINGS.COMMON.PUBLISH}</button>
-                            </div>
-                        </form>
+            <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={UI_STRINGS.ANNOUNCEMENTS.MODAL_TITLE}>
+                <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)', marginTop: 'var(--space-md)' }}>
+                    <div>
+                        <label>{UI_STRINGS.ANNOUNCEMENTS.FORM_TITLE}</label>
+                        <input
+                            type="text"
+                            value={newAnnouncement.title}
+                            onChange={e => setNewAnnouncement({ ...newAnnouncement, title: e.target.value })}
+                            required
+                        />
                     </div>
-                </div>
-            )}
+                    <div>
+                        <label>{UI_STRINGS.ANNOUNCEMENTS.FORM_CONTENT}</label>
+                        <textarea
+                            rows={4}
+                            value={newAnnouncement.content}
+                            onChange={e => setNewAnnouncement({ ...newAnnouncement, content: e.target.value })}
+                            required
+                        />
+                    </div>
+                    <div className="flex gap-4">
+                        <div style={{ flex: 1 }}>
+                            <label>{UI_STRINGS.ANNOUNCEMENTS.FORM_PRIORITY}</label>
+                            <select
+                                value={newAnnouncement.priority}
+                                onChange={e => setNewAnnouncement({ ...newAnnouncement, priority: e.target.value as 'high' | 'medium' | 'low' })}
+                            >
+                                <option value={PRIORITY_LEVELS.LOW}>Low</option>
+                                <option value={PRIORITY_LEVELS.MEDIUM}>Medium</option>
+                                <option value={PRIORITY_LEVELS.HIGH}>High</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div className="flex justify-end gap-2" style={{ marginTop: 'var(--space-md)' }}>
+                        <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>{UI_STRINGS.COMMON.CANCEL}</button>
+                        <button type="submit" className="btn btn-primary">{UI_STRINGS.COMMON.PUBLISH}</button>
+                    </div>
+                </form>
+            </Modal>
         </div>
     );
 }

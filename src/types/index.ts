@@ -92,3 +92,12 @@ export interface SuccessStory {
     role?: string;
 }
 
+export interface StudentProgress {
+    userId: string;
+    userName?: string;
+    attendance: number;
+    overallScore: number;
+    currentModule: string;
+    completedModules: string[];
+}
+

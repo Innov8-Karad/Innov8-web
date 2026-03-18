@@ -10,7 +10,7 @@ import {
   type DocumentData 
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { COLLECTIONS } from '../constants';
+import { COLLECTIONS, FEE_STATUS } from '../constants';
 import type { Fee } from '../types';
 
 export const feeService = {
@@ -20,8 +20,8 @@ export const feeService = {
     return snap.docs.map(doc => ({
       id: doc.id,
       ...doc.data(),
-      dueDate: (doc.data() as any).dueDate?.toDate(),
-      paidDate: (doc.data() as any).paidDate?.toDate(),
+      dueDate: (doc.data() as DocumentData).dueDate?.toDate(),
+      paidDate: (doc.data() as DocumentData).paidDate?.toDate(),
     } as Fee));
   },
 
@@ -29,7 +29,7 @@ export const feeService = {
     const docData: DocumentData = {
       ...data,
       amount: Number(data.amount),
-      dueDate: Timestamp.fromDate(new Date(data.dueDate as any)),
+      dueDate: Timestamp.fromDate(new Date(data.dueDate as unknown as string)),
       createdAt: Timestamp.now()
     };
 
@@ -39,17 +39,17 @@ export const feeService = {
       id: docRef.id,
       ...data,
       amount: Number(data.amount),
-      dueDate: new Date(data.dueDate as any),
+      dueDate: new Date(data.dueDate as unknown as string),
       createdAt: new Date()
     } as Fee;
   },
 
   async updateFeeStatus(feeId: string, newStatus: string): Promise<{ status: string, paidDate?: Date }> {
     const feeRef = doc(db, COLLECTIONS.FEES, feeId);
-    const updateData: any = { status: newStatus };
+    const updateData: Record<string, unknown> = { status: newStatus };
     let paidDate: Date | undefined;
 
-    if (newStatus === 'paid') {
+    if (newStatus === FEE_STATUS.PAID) {
       const now = Timestamp.now();
       updateData.paidDate = now;
       paidDate = now.toDate();

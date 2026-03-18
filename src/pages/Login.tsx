@@ -21,8 +21,8 @@ export default function Login() {
             setLoading(true);
             await login(email, password);
             navigate('/');
-        } catch (err: any) {
-            setError(UI_STRINGS.LOGIN.ERROR + ' ' + err.message);
+        } catch (err) {
+            setError(UI_STRINGS.LOGIN.ERROR + ' ' + (err as Error).message);
         }
         setLoading(false);
     }
@@ -56,8 +56,7 @@ export default function Login() {
                         <img src={logo} alt="Innov8 Logo" style={{ height: '280px', width: 'auto', filter: 'drop-shadow(0 0 50px rgba(var(--primary-rgb), 0.5))' }} />
                     </div>
                     <h2 style={{ fontSize: '1.5rem', color: 'var(--text-secondary)', marginBottom: 'var(--space-xl)', maxWidth: '500px' }}>
-                        Empowering the <span style={{ color: 'var(--primary)', fontStyle: 'italic' }}>Future</span> of 
-                        Digital Learning & Management.
+                        {UI_STRINGS.LOGIN.BRANDING_TEXT} <span style={{ color: 'var(--primary)', fontStyle: 'italic' }}>{UI_STRINGS.LOGIN.BRANDING_HIGHLIGHT}</span> {UI_STRINGS.LOGIN.BRANDING_SUFFIX}
                     </h2>
                 </div>
 
@@ -131,7 +130,7 @@ export default function Login() {
                                         border: '1px solid rgba(255, 255, 255, 0.1)',
                                         height: '54px'
                                     }}
-                                    placeholder="admin@innov8.com"
+                                    placeholder={UI_STRINGS.LOGIN.EMAIL_PLACEHOLDER}
                                 />
                             </div>
                         </div>
@@ -151,7 +150,7 @@ export default function Login() {
                                         border: '1px solid rgba(255, 255, 255, 0.1)',
                                         height: '54px'
                                     }}
-                                    placeholder="••••••••"
+                                    placeholder={UI_STRINGS.LOGIN.PASSWORD_PLACEHOLDER}
                                 />
                             </div>
                         </div>

@@ -1,8 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Building2, Users, Briefcase, Plus, X } from 'lucide-react';
+import { Building2, Users, Briefcase } from 'lucide-react';
 import { placementService } from '../services/placementService';
 import type { Placement, SuccessStory } from '../types';
 import { UI_STRINGS } from '../constants';
+import PageHeader from '../components/PageHeader';
+import LoadingState from '../components/LoadingState';
+import ErrorAlert from '../components/ErrorAlert';
+import Modal from '../components/Modal';
 
 export default function PlacementsPage() {
     const [stats, setStats] = useState<Placement | null>(null);
@@ -66,30 +70,18 @@ export default function PlacementsPage() {
     };
 
     if (loading) {
-        return (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh' }}>
-                <div className="animate-pulse text-secondary">{UI_STRINGS.PLACEMENTS.LOADING}</div>
-            </div>
-        );
+        return <LoadingState message={UI_STRINGS.PLACEMENTS.LOADING} />;
     }
 
     return (
         <div>
-            {error && (
-                <div className="alert alert-error mb-4">
-                    {error}
-                </div>
-            )}
-            <div className="flex justify-between items-center" style={{ marginBottom: 'var(--space-lg)' }}>
-                <div>
-                    <h1>{UI_STRINGS.PLACEMENTS.TITLE}</h1>
-                    <p>{UI_STRINGS.PLACEMENTS.SUBTITLE}</p>
-                </div>
-                <button className="btn btn-primary" onClick={() => setShowModal(true)}>
-                    <Plus size={18} style={{ marginRight: '8px' }} />
-                    {UI_STRINGS.PLACEMENTS.NEW_BTN}
-                </button>
-            </div>
+            <ErrorAlert message={error} />
+            <PageHeader
+                title={UI_STRINGS.PLACEMENTS.TITLE}
+                subtitle={UI_STRINGS.PLACEMENTS.SUBTITLE}
+                actionLabel={UI_STRINGS.PLACEMENTS.NEW_BTN}
+                onAction={() => setShowModal(true)}
+            />
 
             {stats && (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 'var(--space-md)', marginBottom: 'var(--space-xl)' }}>
@@ -98,7 +90,7 @@ export default function PlacementsPage() {
                             <Building2 size={24} />
                         </div>
                         <div>
-                            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Partner Companies</p>
+                            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{UI_STRINGS.PLACEMENTS.STAT_PARTNER_COMPANIES}</p>
                             <h2 style={{ margin: 0 }}>{stats.companiesCount || stats.topCompanies?.length || 0}+</h2>
                         </div>
                     </div>
@@ -107,7 +99,7 @@ export default function PlacementsPage() {
                             <Users size={24} />
                         </div>
                         <div>
-                            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Placed Students</p>
+                            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{UI_STRINGS.PLACEMENTS.STAT_PLACED_STUDENTS}</p>
                             <h2 style={{ margin: 0 }}>{stats.totalPlaced || stats.studentsPlaced || 0}+</h2>
                         </div>
                     </div>
@@ -116,14 +108,14 @@ export default function PlacementsPage() {
                             <Briefcase size={24} />
                         </div>
                         <div>
-                            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Highest Package</p>
-                            <h2 style={{ margin: 0 }}>{stats.highestPackage} LPA</h2>
+                            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{UI_STRINGS.PLACEMENTS.STAT_HIGHEST_PACKAGE}</p>
+                            <h2 style={{ margin: 0 }}>{stats.highestPackage} {UI_STRINGS.PLACEMENTS.LPA_SUFFIX}</h2>
                         </div>
                     </div>
                 </div>
             )}
 
-            <h2 style={{ marginBottom: 'var(--space-md)' }}>Success Stories</h2>
+            <h2 style={{ marginBottom: 'var(--space-md)' }}>{UI_STRINGS.PLACEMENTS.SUCCESS_STORIES_HEADING}</h2>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 'var(--space-lg)' }}>
                 {successStories.map(story => (
                     <div key={story.id} className="card flex gap-4">
@@ -140,70 +132,54 @@ export default function PlacementsPage() {
                             <h3 style={{ margin: 0 }}>{story.studentName}</h3>
                             <p style={{ color: 'var(--primary)', fontWeight: 600, fontSize: '0.9rem', marginTop: '2px' }}>{story.company}</p>
                             <div style={{ marginTop: '8px', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                                <div>{story.role ? `Role: ${story.role}` : `Batch: ${story.batch}`}</div>
-                                <div>Package: {story.package}</div>
+                                <div>{story.role ? `${UI_STRINGS.PLACEMENTS.ROLE_PREFIX} ${story.role}` : `${UI_STRINGS.PLACEMENTS.BATCH_PREFIX} ${story.batch}`}</div>
+                                <div>{UI_STRINGS.PLACEMENTS.PACKAGE_PREFIX} {story.package}</div>
                             </div>
                         </div>
                     </div>
                 ))}
             </div>
 
-            {showModal && (
-                <div style={{
-                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                    backgroundColor: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(4px)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100
-                }}>
-                    <div className="card" style={{ width: '100%', maxWidth: '500px', position: 'relative' }}>
-                        <button
-                            onClick={() => setShowModal(false)}
-                            style={{ position: 'absolute', top: '16px', right: '16px', border: 'none', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}
-                        >
-                            <X size={20} />
-                        </button>
-                        <h2>{UI_STRINGS.PLACEMENTS.MODAL_TITLE}</h2>
-                        <form onSubmit={handleAddStory} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)', marginTop: 'var(--space-lg)' }}>
-                            <div>
-                                <label>Student Name</label>
-                                <input type="text" required value={newStory.studentName} onChange={e => setNewStory({ ...newStory, studentName: e.target.value })} />
-                            </div>
-                            <div className="flex gap-4">
-                                <div style={{ flex: 1 }}>
-                                    <label>Company</label>
-                                    <input type="text" required placeholder="e.g. Google" value={newStory.company} onChange={e => setNewStory({ ...newStory, company: e.target.value })} />
-                                </div>
-                                <div style={{ flex: 1 }}>
-                                    <label>Package</label>
-                                    <input type="text" required placeholder="e.g. 12 LPA" value={newStory.package} onChange={e => setNewStory({ ...newStory, package: e.target.value })} />
-                                </div>
-                            </div>
-                            <div className="flex gap-4">
-                                <div style={{ flex: 1 }}>
-                                    <label>Role</label>
-                                    <input type="text" required placeholder="e.g. Software Engineer" value={newStory.role} onChange={e => setNewStory({ ...newStory, role: e.target.value })} />
-                                </div>
-                                <div style={{ flex: 1 }}>
-                                    <label>Batch</label>
-                                    <input type="text" required placeholder="e.g. 2024" value={newStory.batch} onChange={e => setNewStory({ ...newStory, batch: e.target.value })} />
-                                </div>
-                            </div>
-                            <div>
-                                <label>Testimonial (Optional)</label>
-                                <textarea rows={2} value={newStory.testimonial} onChange={e => setNewStory({ ...newStory, testimonial: e.target.value })} />
-                            </div>
-                            <div>
-                                <label>Image URL (Optional)</label>
-                                <input type="url" value={newStory.studentImage} onChange={e => setNewStory({ ...newStory, studentImage: e.target.value })} />
-                            </div>
-                            <div className="flex justify-end gap-2" style={{ marginTop: 'var(--space-md)' }}>
-                                <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>{UI_STRINGS.COMMON.CANCEL}</button>
-                                <button type="submit" className="btn btn-primary">{UI_STRINGS.COMMON.SAVE}</button>
-                            </div>
-                        </form>
+            <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={UI_STRINGS.PLACEMENTS.MODAL_TITLE}>
+                <form onSubmit={handleAddStory} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)', marginTop: 'var(--space-lg)' }}>
+                    <div>
+                        <label>{UI_STRINGS.PLACEMENTS.FORM_STUDENT_NAME}</label>
+                        <input type="text" required value={newStory.studentName} onChange={e => setNewStory({ ...newStory, studentName: e.target.value })} />
                     </div>
-                </div>
-            )}
+                    <div className="flex gap-4">
+                        <div style={{ flex: 1 }}>
+                            <label>{UI_STRINGS.PLACEMENTS.FORM_COMPANY}</label>
+                            <input type="text" required placeholder={UI_STRINGS.PLACEMENTS.FORM_COMPANY_PLACEHOLDER} value={newStory.company} onChange={e => setNewStory({ ...newStory, company: e.target.value })} />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                            <label>{UI_STRINGS.PLACEMENTS.FORM_PACKAGE}</label>
+                            <input type="text" required placeholder={UI_STRINGS.PLACEMENTS.FORM_PACKAGE_PLACEHOLDER} value={newStory.package} onChange={e => setNewStory({ ...newStory, package: e.target.value })} />
+                        </div>
+                    </div>
+                    <div className="flex gap-4">
+                        <div style={{ flex: 1 }}>
+                            <label>{UI_STRINGS.PLACEMENTS.FORM_ROLE}</label>
+                            <input type="text" required placeholder={UI_STRINGS.PLACEMENTS.FORM_ROLE_PLACEHOLDER} value={newStory.role} onChange={e => setNewStory({ ...newStory, role: e.target.value })} />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                            <label>{UI_STRINGS.PLACEMENTS.FORM_BATCH}</label>
+                            <input type="text" required placeholder={UI_STRINGS.PLACEMENTS.FORM_BATCH_PLACEHOLDER} value={newStory.batch} onChange={e => setNewStory({ ...newStory, batch: e.target.value })} />
+                        </div>
+                    </div>
+                    <div>
+                        <label>{UI_STRINGS.PLACEMENTS.FORM_TESTIMONIAL}</label>
+                        <textarea rows={2} value={newStory.testimonial} onChange={e => setNewStory({ ...newStory, testimonial: e.target.value })} />
+                    </div>
+                    <div>
+                        <label>{UI_STRINGS.PLACEMENTS.FORM_IMAGE_URL}</label>
+                        <input type="url" value={newStory.studentImage} onChange={e => setNewStory({ ...newStory, studentImage: e.target.value })} />
+                    </div>
+                    <div className="flex justify-end gap-2" style={{ marginTop: 'var(--space-md)' }}>
+                        <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>{UI_STRINGS.COMMON.CANCEL}</button>
+                        <button type="submit" className="btn btn-primary">{UI_STRINGS.COMMON.SAVE}</button>
+                    </div>
+                </form>
+            </Modal>
         </div>
     );
 }
-

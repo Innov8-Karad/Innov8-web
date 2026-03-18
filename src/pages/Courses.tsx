@@ -1,8 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Plus, Book, Clock, User, Star, X } from 'lucide-react';
+import { Book, Clock, User, Star } from 'lucide-react';
 import { courseService } from '../services/courseService';
 import type { Course } from '../types';
 import { UI_STRINGS } from '../constants';
+import PageHeader from '../components/PageHeader';
+import LoadingState from '../components/LoadingState';
+import ErrorAlert from '../components/ErrorAlert';
+import Modal from '../components/Modal';
 
 export default function CoursesPage() {
     const [courses, setCourses] = useState<Course[]>([]);
@@ -41,7 +45,7 @@ export default function CoursesPage() {
         e.preventDefault();
         try {
             setError(null);
-            const created = await courseService.createCourse(newCourse as any);
+            const created = await courseService.createCourse(newCourse as unknown as Omit<Course, 'id' | 'createdAt'>);
 
             setCourses([created, ...courses]);
             setShowModal(false);
@@ -61,29 +65,17 @@ export default function CoursesPage() {
         }
     };
 
-    if (loading) return (
-        <div className="flex items-center justify-center h-full">
-            <div className="animate-pulse text-secondary">{UI_STRINGS.COURSES.LOADING}</div>
-        </div>
-    );
+    if (loading) return <LoadingState message={UI_STRINGS.COURSES.LOADING} />;
 
     return (
         <div>
-            {error && (
-                <div className="alert alert-error mb-4">
-                    {error}
-                </div>
-            )}
-            <div className="flex justify-between items-center" style={{ marginBottom: 'var(--space-lg)' }}>
-                <div>
-                    <h1>{UI_STRINGS.COURSES.TITLE}</h1>
-                    <p>{UI_STRINGS.COURSES.SUBTITLE}</p>
-                </div>
-                <button className="btn btn-primary" onClick={() => setShowModal(true)}>
-                    <Plus size={18} style={{ marginRight: '8px' }} />
-                    {UI_STRINGS.COURSES.NEW_BTN}
-                </button>
-            </div>
+            <ErrorAlert message={error} />
+            <PageHeader
+                title={UI_STRINGS.COURSES.TITLE}
+                subtitle={UI_STRINGS.COURSES.SUBTITLE}
+                actionLabel={UI_STRINGS.COURSES.NEW_BTN}
+                onAction={() => setShowModal(true)}
+            />
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 'var(--space-lg)' }}>
                 {courses.map((course: Course) => (
@@ -105,7 +97,7 @@ export default function CoursesPage() {
                                     fontSize: '0.8rem',
                                     color: 'white'
                                 }}>
-                                    {course.isFree ? 'FREE' : `₹ ${course.price.toLocaleString()}`}
+                                    {course.isFree ? UI_STRINGS.COURSES.BADGE_FREE : `₹ ${course.price.toLocaleString()}`}
                                 </span>
                             </div>
                         </div>
@@ -140,62 +132,46 @@ export default function CoursesPage() {
                 ))}
             </div>
 
-            {showModal && (
-                <div style={{
-                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                    backgroundColor: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(4px)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100
-                }}>
-                    <div className="card" style={{ width: '100%', maxWidth: '500px', position: 'relative' }}>
-                        <button
-                            onClick={() => setShowModal(false)}
-                            style={{ position: 'absolute', top: '16px', right: '16px', border: 'none', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}
-                        >
-                            <X size={20} />
-                        </button>
-                        <h2>{UI_STRINGS.COURSES.MODAL_TITLE}</h2>
-                        <form onSubmit={handleAddCourse} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)', marginTop: 'var(--space-lg)' }}>
-                            <div>
-                                <label>Course Title</label>
-                                <input type="text" required placeholder="e.g. Full Stack Web Development" value={newCourse.title} onChange={e => setNewCourse({ ...newCourse, title: e.target.value })} />
-                            </div>
-                            <div>
-                                <label>Description</label>
-                                <textarea rows={2} required value={newCourse.description} onChange={e => setNewCourse({ ...newCourse, description: e.target.value })} />
-                            </div>
-                            <div className="flex gap-4">
-                                <div style={{ flex: 1 }}>
-                                    <label>Instructor</label>
-                                    <input type="text" required value={newCourse.instructor} onChange={e => setNewCourse({ ...newCourse, instructor: e.target.value })} />
-                                </div>
-                                <div style={{ flex: 1 }}>
-                                    <label>Duration</label>
-                                    <input type="text" required placeholder="e.g. 12 Weeks" value={newCourse.duration} onChange={e => setNewCourse({ ...newCourse, duration: e.target.value })} />
-                                </div>
-                            </div>
-                            <div className="flex gap-4 items-center">
-                                <div style={{ flex: 1 }}>
-                                    <label>Price (₹)</label>
-                                    <input type="number" disabled={newCourse.isFree} required={!newCourse.isFree} value={newCourse.price} onChange={e => setNewCourse({ ...newCourse, price: e.target.value })} />
-                                </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '20px' }}>
-                                    <input type="checkbox" id="isFree" checked={newCourse.isFree} onChange={e => setNewCourse({ ...newCourse, isFree: e.target.checked })} />
-                                    <label htmlFor="isFree" style={{ margin: 0 }}>Free Course</label>
-                                </div>
-                            </div>
-                            <div>
-                                <label>Thumbnail URL (Optional)</label>
-                                <input type="url" value={newCourse.thumbnail} onChange={e => setNewCourse({ ...newCourse, thumbnail: e.target.value })} />
-                            </div>
-                            <div className="flex justify-end gap-2" style={{ marginTop: 'var(--space-md)' }}>
-                                <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>{UI_STRINGS.COMMON.CANCEL}</button>
-                                <button type="submit" className="btn btn-primary">{UI_STRINGS.COMMON.SAVE}</button>
-                            </div>
-                        </form>
+            <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={UI_STRINGS.COURSES.MODAL_TITLE}>
+                <form onSubmit={handleAddCourse} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)', marginTop: 'var(--space-lg)' }}>
+                    <div>
+                        <label>{UI_STRINGS.COURSES.FORM_TITLE}</label>
+                        <input type="text" required placeholder={UI_STRINGS.COURSES.FORM_TITLE_PLACEHOLDER} value={newCourse.title} onChange={e => setNewCourse({ ...newCourse, title: e.target.value })} />
                     </div>
-                </div>
-            )}
+                    <div>
+                        <label>{UI_STRINGS.COURSES.FORM_DESCRIPTION}</label>
+                        <textarea rows={2} required value={newCourse.description} onChange={e => setNewCourse({ ...newCourse, description: e.target.value })} />
+                    </div>
+                    <div className="flex gap-4">
+                        <div style={{ flex: 1 }}>
+                            <label>{UI_STRINGS.COURSES.FORM_INSTRUCTOR}</label>
+                            <input type="text" required value={newCourse.instructor} onChange={e => setNewCourse({ ...newCourse, instructor: e.target.value })} />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                            <label>{UI_STRINGS.COURSES.FORM_DURATION}</label>
+                            <input type="text" required placeholder={UI_STRINGS.COURSES.FORM_DURATION_PLACEHOLDER} value={newCourse.duration} onChange={e => setNewCourse({ ...newCourse, duration: e.target.value })} />
+                        </div>
+                    </div>
+                    <div className="flex gap-4 items-center">
+                        <div style={{ flex: 1 }}>
+                            <label>{UI_STRINGS.COURSES.FORM_PRICE}</label>
+                            <input type="number" disabled={newCourse.isFree} required={!newCourse.isFree} value={newCourse.price} onChange={e => setNewCourse({ ...newCourse, price: e.target.value })} />
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '20px' }}>
+                            <input type="checkbox" id="isFree" checked={newCourse.isFree} onChange={e => setNewCourse({ ...newCourse, isFree: e.target.checked })} />
+                            <label htmlFor="isFree" style={{ margin: 0 }}>{UI_STRINGS.COURSES.FORM_FREE_COURSE}</label>
+                        </div>
+                    </div>
+                    <div>
+                        <label>{UI_STRINGS.COURSES.FORM_THUMBNAIL_URL}</label>
+                        <input type="url" value={newCourse.thumbnail} onChange={e => setNewCourse({ ...newCourse, thumbnail: e.target.value })} />
+                    </div>
+                    <div className="flex justify-end gap-2" style={{ marginTop: 'var(--space-md)' }}>
+                        <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>{UI_STRINGS.COMMON.CANCEL}</button>
+                        <button type="submit" className="btn btn-primary">{UI_STRINGS.COMMON.SAVE}</button>
+                    </div>
+                </form>
+            </Modal>
         </div>
     );
 }
-

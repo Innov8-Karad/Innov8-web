@@ -1,17 +1,10 @@
 import { useState, useEffect } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from '../lib/firebase';
 import { CheckCircle } from 'lucide-react';
 import { UI_STRINGS } from '../constants';
-
-interface StudentProgress {
-    userId: string;
-    userName?: string;
-    attendance: number;
-    overallScore: number;
-    currentModule: string;
-    completedModules: string[];
-}
+import { progressService } from '../services/progressService';
+import type { StudentProgress } from '../types';
+import LoadingState from '../components/LoadingState';
+import PageHeader from '../components/PageHeader';
 
 export default function ProgressPage() {
     const [progressData, setProgressData] = useState<StudentProgress[]>([]);
@@ -21,20 +14,7 @@ export default function ProgressPage() {
         async function fetchData() {
             try {
                 setLoading(true);
-                const [progressSnap, usersSnap] = await Promise.all([
-                    getDocs(collection(db, "progress")),
-                    getDocs(collection(db, "users"))
-                ]);
-
-                const usersMap = new Map();
-                usersSnap.docs.forEach(doc => usersMap.set(doc.id, doc.data().name));
-
-                const data = progressSnap.docs.map(doc => ({
-                    userId: doc.id,
-                    userName: usersMap.get(doc.id) || "Unknown Student",
-                    ...doc.data()
-                } as StudentProgress));
-
+                const data = await progressService.fetchProgress();
                 setProgressData(data);
             } catch (err) {
                 console.error("Error fetching progress:", err);
@@ -45,18 +25,14 @@ export default function ProgressPage() {
         fetchData();
     }, []);
 
-    if (loading) return (
-        <div className="flex items-center justify-center h-full">
-            <div className="animate-pulse text-secondary">{UI_STRINGS.PROGRESS.LOADING}</div>
-        </div>
-    );
+    if (loading) return <LoadingState message={UI_STRINGS.PROGRESS.LOADING} />;
 
     return (
         <div>
-            <div style={{ marginBottom: 'var(--space-lg)' }}>
-                <h1>{UI_STRINGS.PROGRESS.TITLE}</h1>
-                <p>{UI_STRINGS.PROGRESS.SUBTITLE}</p>
-            </div>
+            <PageHeader
+                title={UI_STRINGS.PROGRESS.TITLE}
+                subtitle={UI_STRINGS.PROGRESS.SUBTITLE}
+            />
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 'var(--space-md)' }}>
                 {progressData.map(p => (
@@ -93,4 +69,3 @@ export default function ProgressPage() {
         </div>
     );
 }
- 

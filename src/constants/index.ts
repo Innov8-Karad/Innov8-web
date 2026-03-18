@@ -7,7 +7,16 @@ export const COLLECTIONS = {
   EXAMS: 'exams',
   PLACEMENTS: 'placements',
   SUCCESS_STORIES: 'successStories',
+  PROGRESS: 'progress',
 } as const;
+
+export const FEE_STATUS = {
+  PAID: 'paid',
+  PENDING: 'pending',
+  OVERDUE: 'overdue',
+} as const;
+
+export const ADMIN_USER_ID = 'admin';
 
 export const PRIORITY_LEVELS = {
   HIGH: 'high',
@@ -66,6 +75,10 @@ export const UI_STRINGS = {
     ERROR_LOAD: 'Failed to load announcements. Please try again later.',
     ERROR_CREATE: 'Failed to create announcement. Please try again.',
     EMPTY: 'No announcements found.',
+    FORM_TITLE: 'Title',
+    FORM_CONTENT: 'Content',
+    FORM_PRIORITY: 'Priority',
+    TARGET_LABEL: 'Target',
   },
   // Courses page
   COURSES: {
@@ -76,6 +89,16 @@ export const UI_STRINGS = {
     LOADING: 'Loading courses...',
     ERROR_LOAD: 'Failed to load courses. Please try again later.',
     ERROR_CREATE: 'Failed to add course. Please try again.',
+    FORM_TITLE: 'Course Title',
+    FORM_TITLE_PLACEHOLDER: 'e.g. Full Stack Web Development',
+    FORM_DESCRIPTION: 'Description',
+    FORM_INSTRUCTOR: 'Instructor',
+    FORM_DURATION: 'Duration',
+    FORM_DURATION_PLACEHOLDER: 'e.g. 12 Weeks',
+    FORM_PRICE: 'Price (₹)',
+    FORM_FREE_COURSE: 'Free Course',
+    FORM_THUMBNAIL_URL: 'Thumbnail URL (Optional)',
+    BADGE_FREE: 'FREE',
   },
   // Users/Students page
   USERS: {
@@ -90,6 +113,31 @@ export const UI_STRINGS = {
     SEARCH: 'Search by name or email...',
     SELECT_COURSE: 'Select Course',
     SELECT_COURSE_PLACEHOLDER: '-- Choose a course --',
+    // Table headers
+    TH_NAME: 'Name',
+    TH_BATCH: 'Batch',
+    TH_COURSE: 'Course',
+    TH_JOINED: 'Joined',
+    TH_ACTIONS: 'Actions',
+    // Form labels
+    FORM_FULL_NAME: 'Full Name',
+    FORM_EMAIL: 'Email',
+    FORM_PHONE: 'Phone',
+    FORM_BATCH: 'Batch',
+    FORM_BATCH_PLACEHOLDER: 'e.g. 2024-A',
+
+    // View details
+    VIEW_DETAILS: 'View Full Details',
+    CLOSE_DETAILS: 'Close Details',
+    CONTACT_INFO: 'Contact Information',
+    ACADEMIC_DETAILS: 'Academic Details',
+    ENROLLED_COURSES: 'Enrolled Courses',
+    EMAIL_LABEL: 'Email:',
+    PHONE_LABEL: 'Phone:',
+    ENROLLMENT_DATE_LABEL: 'Enrollment Date:',
+    CURRENT_STATUS_LABEL: 'Current Status:',
+    STATUS_ACTIVE: 'Active',
+    NOT_PROVIDED: 'Not provided',
   },
   // Exams page
   EXAMS: {
@@ -101,6 +149,22 @@ export const UI_STRINGS = {
     ERROR_LOAD: 'Failed to load exams. Please try again later.',
     ERROR_CREATE: 'Failed to create exam. Please try again.',
     EMPTY: 'No exams found matching your search.',
+    SEARCH_PLACEHOLDER: 'Search by title or category...',
+    FORM_TITLE: 'Exam Title',
+    FORM_TITLE_PLACEHOLDER: 'e.g. Mid-term React Assessment',
+    FORM_DESCRIPTION: 'Description',
+    FORM_CATEGORY: 'Category',
+    FORM_CATEGORY_PLACEHOLDER: 'e.g. Web Development',
+    FORM_DIFFICULTY: 'Difficulty',
+    FORM_DURATION: 'Duration (mins)',
+    FORM_TOTAL_MARKS: 'Total Marks',
+    FORM_SCHEDULED_DATE: 'Scheduled Date',
+    DIFFICULTY_EASY: 'Easy',
+    DIFFICULTY_MEDIUM: 'Medium',
+    DIFFICULTY_HARD: 'Hard',
+    QUESTIONS_SUFFIX: 'Questions',
+    MARKS_SUFFIX: 'Marks',
+    MINS_SUFFIX: 'mins',
   },
   FEES: {
     TITLE: 'Student Fee Status',
@@ -113,6 +177,45 @@ export const UI_STRINGS = {
     ERROR_LOAD: 'Failed to load fee information. Please try again later.',
     ERROR_UPDATE: 'Failed to update payment status.',
     ERROR_CREATE: 'Failed to create fee record.',
+    // Table headers
+    TH_STUDENT: 'Student',
+    TH_COURSE: 'Course',
+    TH_TOTAL_FEE: 'Total Fee',
+    TH_PAID: 'Paid',
+    TH_PENDING: 'Pending',
+    TH_STATUS: 'Status',
+    TH_ACTIONS: 'Actions',
+    // Stat labels
+    STAT_COLLECTED: 'Total Collected',
+    STAT_PENDING: 'Pending',
+    STAT_OVERDUE: 'Overdue',
+    // Form labels
+    FORM_SELECT_STUDENT: 'Student',
+    FORM_SELECT_STUDENT_PLACEHOLDER: 'Select Student',
+    FORM_AMOUNT: 'Amount (₹)',
+    FORM_DUE_DATE: 'Due Date',
+    FORM_DESCRIPTION: 'Description',
+    FORM_DESCRIPTION_PLACEHOLDER: 'e.g. Monthly Tuition Fee - March',
+    FORM_STATUS: 'Status',
+    STATUS_PENDING: 'Pending',
+    STATUS_PAID: 'Paid',
+    STATUS_OVERDUE: 'Overdue',
+    // Detail modal
+    DETAILS_BTN: 'Details',
+    TRANSACTION_HISTORY: 'Transaction History',
+    TOTAL_PAID: 'Total Paid',
+    BALANCE_DUE: 'Balance Due',
+    MARK_PAID: 'Mark Paid',
+    PAID_CONFIRMED: 'Paid',
+    // Detail modal table headers
+    TH_DETAIL_DESCRIPTION: 'Description',
+    TH_DETAIL_AMOUNT: 'Amount',
+    TH_DETAIL_DUE_DATE: 'Due Date',
+    TH_DETAIL_STATUS: 'Status',
+    TH_DETAIL_ACTION: 'Action',
+    // Status values
+    ALL_CLEAR: 'All Clear',
+    NO_RECORDS: 'No Records',
   },
   PLACEMENTS: {
     TITLE: 'Placements',
@@ -122,6 +225,28 @@ export const UI_STRINGS = {
     ERROR_LOAD: 'Failed to load placement records. Please try again later.',
     ERROR_SAVE: 'Failed to save success story.',
     MODAL_TITLE: 'Add Success Story',
+    // Stat labels
+    STAT_PARTNER_COMPANIES: 'Partner Companies',
+    STAT_PLACED_STUDENTS: 'Placed Students',
+    STAT_HIGHEST_PACKAGE: 'Highest Package',
+    SUCCESS_STORIES_HEADING: 'Success Stories',
+    LPA_SUFFIX: 'LPA',
+    // Form labels
+    FORM_STUDENT_NAME: 'Student Name',
+    FORM_COMPANY: 'Company',
+    FORM_COMPANY_PLACEHOLDER: 'e.g. Google',
+    FORM_PACKAGE: 'Package',
+    FORM_PACKAGE_PLACEHOLDER: 'e.g. 12 LPA',
+    FORM_ROLE: 'Role',
+    FORM_ROLE_PLACEHOLDER: 'e.g. Software Engineer',
+    FORM_BATCH: 'Batch',
+    FORM_BATCH_PLACEHOLDER: 'e.g. 2024',
+    FORM_TESTIMONIAL: 'Testimonial (Optional)',
+    FORM_IMAGE_URL: 'Image URL (Optional)',
+    // Card display
+    ROLE_PREFIX: 'Role:',
+    BATCH_PREFIX: 'Batch:',
+    PACKAGE_PREFIX: 'Package:',
   },
   NAV: {
     DASHBOARD: 'Dashboard',
@@ -142,6 +267,7 @@ export const UI_STRINGS = {
     EMPTY: 'No progress records found. Update student performance to see data here.',
     VIEW_REPORT: 'View Full Report',
     MODULES_COMPLETED: 'Modules Completed',
+    UNKNOWN_STUDENT: 'Unknown Student',
   },
   LOGIN: {
     TITLE: 'Admin Portal',
@@ -161,10 +287,14 @@ export const UI_STRINGS = {
     },
     FOOTER_SUPPORT: 'Need technical support?',
     FOOTER_CONTACT: 'Contact Systems',
+    BRANDING_TEXT: 'Empowering the',
+    BRANDING_HIGHLIGHT: 'Future',
+    BRANDING_SUFFIX: 'of Digital Learning & Management.',
+    EMAIL_PLACEHOLDER: 'admin@innov8.com',
+    PASSWORD_PLACEHOLDER: '••••••••',
   },
   THEME: {
     SWITCH_DARK: 'Switch to Dark Mode',
     SWITCH_LIGHT: 'Switch to Light Mode',
   }
 } as const;
-

@@ -15,7 +15,7 @@ export const userService = {
     return snap.docs.map(doc => ({
       id: doc.id,
       ...doc.data(),
-      enrollmentDate: (doc.data() as any).enrollmentDate?.toDate() || new Date(),
+      enrollmentDate: (doc.data() as DocumentData).enrollmentDate?.toDate() || new Date(),
     } as User));
   },
 

@@ -21,7 +21,7 @@ export const examService = {
     return snap.docs.map(doc => ({
       id: doc.id,
       ...doc.data(),
-      scheduledDate: (doc.data() as any).scheduledDate?.toDate(),
+      scheduledDate: (doc.data() as DocumentData).scheduledDate?.toDate(),
     } as Exam));
   },
 
@@ -30,7 +30,7 @@ export const examService = {
       ...data,
       duration: Number(data.duration),
       totalMarks: Number(data.totalMarks),
-      scheduledDate: Timestamp.fromDate(new Date(data.scheduledDate as any)),
+      scheduledDate: Timestamp.fromDate(new Date(data.scheduledDate as unknown as string)),
       questions: [],
       createdAt: Timestamp.now()
     };
@@ -42,7 +42,7 @@ export const examService = {
       ...data,
       duration: Number(data.duration),
       totalMarks: Number(data.totalMarks),
-      scheduledDate: new Date(data.scheduledDate as any),
+      scheduledDate: new Date(data.scheduledDate as unknown as string),
       questions: []
     } as Exam;
   }
