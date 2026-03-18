@@ -1,0 +1,41 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Profile photos — users can read/write their own
+    match /profilePhotos/{userId}/{allPaths=**} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Course thumbnails — public read, admin write only
+    match /courseThumbnails/{allPaths=**} {
+      allow read: if true;
+      allow write: if false; // Admin SDK only
+    }
+
+    // Study materials — authenticated read, admin write only
+    match /studyMaterials/{allPaths=**} {
+      allow read: if request.auth != null;
+      allow write: if false; // Admin SDK only
+    }
+
+    // Company logos — public read, admin write only
+    match /companyLogos/{allPaths=**} {
+      allow read: if true;
+      allow write: if false; // Admin SDK only
+    }
+
+    // Resumes — users can read/write their own
+    match /resumes/{userId}/{allPaths=**} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Fee receipts — users can read their own, admin write only
+    match /receipts/{userId}/{allPaths=**} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if false; // Admin SDK only
+    }
+  }
+}
