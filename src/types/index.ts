@@ -9,6 +9,7 @@ export interface User {
     profilePhoto?: string;
     skills: string[];
     resume?: string;
+    role?: 'student' | 'admin';
     createdAt: Date;
 }
 
@@ -66,6 +67,13 @@ export interface Course {
     thumbnail?: string;
     rating?: number;
     enrolled?: number;
+    // Mobile-compatible optional fields
+    category?: string;
+    professor?: string;
+    badge?: string;
+    icon?: string;
+    iconColor?: string;
+    iconBg?: string;
 }
 
 export interface Placement {
