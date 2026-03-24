@@ -5,8 +5,9 @@ export const COLLECTIONS = {
   COURSES: 'courses',
   ATTENDANCE: 'attendance',
   EXAMS: 'exams',
-  PLACEMENTS: 'placements',
+  PLACEMENTS: 'placementStats',
   SUCCESS_STORIES: 'successStories',
+  OPPORTUNITIES: 'opportunities',
   PROGRESS: 'progress',
 } as const;
 

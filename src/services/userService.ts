@@ -22,6 +22,7 @@ export const userService = {
   async createUser(data: Omit<User, 'id' | 'enrollmentDate' | 'createdAt'>): Promise<User> {
     const docData: DocumentData = {
       ...data,
+      role: 'student',
       enrollmentDate: Timestamp.now(),
       createdAt: Timestamp.now()
     };
