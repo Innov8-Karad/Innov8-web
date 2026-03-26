@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Check } from 'lucide-react';
+import { Check, IndianRupee, AlertTriangle, Clock } from 'lucide-react';
 import { feeService } from '../services/feeService';
 import { userService } from '../services/userService';
 import type { Fee, User } from '../types';
@@ -9,6 +9,10 @@ import LoadingState from '../components/LoadingState';
 import ErrorAlert from '../components/ErrorAlert';
 import SearchInput from '../components/SearchInput';
 import Modal from '../components/Modal';
+import DataTable from '../components/DataTable';
+import type { Column } from '../components/DataTable';
+import StatCard from '../components/StatCard';
+import { FormField, FormRow, FormActions } from '../components/FormField';
 
 interface StudentSummary {
     userId: string;
@@ -114,7 +118,6 @@ export default function FeesPage() {
         else if (pending > 0) status = UI_STRINGS.FEES.STATUS_PENDING;
         else if (total === 0) status = UI_STRINGS.FEES.NO_RECORDS;
 
-
         return {
             userId: user.id,
             userName: user.name,
@@ -139,6 +142,38 @@ export default function FeesPage() {
         overdue: fees.filter((f: Fee) => f.status === FEE_STATUS.OVERDUE).reduce((acc: number, f: Fee) => acc + f.amount, 0)
     };
 
+    const summaryColumns: Column<StudentSummary>[] = [
+        {
+            key: 'student', header: UI_STRINGS.FEES.TH_STUDENT,
+            render: (s) => (
+                <div>
+                    <div className="font-medium">{s.userName}</div>
+                    <div className="text-xs text-muted">{s.email}</div>
+                </div>
+            ),
+        },
+        { key: 'course', header: UI_STRINGS.FEES.TH_COURSE, render: (s) => <span className="text-sm">{s.course}</span> },
+        { key: 'total', header: UI_STRINGS.FEES.TH_TOTAL_FEE, render: (s) => `₹ ${s.total.toLocaleString()}` },
+        { key: 'paid', header: UI_STRINGS.FEES.TH_PAID, render: (s) => <span style={{ color: 'var(--success)' }}>₹ {s.paid.toLocaleString()}</span> },
+        { key: 'pending', header: UI_STRINGS.FEES.TH_PENDING, render: (s) => <span style={{ color: s.pending > 0 ? 'var(--error)' : undefined }}>₹ {s.pending.toLocaleString()}</span> },
+        {
+            key: 'status', header: UI_STRINGS.FEES.TH_STATUS,
+            render: (s) => (
+                <span className={`badge badge-${s.status === UI_STRINGS.FEES.ALL_CLEAR ? 'success' : s.status === UI_STRINGS.FEES.STATUS_OVERDUE ? 'error' : 'primary'}`}>
+                    {s.status}
+                </span>
+            ),
+        },
+        {
+            key: 'actions', header: UI_STRINGS.FEES.TH_ACTIONS,
+            render: (s) => (
+                <button className="btn btn-secondary" style={{ padding: '4px 12px', fontSize: '0.8rem' }} onClick={() => setViewingStudent(s)}>
+                    {UI_STRINGS.FEES.DETAILS_BTN}
+                </button>
+            ),
+        },
+    ];
+
     if (loading) {
         return <LoadingState message={UI_STRINGS.FEES.LOADING} />;
     }
@@ -153,199 +188,107 @@ export default function FeesPage() {
                 onAction={() => setShowModal(true)}
             />
 
-            <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-                gap: 'var(--space-md)',
-                marginBottom: 'var(--space-xl)'
-            }}>
-                <div className="card stat-card-hover" style={{ borderLeft: '4px solid var(--success)', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.1)' }}>
-                    <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>{UI_STRINGS.FEES.STAT_COLLECTED}</p>
-                    <h2 style={{ color: 'var(--success)', fontSize: '1.75rem' }}>₹ {stats.collected.toLocaleString()}</h2>
-                </div>
-                <div className="card stat-card-hover" style={{ borderLeft: '4px solid var(--primary)', boxShadow: '0 4px 12px rgba(245, 158, 11, 0.1)' }}>
-                    <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>{UI_STRINGS.FEES.STAT_PENDING}</p>
-                    <h2 style={{ color: 'var(--primary)', fontSize: '1.75rem' }}>₹ {stats.pending.toLocaleString()}</h2>
-                </div>
-                <div className="card stat-card-hover" style={{ borderLeft: '4px solid var(--error)', boxShadow: '0 4px 12px rgba(239, 68, 68, 0.1)' }}>
-                    <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>{UI_STRINGS.FEES.STAT_OVERDUE}</p>
-                    <h2 style={{ color: 'var(--error)', fontSize: '1.75rem' }}>₹ {stats.overdue.toLocaleString()}</h2>
-                </div>
+            <div className="grid-cards-sm mb-xl">
+                <StatCard title={UI_STRINGS.FEES.STAT_COLLECTED} value={`₹ ${stats.collected.toLocaleString()}`} icon={IndianRupee} color="success" bordered />
+                <StatCard title={UI_STRINGS.FEES.STAT_PENDING} value={`₹ ${stats.pending.toLocaleString()}`} icon={Clock} color="primary" bordered />
+                <StatCard title={UI_STRINGS.FEES.STAT_OVERDUE} value={`₹ ${stats.overdue.toLocaleString()}`} icon={AlertTriangle} color="error" bordered />
             </div>
 
             <div className="card">
-                <div className="flex items-center gap-4" style={{ marginBottom: 'var(--space-md)' }}>
-                    <SearchInput
-                        placeholder={UI_STRINGS.FEES.SEARCH}
-                        value={searchTerm}
-                        onChange={setSearchTerm}
-                    />
+                <div className="flex items-center gap-4 mb-md">
+                    <SearchInput placeholder={UI_STRINGS.FEES.SEARCH} value={searchTerm} onChange={setSearchTerm} />
                 </div>
 
-                <div style={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                        <thead>
-                            <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-                                <th style={{ padding: 'var(--space-md)', color: 'var(--text-secondary)', fontWeight: 600 }}>{UI_STRINGS.FEES.TH_STUDENT}</th>
-                                <th style={{ padding: 'var(--space-md)', color: 'var(--text-secondary)', fontWeight: 600 }}>{UI_STRINGS.FEES.TH_COURSE}</th>
-                                <th style={{ padding: 'var(--space-md)', color: 'var(--text-secondary)', fontWeight: 600 }}>{UI_STRINGS.FEES.TH_TOTAL_FEE}</th>
-                                <th style={{ padding: 'var(--space-md)', color: 'var(--text-secondary)', fontWeight: 600 }}>{UI_STRINGS.FEES.TH_PAID}</th>
-                                <th style={{ padding: 'var(--space-md)', color: 'var(--text-secondary)', fontWeight: 600 }}>{UI_STRINGS.FEES.TH_PENDING}</th>
-                                <th style={{ padding: 'var(--space-md)', color: 'var(--text-secondary)', fontWeight: 600 }}>{UI_STRINGS.FEES.TH_STATUS}</th>
-                                <th style={{ padding: 'var(--space-md)', color: 'var(--text-secondary)', fontWeight: 600 }}>{UI_STRINGS.FEES.TH_ACTIONS}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filteredSummaries.length > 0 ? (
-                                filteredSummaries.map(summary => (
-                                    <tr key={summary.userId} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                                        <td style={{ padding: 'var(--space-md)' }}>
-                                            <div style={{ fontWeight: 500 }}>{summary.userName}</div>
-                                            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{summary.email}</div>
-                                        </td>
-                                        <td style={{ padding: 'var(--space-md)' }}>
-                                            <span style={{ fontSize: '0.9rem', color: 'var(--text-main)' }}>{summary.course}</span>
-                                        </td>
-                                        <td style={{ padding: 'var(--space-md)' }}>₹ {summary.total.toLocaleString()}</td>
-                                        <td style={{ padding: 'var(--space-md)', color: 'var(--success)' }}>₹ {summary.paid.toLocaleString()}</td>
-                                        <td style={{ padding: 'var(--space-md)', color: summary.pending > 0 ? 'var(--error)' : 'var(--text-main)' }}>₹ {summary.pending.toLocaleString()}</td>
-                                        <td style={{ padding: 'var(--space-md)' }}>
-                                            <span className={`badge badge-${
-                                                summary.status === UI_STRINGS.FEES.ALL_CLEAR ? 'success' :
-                                                summary.status === UI_STRINGS.FEES.STATUS_OVERDUE ? 'error' : 'primary'
-                                            }`}>
-                                                {summary.status}
-                                            </span>
-                                        </td>
-                                        <td style={{ padding: 'var(--space-md)' }}>
-                                            <button 
-                                                className="btn btn-secondary" 
-                                                style={{ padding: '4px 12px', fontSize: '0.8rem' }}
-                                                onClick={() => setViewingStudent(summary)}
-                                            >
-                                                {UI_STRINGS.FEES.DETAILS_BTN}
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))
-                            ) : (
-                                <tr>
-                                    <td colSpan={7} style={{ padding: 'var(--space-xl)', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                                        {UI_STRINGS.FEES.EMPTY}
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                <DataTable
+                    columns={summaryColumns}
+                    data={filteredSummaries}
+                    emptyMessage={UI_STRINGS.FEES.EMPTY}
+                    keyExtractor={(s) => s.userId}
+                />
             </div>
 
             {/* Detailed History Modal */}
             {viewingStudent && (
                 <Modal isOpen={true} onClose={() => setViewingStudent(null)} title={UI_STRINGS.FEES.TRANSACTION_HISTORY} maxWidth="700px">
-                    <p style={{ color: 'var(--text-secondary)' }}>{viewingStudent.userName} • {viewingStudent.course}</p>
+                    <p className="text-muted">{viewingStudent.userName} • {viewingStudent.course}</p>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-md)', marginTop: 'var(--space-lg)', marginBottom: 'var(--space-lg)' }}>
+                    <div className="grid-2col mt-lg mb-lg">
                         <div style={{ padding: 'var(--space-md)', backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '8px' }}>
-                            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{UI_STRINGS.FEES.TOTAL_PAID}</p>
+                            <p className="stat-label">{UI_STRINGS.FEES.TOTAL_PAID}</p>
                             <h3 style={{ color: 'var(--success)' }}>₹ {viewingStudent.paid.toLocaleString()}</h3>
                         </div>
                         <div style={{ padding: 'var(--space-md)', backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '8px' }}>
-                            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{UI_STRINGS.FEES.BALANCE_DUE}</p>
+                            <p className="stat-label">{UI_STRINGS.FEES.BALANCE_DUE}</p>
                             <h3 style={{ color: 'var(--error)' }}>₹ {viewingStudent.pending.toLocaleString()}</h3>
                         </div>
                     </div>
 
-                    <div style={{ overflowX: 'auto' }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                            <thead>
-                                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-                                    <th style={{ padding: '12px', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{UI_STRINGS.FEES.TH_DETAIL_DESCRIPTION}</th>
-                                    <th style={{ padding: '12px', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{UI_STRINGS.FEES.TH_DETAIL_AMOUNT}</th>
-                                    <th style={{ padding: '12px', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{UI_STRINGS.FEES.TH_DETAIL_DUE_DATE}</th>
-                                    <th style={{ padding: '12px', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{UI_STRINGS.FEES.TH_DETAIL_STATUS}</th>
-                                    <th style={{ padding: '12px', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{UI_STRINGS.FEES.TH_DETAIL_ACTION}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {viewingStudent.records.map((record: Fee) => (
-                                    <tr key={record.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                                        <td style={{ padding: '12px' }}>
-                                            <div style={{ fontWeight: 500 }}>{record.description}</div>
-                                        </td>
-                                        <td style={{ padding: '12px' }}>₹ {record.amount.toLocaleString()}</td>
-                                        <td style={{ padding: '12px', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-                                            {record.dueDate?.toLocaleDateString()}
-                                        </td>
-                                        <td style={{ padding: '12px' }}>
-                                            <span className={`badge badge-${
-                                                record.status === FEE_STATUS.PAID ? 'success' :
-                                                record.status === FEE_STATUS.OVERDUE ? 'error' : 'primary'
-                                            }`} style={{ fontSize: '0.75rem', padding: '2px 8px' }}>
-                                                {record.status}
-                                            </span>
-                                        </td>
-                                        <td style={{ padding: '12px' }}>
-                                            {record.status !== FEE_STATUS.PAID ? (
-                                                <button
-                                                    className="btn btn-primary"
-                                                    style={{ padding: '4px 8px', fontSize: '0.75rem' }}
-                                                    onClick={() => handleUpdateStatus(record.id, FEE_STATUS.PAID)}
-                                                >
-                                                    {UI_STRINGS.FEES.MARK_PAID}
-                                                </button>
-                                            ) : (
-                                                <div className="flex items-center gap-1" style={{ color: 'var(--success)', fontSize: '0.75rem' }}>
-                                                    <Check size={14} /> {UI_STRINGS.FEES.PAID_CONFIRMED}
-                                                </div>
-                                            )}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                    <DataTable
+                        columns={[
+                            { key: 'desc', header: UI_STRINGS.FEES.TH_DETAIL_DESCRIPTION, render: (r: Fee) => <div className="font-medium">{r.description}</div> },
+                            { key: 'amount', header: UI_STRINGS.FEES.TH_DETAIL_AMOUNT, render: (r: Fee) => `₹ ${r.amount.toLocaleString()}` },
+                            { key: 'due', header: UI_STRINGS.FEES.TH_DETAIL_DUE_DATE, render: (r: Fee) => <span className="text-sm text-muted">{r.dueDate?.toLocaleDateString()}</span> },
+                            {
+                                key: 'status', header: UI_STRINGS.FEES.TH_DETAIL_STATUS,
+                                render: (r: Fee) => (
+                                    <span className={`badge badge-${r.status === FEE_STATUS.PAID ? 'success' : r.status === FEE_STATUS.OVERDUE ? 'error' : 'primary'}`} style={{ fontSize: '0.75rem', padding: '2px 8px' }}>
+                                        {r.status}
+                                    </span>
+                                ),
+                            },
+                            {
+                                key: 'action', header: UI_STRINGS.FEES.TH_DETAIL_ACTION,
+                                render: (r: Fee) => r.status !== FEE_STATUS.PAID ? (
+                                    <button className="btn btn-primary" style={{ padding: '4px 8px', fontSize: '0.75rem' }} onClick={() => handleUpdateStatus(r.id, FEE_STATUS.PAID)}>
+                                        {UI_STRINGS.FEES.MARK_PAID}
+                                    </button>
+                                ) : (
+                                    <div className="flex items-center gap-1" style={{ color: 'var(--success)', fontSize: '0.75rem' }}>
+                                        <Check size={14} /> {UI_STRINGS.FEES.PAID_CONFIRMED}
+                                    </div>
+                                ),
+                            },
+                        ]}
+                        data={viewingStudent.records}
+                        emptyMessage="No records found."
+                        keyExtractor={(r) => r.id}
+                    />
                 </Modal>
             )}
 
             {/* Create Fee Modal */}
             <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={UI_STRINGS.FEES.MODAL_TITLE}>
-                <form onSubmit={handleAddFee} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)', marginTop: 'var(--space-lg)' }}>
-                    <div>
-                        <label>{UI_STRINGS.FEES.FORM_SELECT_STUDENT}</label>
+                <form onSubmit={handleAddFee} className="form-layout">
+                    <FormField label={UI_STRINGS.FEES.FORM_SELECT_STUDENT}>
                         <select required value={newFee.userId} onChange={e => setNewFee({ ...newFee, userId: e.target.value })}>
                             <option value="">{UI_STRINGS.FEES.FORM_SELECT_STUDENT_PLACEHOLDER}</option>
                             {users.map(user => (
                                 <option key={user.id} value={user.id}>{user.name} ({user.email})</option>
                             ))}
                         </select>
-                    </div>
-                    <div className="flex gap-4">
-                        <div style={{ flex: 1 }}>
-                            <label>{UI_STRINGS.FEES.FORM_AMOUNT}</label>
+                    </FormField>
+                    <FormRow>
+                        <FormField label={UI_STRINGS.FEES.FORM_AMOUNT}>
                             <input type="number" required value={newFee.amount} onChange={e => setNewFee({ ...newFee, amount: e.target.value })} />
-                        </div>
-                        <div style={{ flex: 1 }}>
-                            <label>{UI_STRINGS.FEES.FORM_DUE_DATE}</label>
+                        </FormField>
+                        <FormField label={UI_STRINGS.FEES.FORM_DUE_DATE}>
                             <input type="date" required value={newFee.dueDate} onChange={e => setNewFee({ ...newFee, dueDate: e.target.value })} />
-                        </div>
-                    </div>
-                    <div>
-                        <label>{UI_STRINGS.FEES.FORM_DESCRIPTION}</label>
+                        </FormField>
+                    </FormRow>
+                    <FormField label={UI_STRINGS.FEES.FORM_DESCRIPTION}>
                         <input type="text" required placeholder={UI_STRINGS.FEES.FORM_DESCRIPTION_PLACEHOLDER} value={newFee.description} onChange={e => setNewFee({ ...newFee, description: e.target.value })} />
-                    </div>
-                    <div>
-                        <label>{UI_STRINGS.FEES.FORM_STATUS}</label>
+                    </FormField>
+                    <FormField label={UI_STRINGS.FEES.FORM_STATUS}>
                         <select value={newFee.status} onChange={e => setNewFee({ ...newFee, status: e.target.value as "paid" | "pending" | "overdue" })}>
                             <option value="pending">{UI_STRINGS.FEES.STATUS_PENDING}</option>
                             <option value="paid">{UI_STRINGS.FEES.STATUS_PAID}</option>
                             <option value="overdue">{UI_STRINGS.FEES.STATUS_OVERDUE}</option>
                         </select>
-                    </div>
-                    <div className="flex justify-end gap-2" style={{ marginTop: 'var(--space-md)' }}>
+                    </FormField>
+                    <FormActions>
                         <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>{UI_STRINGS.COMMON.CANCEL}</button>
                         <button type="submit" className="btn btn-primary">{UI_STRINGS.COMMON.SAVE}</button>
-                    </div>
+                    </FormActions>
                 </form>
             </Modal>
         </div>

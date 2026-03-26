@@ -5,6 +5,7 @@ import { progressService } from '../services/progressService';
 import type { StudentProgress } from '../types';
 import LoadingState from '../components/LoadingState';
 import PageHeader from '../components/PageHeader';
+import EmptyState from '../components/EmptyState';
 
 export default function ProgressPage() {
     const [progressData, setProgressData] = useState<StudentProgress[]>([]);
@@ -34,18 +35,16 @@ export default function ProgressPage() {
                 subtitle={UI_STRINGS.PROGRESS.SUBTITLE}
             />
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 'var(--space-md)' }}>
+            <div className="grid-single">
                 {progressData.map(p => (
                     <div key={p.userId} className="card">
-                        <div className="flex justify-between items-start" style={{ marginBottom: 'var(--space-md)' }}>
-                            <div>
-                                <h3 style={{ margin: 0 }}>{p.userName}</h3>
-                            </div>
+                        <div className="flex justify-between items-start mb-md">
+                            <h3 style={{ margin: 0 }}>{p.userName}</h3>
                         </div>
 
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 'var(--space-lg)' }}>
+                        <div className="grid-cards-sm" style={{ gap: 'var(--space-lg)' }}>
                             <div className="flex flex-col gap-2">
-                                <div className="flex items-center gap-2" style={{ fontSize: '0.85rem' }}>
+                                <div className="flex items-center gap-2 text-sm">
                                     <CheckCircle size={16} color="var(--success)" />
                                     {p.completedModules?.length || 0} {UI_STRINGS.PROGRESS.MODULES_COMPLETED}
                                 </div>
@@ -61,9 +60,7 @@ export default function ProgressPage() {
                 ))}
 
                 {progressData.length === 0 && (
-                    <div className="card text-center" style={{ padding: 'var(--space-xl)' }}>
-                        <p>{UI_STRINGS.PROGRESS.EMPTY}</p>
-                    </div>
+                    <EmptyState message={UI_STRINGS.PROGRESS.EMPTY} />
                 )}
             </div>
         </div>

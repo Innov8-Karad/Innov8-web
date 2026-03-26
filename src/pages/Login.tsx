@@ -30,46 +30,14 @@ export default function Login() {
         setLoading(false);
     }
 
-
-
     return (
-        <div style={{
-            minHeight: '100vh',
-            display: 'flex',
-            backgroundColor: '#FFFFFF',
-            color: '#111827',
-            overflow: 'hidden'
-        }}>
+        <div className="login-container">
             {/* Left Panel: Branding */}
-            <div className="flex flex-col justify-center items-center" style={{
-                flex: 1,
-                padding: 'var(--space-2xl)',
-                maxWidth: '60%',
-                display: 'flex',
-                zIndex: 1,
-                borderRight: '1px solid #F3F4F6',
-                backgroundColor: '#FFFFFF'
-            }}>
-                <div className="animate-slide-right flex flex-col items-center" style={{ marginTop: '-100px' }}>
-                    <div className="logo-float" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0' }}>
-                        <img
-                            src={logo}
-                            alt="Innov8 Logo"
-                            style={{
-                                height: '350px',
-                                width: 'auto',
-                                filter: 'drop-shadow(0 0 30px rgba(var(--primary-rgb), 0.15))'
-                            }}
-                        />
-                        <p style={{
-                            fontSize: '1.25rem',
-                            fontWeight: 600,
-                            letterSpacing: '2px',
-                            color: '#4B5563',
-                            textAlign: 'center',
-                            marginTop: '-120px',
-                            textTransform: 'uppercase'
-                        }}>
+            <div className="login-branding flex flex-col justify-center items-center">
+                <div className="animate-slide-right flex flex-col items-center login-branding-inner">
+                    <div className="logo-float flex flex-col items-center">
+                        <img src={logo} alt="Innov8 Logo" className="login-logo" />
+                        <p className="login-tagline">
                             ELEVATING CAREERS • DEFINING FUTURES
                         </p>
                     </div>
@@ -77,89 +45,46 @@ export default function Login() {
             </div>
 
             {/* Right Panel: Login Form */}
-            <div className="flex items-center justify-center" style={{
-                flex: 1,
-                padding: 'var(--space-xl)',
-                zIndex: 2,
-                backgroundColor: '#F9FAFB'
-            }}>
-                <div className="animate-slide-up" style={{
-                    width: '100%',
-                    maxWidth: '450px',
-                    padding: 'var(--space-xl)',
-                    borderRadius: 'var(--radius-xl)',
-                    backgroundColor: '#FFFFFF',
-                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-                    border: '1px solid #F3F4F6'
-                }}>
-                    <div style={{ textAlign: 'center', marginBottom: 'var(--space-xl)' }}>
-                        <h2 style={{ fontSize: '2rem', marginBottom: 'var(--space-xs)', color: '#111827' }}>
-                            {UI_STRINGS.LOGIN.TITLE}
-                        </h2>
-                        <p style={{ color: '#6B7280' }}>{UI_STRINGS.LOGIN.SUBTITLE}</p>
+            <div className="login-form-panel">
+                <div className="animate-slide-up login-form-card">
+                    <div className="text-center mb-xl">
+                        <h2 className="login-title">{UI_STRINGS.LOGIN.TITLE}</h2>
+                        <p className="login-subtitle">{UI_STRINGS.LOGIN.SUBTITLE}</p>
                     </div>
                     <form onSubmit={handleSubmit} className="flex flex-col gap-5">
                         <div className="animate-fade-in delay-200">
-                            <label style={{ display: 'block', marginBottom: 'var(--space-xs)', fontSize: '0.9rem', color: '#4B5563', fontWeight: 500 }}>{UI_STRINGS.LOGIN.EMAIL_LABEL}</label>
+                            <label className="login-label">{UI_STRINGS.LOGIN.EMAIL_LABEL}</label>
                             <div style={{ position: 'relative' }}>
-                                <Mail size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF' }} />
+                                <Mail size={18} className="login-input-icon" />
                                 <input
                                     type="email"
                                     required
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    style={{
-                                        paddingLeft: '48px',
-                                        backgroundColor: '#FFFFFF',
-                                        border: '1px solid #E5E7EB',
-                                        height: '54px',
-                                        color: '#111827'
-                                    }}
+                                    className="login-input"
                                     placeholder={UI_STRINGS.LOGIN.EMAIL_PLACEHOLDER}
                                 />
                             </div>
                         </div>
 
                         <div className="animate-fade-in delay-300">
-                            <label style={{ display: 'block', marginBottom: 'var(--space-xs)', fontSize: '0.9rem', color: '#4B5563', fontWeight: 500 }}>{UI_STRINGS.LOGIN.PASSWORD_LABEL}</label>
+                            <label className="login-label">{UI_STRINGS.LOGIN.PASSWORD_LABEL}</label>
                             <div style={{ position: 'relative' }}>
-                                <Lock size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF' }} />
+                                <Lock size={18} className="login-input-icon" />
                                 <input
                                     type={showPassword ? 'text' : 'password'}
                                     required
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    style={{
-                                        paddingLeft: '48px',
-                                        paddingRight: '48px',
-                                        backgroundColor: '#FFFFFF',
-                                        border: '1px solid #E5E7EB',
-                                        height: '54px',
-                                        color: '#111827'
-                                    }}
+                                    className="login-input"
+                                    style={{ paddingRight: '48px' }}
                                     placeholder={UI_STRINGS.LOGIN.PASSWORD_PLACEHOLDER}
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
                                     aria-label={showPassword ? "Hide password" : "Show password"}
-                                    style={{
-                                        position: 'absolute',
-                                        right: '12px',
-                                        top: '50%',
-                                        transform: 'translateY(-50%)',
-                                        background: 'none',
-                                        border: 'none',
-                                        color: '#9CA3AF',
-                                        cursor: 'pointer',
-                                        padding: '4px',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        transition: 'color 0.2s'
-                                    }}
-                                    onMouseEnter={(e) => e.currentTarget.style.color = 'var(--primary)'}
-                                    onMouseLeave={(e) => e.currentTarget.style.color = '#9CA3AF'}
+                                    className="password-toggle"
                                 >
                                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                                 </button>
@@ -168,15 +93,8 @@ export default function Login() {
 
                         <button
                             type="submit"
-                            className="btn btn-primary animate-fade-in delay-400"
+                            className="btn btn-primary animate-fade-in delay-400 login-submit"
                             disabled={loading}
-                            style={{
-                                marginTop: 'var(--space-md)',
-                                height: '56px',
-                                fontSize: '1.1rem',
-                                gap: '12px',
-                                color: '#FFFFFF'
-                            }}
                         >
                             {loading ? UI_STRINGS.LOGIN.LOADING : (
                                 <>
@@ -185,7 +103,6 @@ export default function Login() {
                             )}
                         </button>
                     </form>
-
                 </div>
             </div>
         </div>
