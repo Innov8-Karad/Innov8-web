@@ -9,8 +9,8 @@ import LoadingState from '../components/LoadingState';
 import ErrorAlert from '../components/ErrorAlert';
 import SearchInput from '../components/SearchInput';
 import Modal from '../components/Modal';
-import { useUser } from '../contexts/UserContext';
-import { useToast } from '../contexts/ToastContext';
+import { useUser } from '../hooks/useUser';
+import { useToast } from '../hooks/useToast';
 
 export default function UsersPage() {
     const { students: users, loading: usersLoading, error: usersError } = useUser();
@@ -112,7 +112,7 @@ export default function UsersPage() {
             const newStatus = user.status === 'inactive' ? 'active' : 'inactive';
             await userService.updateUser(user.id, { status: newStatus });
             showToast(`Student ${newStatus === 'active' ? 'activated' : 'deactivated'}`, "success");
-        } catch (err) {
+        } catch {
             showToast("Failed to update status", "error");
         }
     };
@@ -122,7 +122,7 @@ export default function UsersPage() {
             const newBlockStatus = !user.isBlocked;
             await userService.updateUser(user.id, { isBlocked: newBlockStatus });
             showToast(`Student ${newBlockStatus ? 'blocked' : 'unblocked'}`, "success");
-        } catch (err) {
+        } catch {
             showToast("Failed to update block status", "error");
         }
     };
@@ -132,7 +132,7 @@ export default function UsersPage() {
             try {
                 await userService.deleteUser(user.id);
                 showToast("Student deleted successfully", "success");
-            } catch (err) {
+            } catch {
                 showToast("Failed to delete student", "error");
             }
         }

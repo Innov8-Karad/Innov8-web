@@ -1,16 +1,9 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { COLLECTIONS } from '../constants';
 import type { User } from '../types';
-
-interface UserContextType {
-  students: User[];
-  loading: boolean;
-  error: string | null;
-}
-
-const UserContext = createContext<UserContextType | undefined>(undefined);
+import { UserContext } from './UserContext';
 
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [students, setStudents] = useState<User[]>([]);
@@ -59,12 +52,4 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       {children}
     </UserContext.Provider>
   );
-};
-
-export const useUser = () => {
-  const context = useContext(UserContext);
-  if (context === undefined) {
-    throw new Error('useUser must be used within a UserProvider');
-  }
-  return context;
 };

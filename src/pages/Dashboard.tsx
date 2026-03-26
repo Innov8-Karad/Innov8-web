@@ -4,7 +4,7 @@ import { feeService } from '../services/feeService';
 import { examService } from '../services/examService';
 import { placementService } from '../services/placementService';
 import { DEFAULT_VALUES, DASHBOARD_METRICS, FEE_STATUS } from '../constants';
-import { useUser } from '../contexts/UserContext';
+import { useUser } from '../hooks/useUser';
 
 function StatCard({ title, value, icon: Icon, color, trend, loading }: { title: string, value: string, icon: React.ElementType, color: string, trend?: string, loading?: boolean }) {
     const colorVar = `var(--${color})`;

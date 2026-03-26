@@ -5,7 +5,7 @@ import { Lock, Mail, ArrowRight, Eye, EyeOff } from 'lucide-react';
 
 import logo from '../assets/logo.png';
 import { UI_STRINGS } from '../constants';
-import { useToast } from '../contexts/ToastContext';
+import { useToast } from '../hooks/useToast';
 
 export default function Login() {
     const [email, setEmail] = useState('');
