@@ -7,6 +7,7 @@ import PageHeader from '../components/PageHeader';
 import LoadingState from '../components/LoadingState';
 import ErrorAlert from '../components/ErrorAlert';
 import Modal from '../components/Modal';
+import { FormField, FormRow, FormActions } from '../components/FormField';
 
 export default function AnnouncementsPage() {
     const [announcements, setAnnouncements] = useState<Announcement[]>([]);
@@ -44,12 +45,7 @@ export default function AnnouncementsPage() {
             const created = await announcementService.createAnnouncement(newAnnouncement);
             setAnnouncements([created, ...announcements]);
             setShowModal(false);
-            setNewAnnouncement({ 
-                title: '', 
-                content: '', 
-                priority: PRIORITY_LEVELS.MEDIUM, 
-                targetBatches: [] 
-            });
+            setNewAnnouncement({ title: '', content: '', priority: PRIORITY_LEVELS.MEDIUM, targetBatches: [] });
         } catch (err) {
             console.error("Error creating announcement:", err);
             setError(UI_STRINGS.ANNOUNCEMENTS.ERROR_CREATE);
@@ -72,85 +68,67 @@ export default function AnnouncementsPage() {
                 onAction={() => setShowModal(true)}
             />
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 'var(--space-md)' }}>
+            <div className="grid-single">
                 {announcements.map(ann => (
-                    <div key={ann.id} className="card" style={{ display: 'flex', gap: 'var(--space-md)' }}>
-                        <div style={{
-                            width: '40px',
-                            height: '40px',
-                            borderRadius: '50%',
-                            backgroundColor: `${getPriorityColor(ann.priority)}20`,
-                            color: getPriorityColor(ann.priority),
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            flexShrink: 0
-                        }}>
+                    <div key={ann.id} className="card flex gap-4">
+                        <div
+                            className="avatar-sm flex items-center justify-center"
+                            style={{
+                                width: '40px',
+                                height: '40px',
+                                borderRadius: '50%',
+                                backgroundColor: `${getPriorityColor(ann.priority)}20`,
+                                color: getPriorityColor(ann.priority),
+                                flexShrink: 0
+                            }}
+                        >
                             {ann.priority === PRIORITY_LEVELS.HIGH ? <Bell size={20} /> : <Megaphone size={20} />}
                         </div>
                         <div style={{ flex: 1 }}>
                             <div className="flex justify-between items-start">
                                 <div>
                                     <h3 style={{ margin: 0 }}>{ann.title}</h3>
-                                    <div className="flex items-center gap-2" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                                    <div className="flex items-center gap-2 text-xs text-muted" style={{ marginTop: '4px' }}>
                                         <Calendar size={14} />
                                         {ann.createdAt.toLocaleDateString()}
                                         <span style={{ margin: '0 4px' }}>•</span>
                                         {UI_STRINGS.ANNOUNCEMENTS.TARGET_LABEL}: {ann.targetBatches.join(', ')}
                                     </div>
                                 </div>
-                                <button className="icon-btn icon-btn-danger" title={UI_STRINGS.COMMON.DELETE}>
+                                <button className="icon-btn" title={UI_STRINGS.COMMON.DELETE}>
                                     <Trash2 size={18} />
                                 </button>
                             </div>
-                            <p style={{ marginTop: 'var(--space-md)', lineHeight: 1.6 }}>{ann.content}</p>
+                            <p className="mt-md" style={{ lineHeight: 1.6 }}>{ann.content}</p>
                         </div>
                     </div>
                 ))}
                 {announcements.length === 0 && !loading && (
-                    <div className="text-center py-12 text-secondary">
-                        {UI_STRINGS.ANNOUNCEMENTS.EMPTY}
-                    </div>
+                    <div className="empty-state">{UI_STRINGS.ANNOUNCEMENTS.EMPTY}</div>
                 )}
             </div>
 
             <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={UI_STRINGS.ANNOUNCEMENTS.MODAL_TITLE}>
-                <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)', marginTop: 'var(--space-md)' }}>
-                    <div>
-                        <label>{UI_STRINGS.ANNOUNCEMENTS.FORM_TITLE}</label>
-                        <input
-                            type="text"
-                            value={newAnnouncement.title}
-                            onChange={e => setNewAnnouncement({ ...newAnnouncement, title: e.target.value })}
-                            required
-                        />
-                    </div>
-                    <div>
-                        <label>{UI_STRINGS.ANNOUNCEMENTS.FORM_CONTENT}</label>
-                        <textarea
-                            rows={4}
-                            value={newAnnouncement.content}
-                            onChange={e => setNewAnnouncement({ ...newAnnouncement, content: e.target.value })}
-                            required
-                        />
-                    </div>
-                    <div className="flex gap-4">
-                        <div style={{ flex: 1 }}>
-                            <label>{UI_STRINGS.ANNOUNCEMENTS.FORM_PRIORITY}</label>
-                            <select
-                                value={newAnnouncement.priority}
-                                onChange={e => setNewAnnouncement({ ...newAnnouncement, priority: e.target.value as 'high' | 'medium' | 'low' })}
-                            >
+                <form onSubmit={handleCreate} className="form-layout" style={{ marginTop: 'var(--space-md)' }}>
+                    <FormField label={UI_STRINGS.ANNOUNCEMENTS.FORM_TITLE}>
+                        <input type="text" value={newAnnouncement.title} onChange={e => setNewAnnouncement({ ...newAnnouncement, title: e.target.value })} required />
+                    </FormField>
+                    <FormField label={UI_STRINGS.ANNOUNCEMENTS.FORM_CONTENT}>
+                        <textarea rows={4} value={newAnnouncement.content} onChange={e => setNewAnnouncement({ ...newAnnouncement, content: e.target.value })} required />
+                    </FormField>
+                    <FormRow>
+                        <FormField label={UI_STRINGS.ANNOUNCEMENTS.FORM_PRIORITY}>
+                            <select value={newAnnouncement.priority} onChange={e => setNewAnnouncement({ ...newAnnouncement, priority: e.target.value as 'high' | 'medium' | 'low' })}>
                                 <option value={PRIORITY_LEVELS.LOW}>Low</option>
                                 <option value={PRIORITY_LEVELS.MEDIUM}>Medium</option>
                                 <option value={PRIORITY_LEVELS.HIGH}>High</option>
                             </select>
-                        </div>
-                    </div>
-                    <div className="flex justify-end gap-2" style={{ marginTop: 'var(--space-md)' }}>
+                        </FormField>
+                    </FormRow>
+                    <FormActions>
                         <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>{UI_STRINGS.COMMON.CANCEL}</button>
                         <button type="submit" className="btn btn-primary">{UI_STRINGS.COMMON.PUBLISH}</button>
-                    </div>
+                    </FormActions>
                 </form>
             </Modal>
         </div>

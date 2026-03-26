@@ -7,6 +7,9 @@ import PageHeader from '../components/PageHeader';
 import LoadingState from '../components/LoadingState';
 import ErrorAlert from '../components/ErrorAlert';
 import Modal from '../components/Modal';
+import StatCard from '../components/StatCard';
+import Avatar from '../components/Avatar';
+import { FormField, FormRow, FormActions } from '../components/FormField';
 
 export default function PlacementsPage() {
     const [stats, setStats] = useState<Placement | null>(null);
@@ -107,7 +110,6 @@ export default function PlacementsPage() {
             }
             
             await fetchStories();
-
             setShowModal(false);
             resetForm();
         } catch (err) {
@@ -142,46 +144,22 @@ export default function PlacementsPage() {
             />
 
             {stats && (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 'var(--space-md)', marginBottom: 'var(--space-xl)' }}>
-                    <div className="card flex items-center gap-4">
-                        <div style={{ padding: '12px', borderRadius: '12px', backgroundColor: 'rgba(99, 102, 241, 0.1)', color: 'var(--accent-blue)' }}>
-                            <Building2 size={24} />
-                        </div>
-                        <div>
-                            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{UI_STRINGS.PLACEMENTS.STAT_PARTNER_COMPANIES}</p>
-                            <h2 style={{ margin: 0 }}>{stats.companiesCount || stats.topCompanies?.length || 0}+</h2>
-                        </div>
-                    </div>
-                    <div className="card flex items-center gap-4">
-                        <div style={{ padding: '12px', borderRadius: '12px', backgroundColor: 'rgba(249, 115, 22, 0.1)', color: 'var(--primary)' }}>
-                            <Users size={24} />
-                        </div>
-                        <div>
-                            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{UI_STRINGS.PLACEMENTS.STAT_PLACED_STUDENTS}</p>
-                            <h2 style={{ margin: 0 }}>{stats.totalPlaced || stats.studentsPlaced || 0}+</h2>
-                        </div>
-                    </div>
-                    <div className="card flex items-center gap-4">
-                        <div style={{ padding: '12px', borderRadius: '12px', backgroundColor: 'rgba(34, 197, 94, 0.1)', color: 'var(--success)' }}>
-                            <Briefcase size={24} />
-                        </div>
-                        <div>
-                            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{UI_STRINGS.PLACEMENTS.STAT_HIGHEST_PACKAGE}</p>
-                            <h2 style={{ margin: 0 }}>{stats.highestPackage} {UI_STRINGS.PLACEMENTS.LPA_SUFFIX}</h2>
-                        </div>
-                    </div>
+                <div className="grid-cards-sm mb-xl">
+                    <StatCard title={UI_STRINGS.PLACEMENTS.STAT_PARTNER_COMPANIES} value={`${stats.companiesCount || stats.topCompanies?.length || 0}+`} icon={Building2} color="accent-blue" />
+                    <StatCard title={UI_STRINGS.PLACEMENTS.STAT_PLACED_STUDENTS} value={`${stats.totalPlaced || stats.studentsPlaced || 0}+`} icon={Users} color="primary" />
+                    <StatCard title={UI_STRINGS.PLACEMENTS.STAT_HIGHEST_PACKAGE} value={`${stats.highestPackage} ${UI_STRINGS.PLACEMENTS.LPA_SUFFIX}`} icon={Briefcase} color="success" />
                 </div>
             )}
 
-            <h2 style={{ marginBottom: 'var(--space-md)' }}>{UI_STRINGS.PLACEMENTS.SUCCESS_STORIES_HEADING}</h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 'var(--space-lg)' }}>
+            <h2 className="mb-md">{UI_STRINGS.PLACEMENTS.SUCCESS_STORIES_HEADING}</h2>
+            <div className="grid-cards">
                 {successStories.map(story => (
                     <div key={story.id} className="card flex gap-4">
-                        <div style={{ width: '80px', height: '80px', borderRadius: '12px', backgroundColor: 'var(--dark-card-accent)', flexShrink: 0, overflow: 'hidden' }}>
+                        <div style={{ width: '80px', height: '80px', borderRadius: '12px', overflow: 'hidden', flexShrink: 0, backgroundColor: 'var(--bg-card-accent)' }}>
                             {story.studentPhoto ? (
                                 <img src={story.studentPhoto} alt={story.studentName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                             ) : (
-                                <div className="flex items-center justify-center h-full text-secondary">
+                                <div className="flex items-center justify-center" style={{ height: '100%', color: 'var(--text-secondary)' }}>
                                     <Users size={32} />
                                 </div>
                             )}
@@ -189,23 +167,12 @@ export default function PlacementsPage() {
                         <div style={{ flex: 1 }}>
                             <h3 style={{ margin: 0 }}>{story.studentName}</h3>
                             <p style={{ color: 'var(--primary)', fontWeight: 600, fontSize: '0.9rem', marginTop: '2px' }}>{story.company}</p>
-                            <div style={{ marginTop: '8px', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                            <div className="text-sm text-muted mt-md">
                                 <div>{story.role ? `${UI_STRINGS.PLACEMENTS.ROLE_PREFIX} ${story.role}` : `${UI_STRINGS.PLACEMENTS.BATCH_PREFIX} ${story.batch}`}</div>
                                 <div>{UI_STRINGS.PLACEMENTS.PACKAGE_PREFIX} {story.package}</div>
                             </div>
                         </div>
-                        <button 
-                            onClick={() => handleEditClick(story)}
-                            className="btn-icon"
-                            title={UI_STRINGS.COMMON.EDIT}
-                            style={{ 
-                                alignSelf: 'flex-start',
-                                padding: '8px',
-                                borderRadius: '8px',
-                                color: 'var(--text-secondary)',
-                                transition: 'all 0.2s'
-                            }}
-                        >
+                        <button onClick={() => handleEditClick(story)} title={UI_STRINGS.COMMON.EDIT} className="icon-btn" style={{ alignSelf: 'flex-start' }}>
                             <Pencil size={18} />
                         </button>
                     </div>
@@ -214,60 +181,44 @@ export default function PlacementsPage() {
 
             <Modal 
                 isOpen={showModal} 
-                onClose={() => {
-                    setShowModal(false);
-                    resetForm();
-                }} 
+                onClose={() => { setShowModal(false); resetForm(); }} 
                 title={editingId ? UI_STRINGS.COMMON.EDIT : UI_STRINGS.PLACEMENTS.MODAL_TITLE}
             >
-                <form onSubmit={handleSaveStory} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)', marginTop: 'var(--space-lg)' }}>
-                    <div style={{ alignSelf: 'center', marginBottom: 'var(--space-sm)' }}>
-                        <div style={{ width: '100px', height: '100px', borderRadius: '50%', backgroundColor: 'var(--dark-card-accent)', overflow: 'hidden', border: '2px dashed var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-                            {(previewUrl || newStory.studentImage) ? (
-                                <img src={previewUrl || newStory.studentImage} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                            ) : (
-                                <Users size={40} style={{ color: 'var(--text-secondary)' }} />
-                            )}
-                        </div>
+                <form onSubmit={handleSaveStory} className="form-layout">
+                    <div style={{ alignSelf: 'center' }} className="mb-sm">
+                        <Avatar src={previewUrl || newStory.studentImage} fallbackIcon={<Users size={40} style={{ color: 'var(--text-secondary)' }} />} size="lg" upload />
                     </div>
-                    <div>
-                        <label>{UI_STRINGS.PLACEMENTS.FORM_STUDENT_NAME}</label>
+                    <FormField label={UI_STRINGS.PLACEMENTS.FORM_STUDENT_NAME}>
                         <input type="text" required value={newStory.studentName} onChange={e => setNewStory({ ...newStory, studentName: e.target.value })} />
-                    </div>
-                    <div className="flex gap-4">
-                        <div style={{ flex: 1 }}>
-                            <label>{UI_STRINGS.PLACEMENTS.FORM_COMPANY}</label>
+                    </FormField>
+                    <FormRow>
+                        <FormField label={UI_STRINGS.PLACEMENTS.FORM_COMPANY}>
                             <input type="text" required placeholder={UI_STRINGS.PLACEMENTS.FORM_COMPANY_PLACEHOLDER} value={newStory.company} onChange={e => setNewStory({ ...newStory, company: e.target.value })} />
-                        </div>
-                        <div style={{ flex: 1 }}>
-                            <label>{UI_STRINGS.PLACEMENTS.FORM_PACKAGE}</label>
+                        </FormField>
+                        <FormField label={UI_STRINGS.PLACEMENTS.FORM_PACKAGE}>
                             <input type="text" required placeholder={UI_STRINGS.PLACEMENTS.FORM_PACKAGE_PLACEHOLDER} value={newStory.package} onChange={e => setNewStory({ ...newStory, package: e.target.value })} />
-                        </div>
-                    </div>
-                    <div className="flex gap-4">
-                        <div style={{ flex: 1 }}>
-                            <label>{UI_STRINGS.PLACEMENTS.FORM_ROLE}</label>
+                        </FormField>
+                    </FormRow>
+                    <FormRow>
+                        <FormField label={UI_STRINGS.PLACEMENTS.FORM_ROLE}>
                             <input type="text" required placeholder={UI_STRINGS.PLACEMENTS.FORM_ROLE_PLACEHOLDER} value={newStory.role} onChange={e => setNewStory({ ...newStory, role: e.target.value })} />
-                        </div>
-                        <div style={{ flex: 1 }}>
-                            <label>{UI_STRINGS.PLACEMENTS.FORM_BATCH}</label>
+                        </FormField>
+                        <FormField label={UI_STRINGS.PLACEMENTS.FORM_BATCH}>
                             <input type="text" required placeholder={UI_STRINGS.PLACEMENTS.FORM_BATCH_PLACEHOLDER} value={newStory.batch} onChange={e => setNewStory({ ...newStory, batch: e.target.value })} />
-                        </div>
-                    </div>
-                    <div>
-                        <label>{UI_STRINGS.PLACEMENTS.FORM_TESTIMONIAL}</label>
+                        </FormField>
+                    </FormRow>
+                    <FormField label={UI_STRINGS.PLACEMENTS.FORM_TESTIMONIAL}>
                         <textarea rows={2} value={newStory.testimonial} onChange={e => setNewStory({ ...newStory, testimonial: e.target.value })} />
-                    </div>
-                    <div>
-                        <label>{UI_STRINGS.PLACEMENTS.FORM_IMAGE_URL}</label>
+                    </FormField>
+                    <FormField label={UI_STRINGS.PLACEMENTS.FORM_IMAGE_URL}>
                         <input type="file" accept="image/png, image/jpeg" onChange={handleFileChange} />
-                    </div>
-                    <div className="flex justify-end gap-2" style={{ marginTop: 'var(--space-md)' }}>
+                    </FormField>
+                    <FormActions>
                         <button type="button" className="btn btn-secondary" disabled={saving} onClick={() => { setShowModal(false); resetForm(); }}>{UI_STRINGS.COMMON.CANCEL}</button>
                         <button type="submit" className="btn btn-primary" disabled={saving}>
                             {saving ? UI_STRINGS.COMMON.LOADING : UI_STRINGS.COMMON.SAVE}
                         </button>
-                    </div>
+                    </FormActions>
                 </form>
             </Modal>
         </div>

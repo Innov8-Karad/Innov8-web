@@ -46,28 +46,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     ];
 
     return (
-        <div className="flex" style={{ minHeight: '100vh', backgroundColor: 'var(--dark-bg)' }}>
+        <div className="flex" style={{ minHeight: '100vh' }}>
             {/* Sidebar */}
-            <aside
-                style={{
-                    width: sidebarOpen ? '260px' : '80px',
-                    backgroundColor: 'var(--dark-card)',
-                    borderRight: '1px solid rgba(255,255,255,0.05)',
-                    transition: 'width 0.3s',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    position: 'fixed',
-                    height: '100vh',
-                    zIndex: 10
-                }}
-            >
-                <div style={{ padding: 'var(--space-md)', display: 'flex', alignItems: 'center', justifyContent: sidebarOpen ? 'space-between' : 'center', borderBottom: '1px solid var(--border-subtle)', marginBottom: 'var(--space-sm)' }}>
+            <aside className="sidebar" style={{ width: sidebarOpen ? '260px' : '80px' }}>
+                <div className="sidebar-header" style={{ justifyContent: sidebarOpen ? 'space-between' : 'center' }}>
                     {sidebarOpen && (
-                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <div className="flex items-center">
                             <img src={logo} alt="Innov8 Logo" style={{ height: '100px', width: 'auto', maxWidth: '100%' }} />
                         </div>
                     )}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div className="flex items-center gap-2">
                         <ThemeToggle />
                         <button onClick={() => setSidebarOpen(!sidebarOpen)} className="menu-btn">
                             <Menu size={20} />
@@ -75,34 +63,26 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     </div>
                 </div>
 
-                <nav style={{ flex: 1, padding: 'var(--space-md) 0' }}>
+                <nav className="sidebar-nav">
                     {navItems.map((item) => (
                         <NavLink
                             key={item.path}
                             to={item.path}
-                            style={({ isActive }) => ({
-                                display: 'flex',
-                                alignItems: 'center',
-                                padding: `var(--space-sm) var(--space-md)`,
-                                color: isActive ? 'var(--primary)' : 'var(--text-secondary)',
-                                backgroundColor: isActive ? 'rgba(var(--primary-rgb), 0.12)' : 'transparent',
-                                textDecoration: 'none',
-                                borderLeft: isActive ? '4px solid var(--primary)' : '4px solid transparent',
-                                marginBottom: '4px',
+                            className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+                            style={{
                                 justifyContent: sidebarOpen ? 'flex-start' : 'center',
-                                transition: 'all 0.2s ease',
                                 borderRadius: sidebarOpen ? '0 12px 12px 0' : '8px',
                                 margin: sidebarOpen ? '0 12px 4px 0' : '0 8px 4px 8px'
-                            })}
+                            }}
                         >
                             <item.icon size={20} />
-                            {sidebarOpen && <span style={{ marginLeft: '12px', fontWeight: 500 }}>{item.label}</span>}
+                            {sidebarOpen && <span className="nav-link-label">{item.label}</span>}
                         </NavLink>
                     ))}
                 </nav>
 
-                <div style={{ padding: 'var(--space-md)', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: 'var(--space-md)', justifyContent: sidebarOpen ? 'flex-start' : 'center' }}>
+                <div className="sidebar-footer">
+                    <div className="flex items-center mb-md" style={{ justifyContent: sidebarOpen ? 'flex-start' : 'center' }}>
                         <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
                             {UI_STRINGS.NAV.ADMIN.charAt(0)}
                         </div>
@@ -113,20 +93,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                             </div>
                         )}
                     </div>
-                    <button
-                        onClick={handleLogout}
-                        style={{
-                            width: '100%',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: sidebarOpen ? 'flex-start' : 'center',
-                            backgroundColor: 'transparent',
-                            border: 'none',
-                            color: 'var(--error)',
-                            cursor: 'pointer',
-                            padding: '8px'
-                        }}
-                    >
+                    <button onClick={handleLogout} className="logout-btn" style={{ justifyContent: sidebarOpen ? 'flex-start' : 'center' }}>
                         <LogOut size={20} />
                         {sidebarOpen && <span style={{ marginLeft: '12px' }}>{UI_STRINGS.NAV.LOGOUT}</span>}
                     </button>
@@ -134,12 +101,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </aside>
 
             {/* Main Content */}
-            <main style={{
-                flex: 1,
-                marginLeft: sidebarOpen ? '260px' : '80px',
-                padding: 'var(--space-lg)',
-                transition: 'margin-left 0.3s'
-            }}>
+            <main className="main-content" style={{ marginLeft: sidebarOpen ? '260px' : '80px' }}>
                 {children}
             </main>
         </div>
