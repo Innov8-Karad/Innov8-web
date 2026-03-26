@@ -153,7 +153,7 @@ describe('UI_STRINGS', () => {
     expect(UI_STRINGS.NAV.STUDENTS).toBe('Students');
     expect(UI_STRINGS.NAV.FEES).toBe('Fees');
     expect(UI_STRINGS.NAV.EXAMS).toBe('Exams');
-    expect(UI_STRINGS.NAV.PLACEMENTS).toBe('Placements');
+    expect(UI_STRINGS.NAV.PLACEMENTS).toBe('Success Stories');
     expect(UI_STRINGS.NAV.COURSES).toBe('Courses');
     expect(UI_STRINGS.NAV.PROGRESS).toBe('Progress');
     expect(UI_STRINGS.NAV.ANNOUNCEMENTS).toBe('Announcements');

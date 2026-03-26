@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { GraduationCap, IndianRupee, ClipboardCheck, Target, TrendingUp } from 'lucide-react';
-import { userService } from '../services/userService';
 import { feeService } from '../services/feeService';
 import { examService } from '../services/examService';
 import { placementService } from '../services/placementService';
-import { DEFAULT_VALUES, DASHBOARD_METRICS, ADMIN_USER_ID, FEE_STATUS } from '../constants';
+import { DEFAULT_VALUES, DASHBOARD_METRICS, FEE_STATUS } from '../constants';
+import { useUser } from '../hooks/useUser';
 
 function StatCard({ title, value, icon: Icon, color, trend, loading }: { title: string, value: string, icon: React.ElementType, color: string, trend?: string, loading?: boolean }) {
     const colorVar = `var(--${color})`;
@@ -39,6 +39,7 @@ function StatCard({ title, value, icon: Icon, color, trend, loading }: { title: 
 }
 
 export default function Dashboard() {
+    const { students: studentList, loading: studentsLoading } = useUser();
     const [stats, setStats] = useState({
         students: '0',
         fees: '₹ 0',
@@ -51,8 +52,7 @@ export default function Dashboard() {
         async function fetchStats() {
             try {
                 setLoading(true);
-                const [users, fees, exams, placementsStats] = await Promise.all([
-                    userService.fetchUsers(),
+                const [fees, exams, placementsStats] = await Promise.all([
                     feeService.fetchFees(),
                     examService.fetchExams(),
                     placementService.fetchPlacementStats()
@@ -60,12 +60,12 @@ export default function Dashboard() {
 
                 const totalFeesAmount = fees.filter(f => f.status === FEE_STATUS.PAID).reduce((acc, f) => acc + (f.amount || 0), 0);
 
-                setStats({
-                    students: users.filter(u => u.id !== ADMIN_USER_ID).length.toString(), 
+                setStats(prev => ({
+                    ...prev,
                     fees: `₹ ${(totalFeesAmount / 100000).toFixed(1)}L`,
                     exams: exams.length.toString(),
                     placements: placementsStats?.totalPlaced?.toString() || '0'
-                });
+                }));
             } catch (error) {
                 console.error("Error fetching stats:", error);
             } finally {
@@ -74,6 +74,14 @@ export default function Dashboard() {
         }
         fetchStats();
     }, []);
+
+    // Sync student count whenever studentList updates
+    useEffect(() => {
+        setStats(prev => ({
+            ...prev,
+            students: studentList.length.toString()
+        }));
+    }, [studentList]);
 
     return (
         <div>
@@ -90,7 +98,7 @@ export default function Dashboard() {
                 gap: 'var(--space-lg)',
                 marginBottom: 'var(--space-xl)'
             }}>
-                <StatCard title={DASHBOARD_METRICS.TOTAL_STUDENTS} value={stats.students} icon={GraduationCap} color="primary" trend={DASHBOARD_METRICS.TREND_MONTHLY} loading={loading} />
+                <StatCard title={DASHBOARD_METRICS.TOTAL_STUDENTS} value={stats.students} icon={GraduationCap} color="primary" trend={DASHBOARD_METRICS.TREND_MONTHLY} loading={loading || studentsLoading} />
                 <StatCard title={DASHBOARD_METRICS.FEES_COLLECTED} value={stats.fees} icon={IndianRupee} color="success" trend={DASHBOARD_METRICS.TREND_GROWTH} loading={loading} />
                 <StatCard title={DASHBOARD_METRICS.EXAMS_CONDUCTED} value={stats.exams} icon={ClipboardCheck} color="accent-blue" trend={DASHBOARD_METRICS.TREND_EXAMS} loading={loading} />
                 <StatCard title={DASHBOARD_METRICS.SUCCESS_PLACEMENTS} value={stats.placements} icon={Target} color="teal-accent" trend={DASHBOARD_METRICS.TREND_PLACEMENTS} loading={loading} />

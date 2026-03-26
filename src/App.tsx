@@ -2,6 +2,8 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { ToastProvider } from './contexts/ToastProvider';
+import { UserProvider } from './contexts/UserProvider';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -33,24 +35,28 @@ function App() {
   return (
     <Router>
       <ThemeProvider>
-        <AuthProvider>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            {appRoutes.map(({ path, component: Component }) => (
-              <Route
-                key={path}
-                path={path}
-                element={
-                  <PrivateRoute>
-                    <Layout>
-                      <Component />
-                    </Layout>
-                  </PrivateRoute>
-                }
-              />
-            ))}
-          </Routes>
-        </AuthProvider>
+        <ToastProvider>
+          <UserProvider>
+            <AuthProvider>
+              <Routes>
+                <Route path="/login" element={<Login />} />
+                {appRoutes.map(({ path, component: Component }) => (
+                  <Route
+                    key={path}
+                    path={path}
+                    element={
+                      <PrivateRoute>
+                        <Layout>
+                          <Component />
+                        </Layout>
+                      </PrivateRoute>
+                    }
+                  />
+                ))}
+              </Routes>
+            </AuthProvider>
+          </UserProvider>
+        </ToastProvider>
       </ThemeProvider>
     </Router>
   );
