@@ -10,7 +10,10 @@ export interface User {
     skills: string[];
     resume?: string;
     role?: 'student' | 'admin';
+    status?: 'active' | 'inactive';
+    isBlocked?: boolean;
     createdAt: Date;
+    updatedAt?: Date;
 }
 
 export type FeeStatus = 'paid' | 'pending' | 'overdue';

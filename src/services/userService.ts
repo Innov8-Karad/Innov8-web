@@ -1,11 +1,15 @@
 import { 
   collection, 
   getDocs, 
-  addDoc, 
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
   Timestamp,
   type DocumentData 
 } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db, storage } from '../lib/firebase';
 import { COLLECTIONS } from '../constants';
 import type { User } from '../types';
 
@@ -35,5 +39,27 @@ export const userService = {
       enrollmentDate: new Date(),
       createdAt: new Date()
     } as User;
+  },
+
+  async updateUser(id: string, data: Partial<User>): Promise<void> {
+    const docRef = doc(db, COLLECTIONS.USERS, id);
+    await updateDoc(docRef, {
+      ...data,
+      updatedAt: Timestamp.now()
+    });
+  },
+
+  async deleteUser(id: string): Promise<void> {
+    const docRef = doc(db, COLLECTIONS.USERS, id);
+    await deleteDoc(docRef);
+  },
+
+  async uploadProfilePhoto(file: File): Promise<string> {
+    const fileExtension = file.name.split('.').pop();
+    const fileName = `profilePhotos/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExtension}`;
+    const storageRef = ref(storage, fileName);
+    
+    await uploadBytes(storageRef, file);
+    return await getDownloadURL(storageRef);
   }
 };

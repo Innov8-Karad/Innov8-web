@@ -219,7 +219,7 @@ export const UI_STRINGS = {
     NO_RECORDS: 'No Records',
   },
   PLACEMENTS: {
-    TITLE: 'Placements',
+    TITLE: 'Success Stories',
     SUBTITLE: 'Track student placement records and success stories',
     LOADING: 'Loading placements...',
     NEW_BTN: 'Add Success Story',
@@ -243,7 +243,7 @@ export const UI_STRINGS = {
     FORM_BATCH: 'Batch',
     FORM_BATCH_PLACEHOLDER: 'e.g. 2024',
     FORM_TESTIMONIAL: 'Testimonial (Optional)',
-    FORM_IMAGE_URL: 'Image URL (Optional)',
+    FORM_IMAGE_URL: 'Upload Photo (PNG/JPG)',
     // Card display
     ROLE_PREFIX: 'Role:',
     BATCH_PREFIX: 'Batch:',
@@ -254,7 +254,7 @@ export const UI_STRINGS = {
     STUDENTS: 'Students',
     FEES: 'Fees',
     EXAMS: 'Exams',
-    PLACEMENTS: 'Placements',
+    PLACEMENTS: 'Success Stories',
     COURSES: 'Courses',
     PROGRESS: 'Progress',
     ANNOUNCEMENTS: 'Announcements',
@@ -291,7 +291,7 @@ export const UI_STRINGS = {
     BRANDING_TEXT: 'Empowering the',
     BRANDING_HIGHLIGHT: 'Future',
     BRANDING_SUFFIX: 'of Digital Learning & Management.',
-    EMAIL_PLACEHOLDER: 'admin@innov8.com',
+    EMAIL_PLACEHOLDER: 'Enter email address',
     PASSWORD_PLACEHOLDER: '••••••••',
   },
   THEME: {

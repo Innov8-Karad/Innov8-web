@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 import {
     LayoutDashboard,
     Users,
@@ -19,12 +20,14 @@ import { UI_STRINGS } from '../constants';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
     const { logout, currentUser } = useAuth()!;
+    const { showToast } = useToast();
     const navigate = useNavigate();
     const [sidebarOpen, setSidebarOpen] = React.useState(true);
 
     async function handleLogout() {
         try {
             await logout();
+            showToast("logout successfully", "success");
             navigate('/login');
         } catch (error) {
             console.error("Failed to log out", error);
