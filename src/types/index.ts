@@ -1,3 +1,13 @@
+// =============================================================================
+// @innov8/types — Unified Type Definitions (Shared between Web & Mobile)
+// =============================================================================
+// This file is the SINGLE SOURCE OF TRUTH for all Firestore-backed interfaces.
+// Both Innov8-web and Innov8-mobile must keep this file identical.
+// Platform-specific display types belong in types/mobile.ts or types/admin.ts.
+// =============================================================================
+
+// ─── User ────────────────────────────────────────────────────────────────────
+
 export interface User {
     id: string;
     email: string;
@@ -5,7 +15,7 @@ export interface User {
     phone: string;
     batch: string;
     course: string;
-    enrollmentDate: Date; // Firestore Timestamp converted to Date
+    enrollmentDate: Date;
     profilePhoto?: string;
     skills: string[];
     resume?: string;
@@ -16,6 +26,8 @@ export interface User {
     updatedAt?: Date;
 }
 
+// ─── Fees ────────────────────────────────────────────────────────────────────
+
 export type FeeStatus = 'paid' | 'pending' | 'overdue';
 
 export interface Fee {
@@ -25,15 +37,18 @@ export interface Fee {
     dueDate: Date;
     paidDate?: Date;
     status: FeeStatus;
-    description: string;
+    description?: string;
+    method?: 'Cash' | 'Card' | 'Online';
     receiptUrl?: string;
 }
+
+// ─── Exams ───────────────────────────────────────────────────────────────────
 
 export interface Question {
     id: string;
     text: string;
     options: string[];
-    correctAnswer: number; // index
+    correctAnswer: number;
     explanation?: string;
 }
 
@@ -41,23 +56,27 @@ export interface Exam {
     id: string;
     title: string;
     description: string;
-    duration: number; // minutes
-    questions: Question[];
+    duration: number;
     totalMarks: number;
     scheduledDate: Date;
     category: string;
     difficulty: 'easy' | 'medium' | 'hard';
+    questions: Question[];
 }
 
-export interface Announcement {
+export interface ExamResult {
     id: string;
-    title: string;
-    content: string;
-    createdAt: Date;
-    priority: 'high' | 'medium' | 'low';
-    targetBatches: string[];
-    author: string;
+    examId: string;
+    userId: string;
+    score: number;
+    totalMarks: number;
+    percentage: number;
+    submittedAt: Date;
+    answers: Record<string, unknown>[];
+    timeTaken: number;
 }
+
+// ─── Courses ─────────────────────────────────────────────────────────────────
 
 export interface Course {
     id: string;
@@ -70,13 +89,60 @@ export interface Course {
     thumbnail?: string;
     rating?: number;
     enrolled?: number;
-    // Mobile-compatible optional fields
     category?: string;
     professor?: string;
     badge?: string;
     icon?: string;
     iconColor?: string;
     iconBg?: string;
+}
+
+export interface ModuleType {
+    id: string;
+    title: string;
+    progress: number;
+    completed: boolean;
+}
+
+export interface NoteType {
+    id: string;
+    title: string;
+    size: string;
+    type: 'PDF' | 'DOC' | 'MD';
+}
+
+export interface AssignmentType {
+    id: string;
+    title: string;
+    dueDate: string;
+    status: 'Pending' | 'Submitted' | 'Graded';
+    score?: string;
+}
+
+// ─── Announcements ───────────────────────────────────────────────────────────
+
+export interface Announcement {
+    id: string;
+    title: string;
+    content: string;
+    targetBatches: string[];
+    createdAt: Date;
+    priority: 'low' | 'medium' | 'high';
+    author: string;
+}
+
+// ─── Placements ──────────────────────────────────────────────────────────────
+
+export interface SuccessStory {
+    id: string;
+    studentName: string;
+    studentPhoto?: string;
+    company: string;
+    package: string | number;
+    batch?: string;
+    testimonial?: string;
+    role?: string;
+    course?: string;
 }
 
 export interface Placement {
@@ -92,23 +158,30 @@ export interface Placement {
     successStories: SuccessStory[];
 }
 
-export interface SuccessStory {
+export interface PlacementOpportunity {
     id: string;
-    studentName: string;
-    studentPhoto?: string;
     company: string;
-    package: string | number;
-    batch?: string;
-    testimonial?: string;
-    role?: string;
+    role: string;
+    location: string;
+    salary: string;
+    package?: string;
+    status: 'APPLIED' | 'NOT APPLIED';
+    hrInterest: boolean;
+    date?: Date | string;
+    postedDate?: Date | string;
+    eligibleBatches?: string[];
+    description?: string;
 }
+
+// ─── Progress ────────────────────────────────────────────────────────────────
 
 export interface StudentProgress {
     userId: string;
     userName?: string;
+    overallProgress?: number;
     attendance: number;
     overallScore: number;
     currentModule: string;
     completedModules: string[];
+    lastAccessed?: Date;
 }
-
