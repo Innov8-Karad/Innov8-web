@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Book, Clock, User, Star } from 'lucide-react';
+import { Book, Clock, User, Star, Edit2, Trash2 } from 'lucide-react';
 import { courseService } from '../services/courseService';
 import type { Course } from '../types';
 import { UI_STRINGS } from '../constants';
@@ -8,12 +8,18 @@ import LoadingState from '../components/LoadingState';
 import ErrorAlert from '../components/ErrorAlert';
 import Modal from '../components/Modal';
 import { FormField, FormRow, FormActions } from '../components/FormField';
+import { useToast } from '../hooks/useToast';
+import CurriculumBuilder from '../components/CurriculumBuilder';
 
 export default function CoursesPage() {
     const [courses, setCourses] = useState<Course[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [showModal, setShowModal] = useState(false);
+    const [editingCourse, setEditingCourse] = useState<Course | null>(null);
+    const [deletingCourse, setDeletingCourse] = useState<Course | null>(null);
+    const { showToast } = useToast();
+    
     const [newCourse, setNewCourse] = useState({
         title: '',
         description: '',
@@ -26,34 +32,65 @@ export default function CoursesPage() {
     });
 
     useEffect(() => {
-        const fetchCourses = async () => {
-            try {
-                setLoading(true);
-                setError(null);
-                const data = await courseService.fetchCourses();
-                setCourses(data);
-            } catch (err) {
-                console.error("Error fetching courses:", err);
-                setError(UI_STRINGS.COURSES.ERROR_LOAD);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchCourses();
+        const unsubscribe = courseService.subscribeToCourses((data) => {
+            setCourses(data);
+            setLoading(false);
+        });
+        return () => unsubscribe();
     }, []);
+
+    const resetForm = () => {
+        setEditingCourse(null);
+        setNewCourse({ title: '', description: '', duration: '', instructor: '', price: '', isFree: false, category: '', thumbnail: '' });
+    };
 
     const handleAddCourse = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
             setError(null);
-            const created = await courseService.createCourse(newCourse as unknown as Omit<Course, 'id' | 'createdAt'>);
-            setCourses([created, ...courses]);
+            if (editingCourse) {
+                await courseService.updateCourse(editingCourse.id, {
+                    ...newCourse,
+                    price: newCourse.isFree ? 0 : Number(newCourse.price)
+                });
+                showToast("Course updated successfully", "success");
+            } else {
+                await courseService.createCourse(newCourse as unknown as Omit<Course, 'id' | 'createdAt'>);
+                showToast("Course created successfully", "success");
+            }
             setShowModal(false);
-            setNewCourse({ title: '', description: '', duration: '', instructor: '', price: '', isFree: false, category: '', thumbnail: '' });
+            resetForm();
         } catch (err) {
-            console.error("Error adding course: ", err);
-            setError(UI_STRINGS.COURSES.ERROR_CREATE);
+            console.error("Error saving course: ", err);
+            setError(editingCourse ? "Failed to update course" : UI_STRINGS.COURSES.ERROR_CREATE);
+            showToast("Failed to update course", "error");
         }
+    };
+
+    const confirmDelete = async () => {
+        if (!deletingCourse) return;
+        try {
+            await courseService.deleteCourse(deletingCourse.id);
+            showToast("Course deleted successfully", "success");
+            setDeletingCourse(null);
+        } catch {
+            showToast("Failed to delete course", "error");
+        }
+    };
+
+    const openEditModal = (course: Course) => {
+        setEditingCourse(course);
+        setNewCourse({
+            title: course.title || '',
+            description: course.description || '',
+            duration: course.duration || '',
+            instructor: course.instructor || '',
+            price: (course.price !== undefined ? course.price : 0).toString(),
+            isFree: course.isFree || false,
+            category: course.category || '',
+            thumbnail: course.thumbnail || ''
+        });
+        setShowModal(true);
     };
 
     if (loading) return <LoadingState message={UI_STRINGS.COURSES.LOADING} />;
@@ -65,7 +102,10 @@ export default function CoursesPage() {
                 title={UI_STRINGS.COURSES.TITLE}
                 subtitle={UI_STRINGS.COURSES.SUBTITLE}
                 actionLabel={UI_STRINGS.COURSES.NEW_BTN}
-                onAction={() => setShowModal(true)}
+                onAction={() => {
+                    resetForm();
+                    setShowModal(true);
+                }}
             />
 
             <div className="grid-cards">
@@ -107,15 +147,25 @@ export default function CoursesPage() {
                                     <span className="font-semibold">{course.rating || 'N/A'}</span>
                                     <span className="text-xs text-muted">({course.enrolled || 0})</span>
                                 </div>
-                                <button className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '0.85rem' }}>{UI_STRINGS.COMMON.EDIT}</button>
+                                <div className="flex items-center gap-2">
+                                    <button className="icon-btn text-accent-blue" title="Edit Course" onClick={() => openEditModal(course)} style={{ padding: '6px' }}>
+                                        <Edit2 size={16} />
+                                    </button>
+                                    <button className="icon-btn text-error" title="Delete Course" onClick={() => setDeletingCourse(course)} style={{ padding: '6px' }}>
+                                        <Trash2 size={16} />
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
                 ))}
             </div>
 
-            <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={UI_STRINGS.COURSES.MODAL_TITLE}>
-                <form onSubmit={handleAddCourse} className="form-layout">
+            <Modal isOpen={showModal} onClose={() => { setShowModal(false); resetForm(); }} title={editingCourse ? "Edit Course" : UI_STRINGS.COURSES.MODAL_TITLE} maxWidth={editingCourse ? "800px" : "500px"}>
+                <div className={editingCourse ? "grid grid-cols-1 lg:grid-cols-2 gap-6" : ""}>
+                    <div>
+                        <h3 className="section-label mb-4">Course Details</h3>
+                        <form onSubmit={handleAddCourse} className="form-layout">
                     <FormField label={UI_STRINGS.COURSES.FORM_TITLE}>
                         <input type="text" required placeholder={UI_STRINGS.COURSES.FORM_TITLE_PLACEHOLDER} value={newCourse.title} onChange={e => setNewCourse({ ...newCourse, title: e.target.value })} />
                     </FormField>
@@ -143,10 +193,41 @@ export default function CoursesPage() {
                         <input type="url" value={newCourse.thumbnail} onChange={e => setNewCourse({ ...newCourse, thumbnail: e.target.value })} />
                     </FormField>
                     <FormActions>
-                        <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>{UI_STRINGS.COMMON.CANCEL}</button>
+                        <button type="button" className="btn btn-secondary" onClick={() => { setShowModal(false); resetForm(); }}>{UI_STRINGS.COMMON.CANCEL}</button>
                         <button type="submit" className="btn btn-primary">{UI_STRINGS.COMMON.SAVE}</button>
                     </FormActions>
                 </form>
+                    </div>
+                    {editingCourse && (
+                        <div className="border-t pt-6 mt-6 lg:border-t-0 lg:pt-0 lg:mt-0 lg:border-l lg:border-divider lg:pl-6 col-span-1">
+                            <h3 className="section-label mb-1">Curriculum</h3>
+                            <p className="text-sm text-muted mb-4">Manage modules and resources (auto-saved)</p>
+                            <CurriculumBuilder courseId={editingCourse.id} />
+                        </div>
+                    )}
+                </div>
+            </Modal>
+
+            {/* Delete Confirmation Modal */}
+            <Modal
+                isOpen={!!deletingCourse}
+                onClose={() => setDeletingCourse(null)}
+                title="Confirm Deletion"
+                maxWidth="400px"
+            >
+                <div className="p-4" style={{ paddingTop: '16px', paddingBottom: '16px' }}>
+                    <p style={{ marginBottom: '24px', color: 'var(--text-secondary)' }}>
+                        Are you sure you want to delete <strong>{deletingCourse?.title}</strong>? This will remove all modules and resources.
+                    </p>
+                    <div className="flex justify-end gap-3 mt-6">
+                        <button className="btn btn-secondary" onClick={() => setDeletingCourse(null)}>
+                            {UI_STRINGS.COMMON.CANCEL}
+                        </button>
+                        <button className="btn btn-primary" style={{ backgroundColor: 'var(--error)', borderColor: 'var(--error)' }} onClick={confirmDelete}>
+                            Delete
+                        </button>
+                    </div>
+                </div>
             </Modal>
         </div>
     );

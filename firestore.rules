@@ -49,6 +49,11 @@ service cloud.firestore {
       allow create: if isAdmin()
                     && request.resource.data.keys().hasAll(['title']);
       allow update, delete: if isAdmin();
+      
+      match /modules/{moduleId} {
+        allow read: if isAuthenticated();
+        allow write: if isAdmin();
+      }
     }
 
     // ── Exams ────────────────────────────────────────────────────────────
