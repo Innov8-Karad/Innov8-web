@@ -23,6 +23,7 @@ export default function UsersPage() {
     const [error, setError] = useState<string | null>(null);
     const [showModal, setShowModal] = useState(false);
     const [viewingUser, setViewingUser] = useState<User | null>(null);
+    const [deletingUser, setDeletingUser] = useState<User | null>(null);
     const [courses, setCourses] = useState<Course[]>([]);
     
     // Photo upload states
@@ -36,6 +37,7 @@ export default function UsersPage() {
         phone: '',
         batch: '',
         course: '',
+        skills: '',
         profilePhoto: ''
     });
     const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -68,9 +70,14 @@ export default function UsersPage() {
                 photoUrl = await userService.uploadProfilePhoto(selectedFile);
             }
 
+            const parsedSkills = newUser.skills
+                ? newUser.skills.split(',').map(s => s.trim()).filter(Boolean)
+                : [];
+
             if (editingUser) {
                 await userService.updateUser(editingUser.id, {
                     ...newUser,
+                    skills: parsedSkills,
                     profilePhoto: photoUrl
                 });
                 showToast("Student updated successfully", "success");
@@ -78,7 +85,7 @@ export default function UsersPage() {
                 await userService.createUser({
                     ...newUser,
                     profilePhoto: photoUrl,
-                    skills: [],
+                    skills: parsedSkills,
                     status: 'active',
                     isBlocked: false
                 } as unknown as Omit<User, 'id' | 'enrollmentDate' | 'createdAt'>);
@@ -100,7 +107,7 @@ export default function UsersPage() {
         setEditingUser(null);
         setSelectedFile(null);
         setPreviewUrl(null);
-        setNewUser({ name: '', email: '', phone: '', batch: '', course: '', profilePhoto: '' });
+        setNewUser({ name: '', email: '', phone: '', batch: '', course: '', skills: '', profilePhoto: '' });
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -131,25 +138,26 @@ export default function UsersPage() {
         }
     };
 
-    const handleDelete = async (user: User) => {
-        if (window.confirm(`Are you sure you want to delete ${user.name}? This action cannot be undone.`)) {
-            try {
-                await userService.deleteUser(user.id);
-                showToast("Student deleted successfully", "success");
-            } catch {
-                showToast("Failed to delete student", "error");
-            }
+    const confirmDelete = async () => {
+        if (!deletingUser) return;
+        try {
+            await userService.deleteUser(deletingUser.id);
+            showToast("Student deleted successfully", "success");
+            setDeletingUser(null);
+        } catch {
+            showToast("Failed to delete student", "error");
         }
     };
 
     const openEditModal = (user: User) => {
         setEditingUser(user);
         setNewUser({
-            name: user.name,
-            email: user.email,
-            phone: user.phone,
-            batch: user.batch,
-            course: user.course,
+            name: user.name || '',
+            email: user.email || '',
+            phone: user.phone || '',
+            batch: user.batch || '',
+            course: user.course || '',
+            skills: user.skills ? (Array.isArray(user.skills) ? user.skills.join(', ') : user.skills) : '',
             profilePhoto: user.profilePhoto || ''
         });
         setSelectedFile(null);
@@ -218,7 +226,7 @@ export default function UsersPage() {
                     <button className="icon-btn" title="Edit Student" onClick={() => openEditModal(user)} style={{ color: 'var(--accent-blue)' }}>
                         <Edit2 size={18} />
                     </button>
-                    <button className="icon-btn" title="Delete Student" onClick={() => handleDelete(user)} style={{ color: 'var(--error)' }}>
+                    <button className="icon-btn" title="Delete Student" onClick={() => setDeletingUser(user)} style={{ color: 'var(--error)' }}>
                         <Trash2 size={18} />
                     </button>
                     <button className="icon-btn" title={user.isBlocked ? 'Unblock Student' : 'Block Student'} onClick={() => handleToggleBlock(user)} style={{ color: user.isBlocked ? 'var(--error)' : 'var(--text-secondary)' }}>
@@ -294,14 +302,19 @@ export default function UsersPage() {
                             <input type="text" required placeholder={UI_STRINGS.USERS.FORM_BATCH_PLACEHOLDER} value={newUser.batch} onChange={e => setNewUser({ ...newUser, batch: e.target.value })} />
                         </FormField>
                     </FormRow>
-                    <FormField label={UI_STRINGS.USERS.SELECT_COURSE}>
-                        <select required value={newUser.course} onChange={e => setNewUser({ ...newUser, course: e.target.value })}>
-                            <option value="">{UI_STRINGS.USERS.SELECT_COURSE_PLACEHOLDER}</option>
-                            {courses.map(course => (
-                                <option key={course.id} value={course.title}>{course.title}</option>
-                            ))}
-                        </select>
-                    </FormField>
+                    <FormRow>
+                        <FormField label={UI_STRINGS.USERS.SELECT_COURSE}>
+                            <select required value={newUser.course} onChange={e => setNewUser({ ...newUser, course: e.target.value })}>
+                                <option value="">{UI_STRINGS.USERS.SELECT_COURSE_PLACEHOLDER}</option>
+                                {courses.map(course => (
+                                    <option key={course.id} value={course.title}>{course.title}</option>
+                                ))}
+                            </select>
+                        </FormField>
+                        <FormField label="Skills (comma-separated)">
+                            <input type="text" placeholder="React, Node.js, UI/UX" value={newUser.skills} onChange={e => setNewUser({ ...newUser, skills: e.target.value })} />
+                        </FormField>
+                    </FormRow>
                     <FormActions>
                         <button type="button" className="btn btn-secondary" onClick={() => { setShowModal(false); resetForm(); }} disabled={uploadingPhoto}>{UI_STRINGS.COMMON.CANCEL}</button>
                         <button type="submit" className="btn btn-primary" disabled={uploadingPhoto}>
@@ -370,6 +383,28 @@ export default function UsersPage() {
                         </div>
                     </div>
                 )}
+            </Modal>
+
+            {/* Delete Confirmation Modal */}
+            <Modal
+                isOpen={!!deletingUser}
+                onClose={() => setDeletingUser(null)}
+                title="Confirm Deletion"
+                maxWidth="400px"
+            >
+                <div className="p-4" style={{ paddingTop: '16px', paddingBottom: '16px' }}>
+                    <p style={{ marginBottom: '24px', color: 'var(--text-secondary)' }}>
+                        Are you sure you want to delete <strong>{deletingUser?.name}</strong>? This action cannot be undone.
+                    </p>
+                    <div className="flex justify-end gap-3 mt-6">
+                        <button className="btn btn-secondary" onClick={() => setDeletingUser(null)}>
+                            {UI_STRINGS.COMMON.CANCEL}
+                        </button>
+                        <button className="btn btn-primary" style={{ backgroundColor: 'var(--error)', borderColor: 'var(--error)' }} onClick={confirmDelete}>
+                            Delete
+                        </button>
+                    </div>
+                </div>
             </Modal>
         </div>
     );
