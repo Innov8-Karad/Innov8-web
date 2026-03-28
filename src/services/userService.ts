@@ -43,8 +43,14 @@ export const userService = {
 
   async updateUser(id: string, data: Partial<User>): Promise<void> {
     const docRef = doc(db, COLLECTIONS.USERS, id);
+    
+    // Clean undefined values
+    const cleanedData = Object.fromEntries(
+        Object.entries(data).filter((entry) => entry[1] !== undefined)
+    );
+    
     await updateDoc(docRef, {
-      ...data,
+      ...cleanedData,
       updatedAt: Timestamp.now()
     });
   },
