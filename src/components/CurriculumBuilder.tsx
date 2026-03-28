@@ -242,7 +242,7 @@ export default function CurriculumBuilder({ courseId }: CurriculumBuilderProps) 
             <Modal isOpen={showResourceModal} onClose={() => setShowResourceModal(false)} title={editingResource ? "Edit Resource" : "Add Resource"} maxWidth="500px">
                 <form onSubmit={handleSaveResource} className="p-1">
                     <FormField label="Resource Type">
-                        <select required value={resourceForm.type} onChange={e => setResourceForm({ ...resourceForm, type: e.target.value as any })}>
+                        <select required value={resourceForm.type} onChange={e => setResourceForm({ ...resourceForm, type: e.target.value as 'video' | 'pdf' | 'link' })}>
                             <option value="video">Video</option>
                             <option value="pdf">PDF</option>
                             <option value="link">External Link</option>

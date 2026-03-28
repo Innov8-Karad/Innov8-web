@@ -58,7 +58,7 @@ export const courseService = {
     
     // Clean undefined values
     const cleanedData = Object.fromEntries(
-        Object.entries(data).filter(([_, v]) => v !== undefined)
+        Object.entries(data).filter((entry) => entry[1] !== undefined)
     );
     
     await updateDoc(docRef, { ...cleanedData, updatedAt: Timestamp.now() });
