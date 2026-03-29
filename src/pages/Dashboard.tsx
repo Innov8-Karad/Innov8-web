@@ -1,91 +1,283 @@
 import { useState, useEffect } from 'react';
-import { GraduationCap, IndianRupee, ClipboardCheck, Target, TrendingUp } from 'lucide-react';
-import { feeService } from '../services/feeService';
-import { examService } from '../services/examService';
-import { placementService } from '../services/placementService';
-import { DEFAULT_VALUES, DASHBOARD_METRICS, FEE_STATUS } from '../constants';
-import { useUser } from '../hooks/useUser';
+import {
+  GraduationCap,
+  IndianRupee,
+  ClipboardCheck,
+  Target,
+  TrendingUp
+} from 'lucide-react';
+
+import {
+  dashboardService,
+  type DashboardStats,
+  type MonthlyTrend
+} from '../services/dashboardService';
+
+import { DEFAULT_VALUES, DASHBOARD_METRICS } from '../constants';
 import StatCard from '../components/StatCard';
 
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  Legend
+} from 'recharts';
+
 export default function Dashboard() {
-    const { students: studentList, loading: studentsLoading } = useUser();
-    const [stats, setStats] = useState({
-        students: '0',
-        fees: '₹ 0',
-        exams: '0',
-        placements: '0'
-    });
-    const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        async function fetchStats() {
-            try {
-                setLoading(true);
-                const [fees, exams, placementsStats] = await Promise.all([
-                    feeService.fetchFees(),
-                    examService.fetchExams(),
-                    placementService.fetchPlacementStats()
-                ]);
+const [stats, setStats] = useState<DashboardStats>({
+totalStudents: 0,
+totalFeesCollected: 0,
+totalExams: 0,
+placementSuccessRate: 0
+});
 
-                const totalFeesAmount = fees.filter(f => f.status === FEE_STATUS.PAID).reduce((acc, f) => acc + (f.amount || 0), 0);
+const [trends, setTrends] = useState<MonthlyTrend[]>([]);
+const [loading, setLoading] = useState(true);
 
-                setStats(prev => ({
-                    ...prev,
-                    fees: `₹ ${(totalFeesAmount / 100000).toFixed(1)}L`,
-                    exams: exams.length.toString(),
-                    placements: placementsStats?.totalPlaced?.toString() || '0'
-                }));
-            } catch (error) {
-                console.error("Error fetching stats:", error);
-            } finally {
-                setLoading(false);
-            }
-        }
-        fetchStats();
-    }, []);
+useEffect(() => {
 
-    // Sync student count whenever studentList updates
-    useEffect(() => {
-        setStats(prev => ({
-            ...prev,
-            students: studentList.length.toString()
-        }));
-    }, [studentList]);
+const unsubStats = dashboardService.subscribeToStats((newStats) => {
+setStats(newStats);
+setLoading(false);
+});
 
-    return (
-        <div>
-            <div className="mb-lg">
-                <h1 style={{ fontSize: '2.5rem', marginBottom: '8px' }}>
-                    {DEFAULT_VALUES.ANALYTICS_OVERVIEW.split(' ')[0]} <span style={{ color: 'var(--primary)' }}>{DEFAULT_VALUES.ANALYTICS_OVERVIEW.split(' ')[1]}</span>
-                </h1>
-                <p className="text-muted">{DEFAULT_VALUES.ADMIN_WELCOME}. {DEFAULT_VALUES.DASHBOARD_SUBTEXT}</p>
-            </div>
+const unsubTrends =
+dashboardService.subscribeToMonthlyTrends((newTrends) => {
+setTrends(newTrends);
+});
 
-            <div className="grid-cards-wide mb-xl">
-                <StatCard title={DASHBOARD_METRICS.TOTAL_STUDENTS} value={stats.students} icon={GraduationCap} color="primary" trend={DASHBOARD_METRICS.TREND_MONTHLY} loading={loading || studentsLoading} />
-                <StatCard title={DASHBOARD_METRICS.FEES_COLLECTED} value={stats.fees} icon={IndianRupee} color="success" trend={DASHBOARD_METRICS.TREND_GROWTH} loading={loading} />
-                <StatCard title={DASHBOARD_METRICS.EXAMS_CONDUCTED} value={stats.exams} icon={ClipboardCheck} color="accent-blue" trend={DASHBOARD_METRICS.TREND_EXAMS} loading={loading} />
-                <StatCard title={DASHBOARD_METRICS.SUCCESS_PLACEMENTS} value={stats.placements} icon={Target} color="teal-accent" trend={DASHBOARD_METRICS.TREND_PLACEMENTS} loading={loading} />
-            </div>
+const timer = setTimeout(() => setLoading(false), 5000);
 
-            <div className="grid-single">
-                <div className="card" style={{ padding: 'var(--space-lg)' }}>
-                    <h3 className="flex items-center gap-2">
-                        <TrendingUp size={20} color="var(--primary)" />
-                        {DEFAULT_VALUES.GROWTH_INSIGHTS}
-                    </h3>
-                    {loading ? (
-                        <div className="animate-pulse mt-md">
-                            <div style={{ height: '1rem', backgroundColor: 'var(--bg-card-accent)', borderRadius: '4px', width: '100%', marginBottom: '8px' }} />
-                            <div style={{ height: '1rem', backgroundColor: 'var(--bg-card-accent)', borderRadius: '4px', width: '70%' }} />
-                        </div>
-                    ) : (
-                        <p className="text-muted mt-md" style={{ fontSize: '1rem', lineHeight: 1.6 }}>
-                            {DEFAULT_VALUES.ENGAGEMENT_TEXT.replace('12.5% students', `${stats.students} students`)}
-                        </p>
-                    )}
-                </div>
-            </div>
-        </div>
-    );
+return () => {
+unsubStats();
+
+unsubTrends();
+clearTimeout(timer);
+};
+
+}, []);
+
+
+const formatRupees = (amount: number) => {
+if (amount >= 100000) return `₹ ${(amount / 100000).toFixed(1)}L`;
+if (amount >= 1000) return `₹ ${(amount / 1000).toFixed(1)}K`;
+return `₹ ${amount}`;
+};
+
+
+return (
+
+<div style={{ paddingBottom: '2rem' }}>
+
+<div className="mb-lg">
+<h1 style={{ fontSize: '2.5rem', marginBottom: '8px' }}>
+{DEFAULT_VALUES.ANALYTICS_OVERVIEW.split(' ')[0]}
+<span style={{ color: 'var(--primary)' }}>
+{DEFAULT_VALUES.ANALYTICS_OVERVIEW.split(' ')[1]}
+</span>
+</h1>
+
+<p className="text-muted">
+{DEFAULT_VALUES.ADMIN_WELCOME}. {DEFAULT_VALUES.DASHBOARD_SUBTEXT}
+</p>
+
+</div>
+
+
+{/* Metrics Section */}
+
+<div className="grid-cards-wide mb-xl">
+
+<StatCard
+title={DASHBOARD_METRICS.TOTAL_STUDENTS}
+value={stats.totalStudents.toString()}
+icon={GraduationCap}
+color="primary"
+trend={DASHBOARD_METRICS.TREND_MONTHLY}
+loading={loading}
+/>
+
+<StatCard
+title={DASHBOARD_METRICS.FEES_COLLECTED}
+value={formatRupees(stats.totalFeesCollected)}
+icon={IndianRupee}
+color="success"
+trend={DASHBOARD_METRICS.TREND_GROWTH}
+loading={loading}
+/>
+
+<StatCard
+title={DASHBOARD_METRICS.EXAMS_CONDUCTED}
+value={stats.totalExams.toString()}
+icon={ClipboardCheck}
+color="accent-blue"
+trend={DASHBOARD_METRICS.TREND_EXAMS}
+loading={loading}
+/>
+
+<StatCard
+title={DASHBOARD_METRICS.SUCCESS_PLACEMENTS}
+value={`${stats.placementSuccessRate}%`}
+icon={Target}
+color="teal-accent"
+trend={DASHBOARD_METRICS.TREND_PLACEMENTS}
+loading={loading}
+/>
+
+</div>
+
+
+{/* Charts Section */}
+
+<div
+className="grid-overview mb-xl"
+style={{
+display: 'grid',
+gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+gap: 'var(--space-lg)'
+}}
+>
+
+{/* Chart 1 */}
+
+<div
+className="card"
+style={{
+padding: 'var(--space-lg)',
+height: '400px',
+display: 'flex',
+flexDirection: 'column'
+}}
+>
+
+<h3
+className="flex items-center gap-2 mb-md"
+style={{
+borderBottom: '1px solid var(--border-color)',
+paddingBottom: 'var(--space-md)'
+}}
+>
+
+<TrendingUp size={20} color="var(--primary)" />
+Growth Trends (Monthly)
+
+</h3>
+
+{loading ? (
+
+<div className="animate-pulse flex-1 bg-surface-hover rounded" />
+
+) : (
+
+<div style={{ flex: 1, minHeight: 0 }}>
+
+<ResponsiveContainer width="100%" height="100%">
+
+<AreaChart data={trends}>
+
+<CartesianGrid strokeDasharray="3 3" />
+
+<XAxis dataKey="month" />
+
+<YAxis />
+
+<Tooltip />
+
+<Legend />
+
+<Area
+type="monotone"
+dataKey="students"
+stroke="var(--primary)"
+/>
+
+<Area
+type="monotone"
+dataKey="exams"
+stroke="var(--accent-blue)"
+/>
+
+</AreaChart>
+
+</ResponsiveContainer>
+
+</div>
+
+)}
+
+</div>
+
+
+{/* Revenue Chart */}
+
+<div
+className="card"
+style={{
+padding: 'var(--space-lg)',
+height: '400px',
+display: 'flex',
+flexDirection: 'column'
+}}
+>
+
+<h3
+className="flex items-center gap-2 mb-md"
+style={{
+borderBottom: '1px solid var(--border-color)',
+paddingBottom: 'var(--space-md)'
+}}
+>
+
+<IndianRupee size={20} color="var(--success)" />
+Revenue Trend
+
+</h3>
+
+<div style={{ flex: 1 }}>
+
+<ResponsiveContainer width="100%" height="100%">
+
+<BarChart data={trends}>
+
+<CartesianGrid strokeDasharray="3 3" />
+
+<XAxis dataKey="month" />
+
+<YAxis
+tickFormatter={(value) =>
+`₹${value >= 1000
+? (value / 1000).toFixed(0) + 'k'
+: value}`
+}
+/>
+
+<Tooltip
+formatter={(value: number | string | readonly (number | string)[] | undefined) => {
+const val = Array.isArray(value) ? value[0] : value;
+return `₹ ${Number(val || 0).toLocaleString()}`;
+}}
+/>
+<Bar name="Fees Collected" dataKey="fees" fill="var(--success)" />
+
+</BarChart>
+
+</ResponsiveContainer>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+);
+
 }
