@@ -56,6 +56,18 @@ service cloud.firestore {
         allow read: if isAuthenticated();
         allow write: if isAdmin();
       }
+
+      // ── Course Resources ──
+      match /resources/{resourceId} {
+        allow read: if isAuthenticated();
+        allow write: if isAdmin();
+      }
+
+      // ── Course Assignments ──
+      match /assignments/{assignmentId} {
+        allow read: if isAuthenticated();
+        allow write: if isAdmin();
+      }
     }
 
     // ── Exams ────────────────────────────────────────────────────────────
@@ -90,11 +102,9 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // ── Progress ─────────────────────────────────────────────────────────
-    // Doc-ID scoped: students read only /progress/{their-own-uid}.
-    match /progress/{userId} {
-      allow read: if isOwner(userId) || isAdmin();
-      allow write: if isAdmin();
+    // ── User Progress (Format: {userId}_{courseId}) ──
+    match /user_progress/{docId} {
+      allow read, write: if isAuthenticated() && (isAdmin() || docId.split('_')[0] == request.auth.uid);
     }
 
     // ── Exam Results ─────────────────────────────────────────────────────

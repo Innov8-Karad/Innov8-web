@@ -1,7 +1,6 @@
 import { 
   collection, 
   getDocs, 
-  getDoc,
   addDoc, 
   updateDoc,
   deleteDoc,
@@ -9,13 +8,12 @@ import {
   onSnapshot,
   query,
   orderBy,
-  arrayUnion,
   Timestamp,
   type DocumentData 
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { COLLECTIONS } from '../constants';
-import type { Course, CourseModule, CourseResource } from '../types';
+import type { Course, CourseModule, CourseResource, AssignmentType } from '../types';
 
 export const courseService = {
   subscribeToCourses(callback: (courses: Course[]) => void) {
@@ -111,35 +109,62 @@ export const courseService = {
 
   // ── Module Resources ──
 
-  async addResource(courseId: string, moduleId: string, resource: Omit<CourseResource, 'id'>): Promise<void> {
-    const docRef = doc(db, COLLECTIONS.COURSES, courseId, 'modules', moduleId);
-    const newResource: CourseResource = { ...resource, id: crypto.randomUUID() };
-    await updateDoc(docRef, {
-      resources: arrayUnion(newResource)
+  subscribeToResources(courseId: string, callback: (resources: CourseResource[]) => void) {
+    const q = query(collection(db, COLLECTIONS.COURSES, courseId, 'resources'));
+    return onSnapshot(q, (snapshot) => {
+      const resources = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CourseResource));
+      callback(resources);
+    }, (error) => {
+      console.error("Error subscribing to resources:", error);
+      callback([]);
     });
   },
 
-  async updateResource(courseId: string, moduleId: string, resourceId: string, data: Partial<CourseResource>): Promise<void> {
-    const docRef = doc(db, COLLECTIONS.COURSES, courseId, 'modules', moduleId);
-    const snap = await getDoc(docRef);
-    if (!snap.exists()) return;
-    
-    const module = snap.data() as CourseModule;
-    const resources = module.resources || [];
-    const updatedResources = resources.map(res => res.id === resourceId ? { ...res, ...data } : res);
-    
-    await updateDoc(docRef, { resources: updatedResources });
+  async addResource(courseId: string, moduleId: string, resource: Omit<CourseResource, 'id'>): Promise<void> {
+    await addDoc(collection(db, COLLECTIONS.COURSES, courseId, 'resources'), {
+      ...resource,
+      moduleId,
+      createdAt: Timestamp.now()
+    });
   },
 
-  async deleteResource(courseId: string, moduleId: string, resourceId: string): Promise<void> {
-    const docRef = doc(db, COLLECTIONS.COURSES, courseId, 'modules', moduleId);
-    const snap = await getDoc(docRef);
-    if (!snap.exists()) return;
-    
-    const module = snap.data() as CourseModule;
-    const resources = module.resources || [];
-    const updatedResources = resources.filter(res => res.id !== resourceId);
-    
-    await updateDoc(docRef, { resources: updatedResources });
+  async updateResource(courseId: string, resourceId: string, data: Partial<CourseResource>): Promise<void> {
+    const docRef = doc(db, COLLECTIONS.COURSES, courseId, 'resources', resourceId);
+    await updateDoc(docRef, { ...data, updatedAt: Timestamp.now() });
+  },
+
+  async deleteResource(courseId: string, resourceId: string): Promise<void> {
+    const docRef = doc(db, COLLECTIONS.COURSES, courseId, 'resources', resourceId);
+    await deleteDoc(docRef);
+  },
+
+  // ── Assignments ──
+
+  subscribeToAssignments(courseId: string, callback: (assignments: AssignmentType[]) => void) {
+    const q = query(collection(db, COLLECTIONS.COURSES, courseId, 'assignments'));
+    return onSnapshot(q, (snapshot) => {
+      const assignments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AssignmentType));
+      callback(assignments);
+    }, (error) => {
+      console.error("Error subscribing to assignments:", error);
+      callback([]);
+    });
+  },
+
+  async addAssignment(courseId: string, assignment: Omit<AssignmentType, 'id'>): Promise<void> {
+    await addDoc(collection(db, COLLECTIONS.COURSES, courseId, 'assignments'), {
+      ...assignment,
+      createdAt: Timestamp.now()
+    });
+  },
+
+  async updateAssignment(courseId: string, assignmentId: string, data: Partial<AssignmentType>): Promise<void> {
+    const docRef = doc(db, COLLECTIONS.COURSES, courseId, 'assignments', assignmentId);
+    await updateDoc(docRef, { ...data, updatedAt: Timestamp.now() });
+  },
+
+  async deleteAssignment(courseId: string, assignmentId: string): Promise<void> {
+    const docRef = doc(db, COLLECTIONS.COURSES, courseId, 'assignments', assignmentId);
+    await deleteDoc(docRef);
   }
 };

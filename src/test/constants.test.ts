@@ -20,7 +20,7 @@ describe('COLLECTIONS', () => {
     expect(COLLECTIONS.PLACEMENTS).toBe('placementStats');
     expect(COLLECTIONS.OPPORTUNITIES).toBe('opportunities');
     expect(COLLECTIONS.SUCCESS_STORIES).toBe('successStories');
-    expect(COLLECTIONS.PROGRESS).toBe('progress');
+    expect(COLLECTIONS.PROGRESS).toBe('user_progress');
     expect(COLLECTIONS.ATTENDANCE).toBe('attendance');
   });
 

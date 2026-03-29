@@ -8,7 +8,7 @@ export const COLLECTIONS = {
   PLACEMENTS: 'placementStats',
   SUCCESS_STORIES: 'successStories',
   OPPORTUNITIES: 'opportunities',
-  PROGRESS: 'progress',
+  PROGRESS: 'user_progress',
 } as const;
 
 export const FEE_STATUS = {
