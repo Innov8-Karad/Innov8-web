@@ -101,6 +101,7 @@ export interface Course {
 
 export interface CourseResource {
     id: string;
+    moduleId?: string;
     title?: string;
     url: string;
     type: 'video' | 'pdf' | 'link';
@@ -194,6 +195,7 @@ export interface PlacementOpportunity {
 
 export interface StudentProgress {
     userId: string;
+    courseId?: string;
     userName?: string;
     overallProgress?: number;
     attendance: number;

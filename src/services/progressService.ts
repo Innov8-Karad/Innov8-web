@@ -5,18 +5,29 @@ import type { StudentProgress } from '../types';
 
 export const progressService = {
   async fetchProgress(): Promise<StudentProgress[]> {
-    const [progressSnap, usersSnap] = await Promise.all([
+    const [progressSnap, usersSnap, coursesSnap] = await Promise.all([
       getDocs(collection(db, COLLECTIONS.PROGRESS)),
-      getDocs(collection(db, COLLECTIONS.USERS))
+      getDocs(collection(db, COLLECTIONS.USERS)),
+      getDocs(collection(db, COLLECTIONS.COURSES))
     ]);
 
     const usersMap = new Map<string, string>();
     usersSnap.docs.forEach(doc => usersMap.set(doc.id, doc.data().name));
 
-    return progressSnap.docs.map(doc => ({
-      userId: doc.id,
-      userName: usersMap.get(doc.id) || 'Unknown Student',
-      ...doc.data()
-    } as StudentProgress));
+    const coursesMap = new Map<string, string>();
+    coursesSnap.docs.forEach(doc => coursesMap.set(doc.id, doc.data().title));
+
+    return progressSnap.docs.map(doc => {
+      const parts = doc.id.split('_');
+      const userId = parts[0] || doc.id;
+      const courseId = parts[1] || '';
+      return {
+        userId,
+        courseId,
+        userName: usersMap.get(userId) || 'Unknown Student',
+        courseName: coursesMap.get(courseId) || 'Unknown Course',
+        ...doc.data()
+      } as StudentProgress & { courseName?: string };
+    });
   }
 };

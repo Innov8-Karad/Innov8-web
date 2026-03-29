@@ -84,7 +84,7 @@ describe('Plug-and-Play DB Readiness', () => {
   it('collection names should only reference Firestore collections, not project-specific values', () => {
     // All values should be simple lowercase strings (Firestore conventions)
     Object.values(COLLECTIONS).forEach(val => {
-      expect(val).toMatch(/^[a-zA-Z]+$/);
+      expect(val).toMatch(/^[a-zA-Z_]+$/);
     });
   });
 

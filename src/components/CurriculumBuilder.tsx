@@ -12,6 +12,7 @@ interface CurriculumBuilderProps {
 
 export default function CurriculumBuilder({ courseId }: CurriculumBuilderProps) {
     const [modules, setModules] = useState<CourseModule[]>([]);
+    const [resources, setResources] = useState<CourseResource[]>([]);
     const [loading, setLoading] = useState(true);
     const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
     const { showToast } = useToast();
@@ -28,9 +29,13 @@ export default function CurriculumBuilder({ courseId }: CurriculumBuilderProps) 
     const [resourceForm, setResourceForm] = useState({ title: '', url: '', type: 'video' as 'video' | 'pdf' | 'link' });
 
     useEffect(() => {
-        const unsubscribe = courseService.subscribeToModules(courseId, (fetchedModules) => {
+        const unsubscribeModules = courseService.subscribeToModules(courseId, (fetchedModules) => {
             setModules(fetchedModules);
             setLoading(false);
+        });
+
+        const unsubscribeResources = courseService.subscribeToResources(courseId, (fetchedResources) => {
+            setResources(fetchedResources);
         });
 
         // Safety timeout to disable loader if something hangs
@@ -39,7 +44,8 @@ export default function CurriculumBuilder({ courseId }: CurriculumBuilderProps) 
         }, 5000);
 
         return () => {
-            unsubscribe();
+            unsubscribeModules();
+            unsubscribeResources();
             clearTimeout(timer);
         };
     }, [courseId]);
@@ -99,7 +105,7 @@ export default function CurriculumBuilder({ courseId }: CurriculumBuilderProps) 
         if (!activeModuleId) return;
         try {
             if (editingResource) {
-                await courseService.updateResource(courseId, activeModuleId, editingResource.id, resourceForm);
+                await courseService.updateResource(courseId, editingResource.id, resourceForm);
                 showToast("Resource updated", "success");
             } else {
                 await courseService.addResource(courseId, activeModuleId, resourceForm);
@@ -113,10 +119,10 @@ export default function CurriculumBuilder({ courseId }: CurriculumBuilderProps) 
         }
     };
 
-    const handleDeleteResource = async (moduleId: string, resourceId: string) => {
+    const handleDeleteResource = async (resourceId: string) => {
         if (window.confirm("Delete this resource?")) {
             try {
-                await courseService.deleteResource(courseId, moduleId, resourceId);
+                await courseService.deleteResource(courseId, resourceId);
                 showToast("Resource deleted", "success");
             } catch {
                 showToast("Failed to delete resource", "error");
@@ -169,7 +175,7 @@ export default function CurriculumBuilder({ courseId }: CurriculumBuilderProps) 
                                     </div>
                                     <div>
                                         <h4 className="font-semibold">{module.title}</h4>
-                                        <span className="text-xs text-muted">{module.resources?.length || 0} resources</span>
+                                        <span className="text-xs text-muted">{resources.filter(r => r.moduleId === module.id).length} resources</span>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
@@ -197,10 +203,10 @@ export default function CurriculumBuilder({ courseId }: CurriculumBuilderProps) 
                                     </div>
 
                                     <div className="flex flex-col gap-2">
-                                        {(!module.resources || module.resources.length === 0) ? (
+                                        {resources.filter(r => r.moduleId === module.id).length === 0 ? (
                                             <div className="text-xs text-muted text-center py-2">No resources in this module.</div>
                                         ) : (
-                                            module.resources.map(resource => (
+                                            resources.filter(r => r.moduleId === module.id).map(resource => (
                                                 <div key={resource.id} className="flex justify-between items-center p-2 rounded-md bg-secondary/30 text-sm">
                                                     <div className="flex items-center gap-2 flex-1 overflow-hidden">
                                                         <span className="text-muted">{getResourceIcon(resource.type)}</span>
@@ -213,7 +219,7 @@ export default function CurriculumBuilder({ courseId }: CurriculumBuilderProps) 
                                                         <button type="button" className="icon-btn bg-transparent text-muted" onClick={() => openEditResource(module.id, resource)} style={{ padding: '4px' }}>
                                                             <Edit2 size={14} />
                                                         </button>
-                                                        <button type="button" className="icon-btn bg-transparent text-error" onClick={() => handleDeleteResource(module.id, resource.id)} style={{ padding: '4px' }}>
+                                                        <button type="button" className="icon-btn bg-transparent text-error" onClick={() => handleDeleteResource(resource.id)} style={{ padding: '4px' }}>
                                                             <Trash2 size={14} />
                                                         </button>
                                                     </div>

@@ -10,6 +10,7 @@ import Modal from '../components/Modal';
 import { FormField, FormRow, FormActions } from '../components/FormField';
 import { useToast } from '../hooks/useToast';
 import CurriculumBuilder from '../components/CurriculumBuilder';
+import AssignmentBuilder from '../components/AssignmentBuilder';
 
 export default function CoursesPage() {
     const [courses, setCourses] = useState<Course[]>([]);
@@ -218,9 +219,12 @@ export default function CoursesPage() {
                     </div>
                     {editingCourse && (
                         <div className="border-t pt-6 mt-6 lg:border-t-0 lg:pt-0 lg:mt-0 lg:border-l lg:border-divider lg:pl-6 col-span-1">
-                            <h3 className="section-label mb-1">Curriculum</h3>
-                            <p className="text-sm text-muted mb-4">Manage modules and resources (auto-saved)</p>
-                            <CurriculumBuilder courseId={editingCourse.id} />
+                            <h3 className="section-label mb-1">Curriculum & Assignments</h3>
+                            <p className="text-sm text-muted mb-4">Manage course contents (auto-saved)</p>
+                            <div className="flex flex-col gap-6">
+                                <CurriculumBuilder courseId={editingCourse.id} />
+                                <AssignmentBuilder courseId={editingCourse.id} />
+                            </div>
                         </div>
                     )}
                 </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { CheckCircle } from 'lucide-react';
+import { CheckCircle, BookOpen } from 'lucide-react';
 import { UI_STRINGS } from '../constants';
 import { progressService } from '../services/progressService';
 import type { StudentProgress } from '../types';
@@ -7,8 +7,10 @@ import LoadingState from '../components/LoadingState';
 import PageHeader from '../components/PageHeader';
 import EmptyState from '../components/EmptyState';
 
+type ProgressEntry = StudentProgress & { courseName?: string };
+
 export default function ProgressPage() {
-    const [progressData, setProgressData] = useState<StudentProgress[]>([]);
+    const [progressData, setProgressData] = useState<ProgressEntry[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -16,7 +18,7 @@ export default function ProgressPage() {
             try {
                 setLoading(true);
                 const data = await progressService.fetchProgress();
-                setProgressData(data);
+                setProgressData(data as ProgressEntry[]);
             } catch (err) {
                 console.error("Error fetching progress:", err);
             } finally {
@@ -28,6 +30,20 @@ export default function ProgressPage() {
 
     if (loading) return <LoadingState message={UI_STRINGS.PROGRESS.LOADING} />;
 
+    // Group progress by User
+    const usersProgress = progressData.reduce((acc, curr) => {
+        if (!acc[curr.userId]) {
+            acc[curr.userId] = {
+                userName: curr.userName || UI_STRINGS.PROGRESS.UNKNOWN_STUDENT,
+                courses: []
+            };
+        }
+        acc[curr.userId].courses.push(curr);
+        return acc;
+    }, {} as Record<string, { userName: string, courses: ProgressEntry[] }>);
+
+    const userEntries = Object.values(usersProgress);
+
     return (
         <div>
             <PageHeader
@@ -36,30 +52,42 @@ export default function ProgressPage() {
             />
 
             <div className="grid-single">
-                {progressData.map(p => (
-                    <div key={p.userId} className="card">
-                        <div className="flex justify-between items-start mb-md">
-                            <h3 style={{ margin: 0 }}>{p.userName}</h3>
+                {userEntries.map((user, idx) => (
+                    <div key={idx} className="card">
+                        <div className="flex justify-between items-start mb-md border-b border-divider pb-3">
+                            <h3 style={{ margin: 0, fontSize: '1.25rem' }}>{user.userName}</h3>
+                            <button className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>
+                                View Full Profile
+                            </button>
                         </div>
 
-                        <div className="grid-cards-sm" style={{ gap: 'var(--space-lg)' }}>
-                            <div className="flex flex-col gap-2">
-                                <div className="flex items-center gap-2 text-sm">
-                                    <CheckCircle size={16} color="var(--success)" />
-                                    {p.completedModules?.length || 0} {UI_STRINGS.PROGRESS.MODULES_COMPLETED}
-                                </div>
+                        {user.courses.length === 0 ? (
+                            <p className="text-sm text-muted">No course progress data available.</p>
+                        ) : (
+                            <div className="grid-cards-sm mt-md" style={{ gap: 'var(--space-md)' }}>
+                                {user.courses.map((courseProgress, cIdx) => (
+                                    <div key={cIdx} className="bg-secondary/20 rounded-lg p-4 border border-divider">
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <div className="bg-primary/10 p-2 rounded-full text-primary">
+                                                <BookOpen size={16} />
+                                            </div>
+                                            <h4 className="font-medium">{courseProgress.courseName || 'Unnamed Course'}</h4>
+                                        </div>
+                                        
+                                        <div className="flex flex-col gap-2">
+                                            <div className="flex items-center gap-2 text-sm text-muted">
+                                                <CheckCircle size={14} color="var(--success)" />
+                                                <span className="font-semibold text-text">{courseProgress.completedModules?.length || 0}</span> modules completed
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
-
-                            <div className="flex justify-end">
-                                <button className="btn btn-secondary" style={{ padding: '8px 16px', fontSize: '0.85rem' }}>
-                                    {UI_STRINGS.PROGRESS.VIEW_REPORT}
-                                </button>
-                            </div>
-                        </div>
+                        )}
                     </div>
                 ))}
 
-                {progressData.length === 0 && (
+                {userEntries.length === 0 && (
                     <EmptyState message={UI_STRINGS.PROGRESS.EMPTY} />
                 )}
             </div>
