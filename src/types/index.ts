@@ -95,6 +95,23 @@ export interface Course {
     icon?: string;
     iconColor?: string;
     iconBg?: string;
+    createdAt?: { seconds: number; nanoseconds: number };
+    updatedAt?: { seconds: number; nanoseconds: number };
+}
+
+export interface CourseResource {
+    id: string;
+    title?: string;
+    url: string;
+    type: 'video' | 'pdf' | 'link';
+}
+
+export interface CourseModule {
+    id: string;
+    title: string;
+    description: string;
+    order: number;
+    resources: CourseResource[];
 }
 
 export interface ModuleType {
