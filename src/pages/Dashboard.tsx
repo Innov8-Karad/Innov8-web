@@ -4,13 +4,15 @@ import {
   IndianRupee,
   ClipboardCheck,
   Target,
-  TrendingUp
+  TrendingUp,
+  Activity
 } from 'lucide-react';
 
 import {
   dashboardService,
   type DashboardStats,
-  type MonthlyTrend
+  type MonthlyTrend,
+  type ActivityItem
 } from '../services/dashboardService';
 
 import { DEFAULT_VALUES, DASHBOARD_METRICS } from '../constants';
@@ -39,6 +41,7 @@ placementSuccessRate: 0
 });
 
 const [trends, setTrends] = useState<MonthlyTrend[]>([]);
+const [activities, setActivities] = useState<ActivityItem[]>([]);
 const [loading, setLoading] = useState(true);
 
 useEffect(() => {
@@ -53,12 +56,17 @@ dashboardService.subscribeToMonthlyTrends((newTrends) => {
 setTrends(newTrends);
 });
 
+const unsubActivities =
+dashboardService.subscribeToRecentActivity((data) => {
+setActivities(data);
+});
+
 const timer = setTimeout(() => setLoading(false), 5000);
 
 return () => {
 unsubStats();
-
 unsubTrends();
+unsubActivities();
 clearTimeout(timer);
 };
 
@@ -69,6 +77,22 @@ const formatRupees = (amount: number) => {
 if (amount >= 100000) return `₹ ${(amount / 100000).toFixed(1)}L`;
 if (amount >= 1000) return `₹ ${(amount / 1000).toFixed(1)}K`;
 return `₹ ${amount}`;
+};
+
+const getActivityIcon = (type: string) => {
+switch (type) {
+case 'registration':
+return <GraduationCap size={16} color="var(--primary)" />;
+
+case 'fee':
+return <IndianRupee size={16} color="var(--success)" />;
+
+case 'exam':
+return <ClipboardCheck size={16} color="var(--accent-blue)" />;
+
+default:
+return <Activity size={16} color="var(--text-muted)" />;
+}
 };
 
 
@@ -145,134 +169,97 @@ gap: 'var(--space-lg)'
 }}
 >
 
-{/* Chart 1 */}
+{/* Growth Chart */}
 
-<div
-className="card"
-style={{
-padding: 'var(--space-lg)',
-height: '400px',
-display: 'flex',
-flexDirection: 'column'
-}}
->
+<div className="card" style={{ padding: 'var(--space-lg)', height: '400px' }}>
 
-<h3
-className="flex items-center gap-2 mb-md"
-style={{
-borderBottom: '1px solid var(--border-color)',
-paddingBottom: 'var(--space-md)'
-}}
->
-
+<h3 className="flex items-center gap-2 mb-md">
 <TrendingUp size={20} color="var(--primary)" />
-Growth Trends (Monthly)
-
+Growth Trends
 </h3>
 
-{loading ? (
-
-<div className="animate-pulse flex-1 bg-surface-hover rounded" />
-
-) : (
-
-<div style={{ flex: 1, minHeight: 0 }}>
-
-<ResponsiveContainer width="100%" height="100%">
-
+<ResponsiveContainer width="100%" height="90%">
 <AreaChart data={trends}>
-
 <CartesianGrid strokeDasharray="3 3" />
-
 <XAxis dataKey="month" />
-
 <YAxis />
-
 <Tooltip />
-
 <Legend />
-
-<Area
-type="monotone"
-dataKey="students"
-stroke="var(--primary)"
-/>
-
-<Area
-type="monotone"
-dataKey="exams"
-stroke="var(--accent-blue)"
-/>
-
+<Area type="monotone" dataKey="students" stroke="var(--primary)" />
+<Area type="monotone" dataKey="exams" stroke="var(--accent-blue)" />
 </AreaChart>
-
 </ResponsiveContainer>
-
-</div>
-
-)}
 
 </div>
 
 
 {/* Revenue Chart */}
 
-<div
-className="card"
-style={{
-padding: 'var(--space-lg)',
-height: '400px',
-display: 'flex',
-flexDirection: 'column'
-}}
->
+<div className="card" style={{ padding: 'var(--space-lg)', height: '400px' }}>
 
-<h3
-className="flex items-center gap-2 mb-md"
-style={{
-borderBottom: '1px solid var(--border-color)',
-paddingBottom: 'var(--space-md)'
-}}
->
-
+<h3 className="flex items-center gap-2 mb-md">
 <IndianRupee size={20} color="var(--success)" />
 Revenue Trend
-
 </h3>
 
-<div style={{ flex: 1 }}>
-
-<ResponsiveContainer width="100%" height="100%">
-
+<ResponsiveContainer width="100%" height="90%">
 <BarChart data={trends}>
-
 <CartesianGrid strokeDasharray="3 3" />
-
 <XAxis dataKey="month" />
-
-<YAxis
-tickFormatter={(value) =>
-`₹${value >= 1000
-? (value / 1000).toFixed(0) + 'k'
-: value}`
-}
-/>
-
-<Tooltip
-formatter={(value: number | string | readonly (number | string)[] | undefined) => {
-const val = Array.isArray(value) ? value[0] : value;
-return `₹ ${Number(val || 0).toLocaleString()}`;
-}}
-/>
-<Bar name="Fees Collected" dataKey="fees" fill="var(--success)" />
-
+<YAxis />
+<Tooltip />
+<Bar dataKey="fees" fill="var(--success)" />
 </BarChart>
-
 </ResponsiveContainer>
 
 </div>
 
 </div>
+
+
+{/* ✅ Recent Activity */}
+
+<div className="card" style={{ padding: 'var(--space-lg)' }}>
+
+<h3 className="flex items-center gap-2 mb-md">
+<Activity size={20} color="var(--primary)" />
+Recent Activity
+</h3>
+
+{activities.map((activity) => (
+
+<div
+key={activity.id}
+style={{
+display: 'flex',
+alignItems: 'center',
+gap: '12px',
+padding: '12px',
+borderBottom: '1px solid var(--border-color)'
+}}
+>
+
+<div>
+{getActivityIcon(activity.type)}
+</div>
+
+<div style={{ flex: 1 }}>
+<div style={{ fontWeight: 600 }}>
+{activity.title}
+</div>
+
+<div style={{ fontSize: '12px', color: 'gray' }}>
+{activity.subtitle}
+</div>
+</div>
+
+<div>
+{activity.timestamp?.toLocaleDateString()}
+</div>
+
+</div>
+
+))}
 
 </div>
 
