@@ -140,7 +140,8 @@ describe('SuccessStory type', () => {
       company: 'Google',
       package: '12 LPA',
       role: 'Software Engineer',
-      batch: '2024'
+      batch: '2024',
+      year: 2024
     };
     expect(story.studentName).toBe('Jane Doe');
     expect(story.company).toBe('Google');

@@ -28,7 +28,7 @@ describe('No Hardcoded Values Audit', () => {
     it('all Firestore collection names should be defined in COLLECTIONS constant', () => {
       const requiredCollections = [
         'USERS', 'FEES', 'COURSES', 'EXAMS',
-        'ANNOUNCEMENTS', 'PLACEMENTS', 'SUCCESS_STORIES', 'PROGRESS'
+        'ANNOUNCEMENTS', 'PLACEMENTS', 'PLACEMENT_STATS', 'PROGRESS'
       ];
       requiredCollections.forEach(col => {
         expect(COLLECTIONS).toHaveProperty(col);
