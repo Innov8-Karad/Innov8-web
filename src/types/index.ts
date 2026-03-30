@@ -157,10 +157,22 @@ export interface SuccessStory {
     studentPhoto?: string;
     company: string;
     package: string | number;
+    role: string;
     batch?: string;
     testimonial?: string;
-    role?: string;
-    course?: string;
+    year: number;
+    createdAt?: { seconds: number; nanoseconds: number };
+    updatedAt?: { seconds: number; nanoseconds: number };
+}
+
+export interface PlacementStats {
+    id: string;
+    year: number;
+    companiesCount: number;
+    studentsPlaced: number;
+    averagePackage: number;
+    highestPackage: number;
+    updatedAt?: { seconds: number; nanoseconds: number };
 }
 
 export interface Placement {

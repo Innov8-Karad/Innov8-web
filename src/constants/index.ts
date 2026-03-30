@@ -5,8 +5,8 @@ export const COLLECTIONS = {
   COURSES: 'courses',
   ATTENDANCE: 'attendance',
   EXAMS: 'exams',
-  PLACEMENTS: 'placementStats',
-  SUCCESS_STORIES: 'successStories',
+  PLACEMENTS: 'placements',
+  PLACEMENT_STATS: 'placementStats',
   OPPORTUNITIES: 'opportunities',
   PROGRESS: 'user_progress',
 } as const;
@@ -248,6 +248,17 @@ export const UI_STRINGS = {
     ROLE_PREFIX: 'Role:',
     BATCH_PREFIX: 'Batch:',
     PACKAGE_PREFIX: 'Package:',
+    // Year-wise and Stats management
+    SELECT_YEAR: 'Select Year',
+    EDIT_STATS: 'Edit Yearly Stats',
+    DELETE_STORY_CONFIRM: 'Are you sure you want to delete this success story?',
+    DELETE_STORY_SUCCESS: 'Success story deleted successfully.',
+    SAVE_STATS_SUCCESS: 'Placement statistics updated successfully.',
+    FORM_YEAR: 'Placement Year',
+    FORM_COMPANIES_COUNT: 'Total Companies',
+    FORM_STUDENTS_PLACED: 'Students Placed',
+    FORM_AVG_PACKAGE: 'Average Package (LPA)',
+    FORM_HIGHEST_PACKAGE: 'Highest Package (LPA)',
   },
   NAV: {
     DASHBOARD: 'Dashboard',

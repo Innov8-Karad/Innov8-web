@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
-import { Building2, Users, Briefcase, Pencil } from 'lucide-react';
+import { useState, useEffect, useContext } from 'react';
+import { Building2, Users, Briefcase, Pencil, Trash2, Calendar } from 'lucide-react';
 import { placementService } from '../services/placementService';
-import type { Placement, SuccessStory } from '../types';
+import { ToastContext } from '../contexts/ToastContext';
+import type { SuccessStory, PlacementStats } from '../types';
 import { UI_STRINGS } from '../constants';
 import PageHeader from '../components/PageHeader';
 import LoadingState from '../components/LoadingState';
@@ -12,72 +13,134 @@ import Avatar from '../components/Avatar';
 import { FormField, FormRow, FormActions } from '../components/FormField';
 
 export default function PlacementsPage() {
-    const [stats, setStats] = useState<Placement | null>(null);
+    // 1. Context
+    const toastContext = useContext(ToastContext);
+    const showToast = toastContext?.showToast;
+
+    // 2. State
+    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+    const [stats, setStats] = useState<PlacementStats | null>(null);
     const [successStories, setSuccessStories] = useState<SuccessStory[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [showModal, setShowModal] = useState(false);
-    const [editingId, setEditingId] = useState<string | null>(null);
+    
+    // 2. Modals Control
+    const [showStoryModal, setShowStoryModal] = useState(false);
+    const [showStatsModal, setShowStatsModal] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [editingStoryId, setEditingStoryId] = useState<string | null>(null);
+    const [storyToDelete, setStoryToDelete] = useState<string | null>(null);
+    
+    // 3. Form States
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-    const [newStory, setNewStory] = useState({
+    const [storyForm, setStoryForm] = useState({
         studentName: '',
         company: '',
         package: '',
         role: '',
         studentImage: '',
         batch: '',
-        testimonial: ''
+        testimonial: '',
+        year: selectedYear
     });
 
-    const fetchStories = async () => {
-        try {
-            const storiesData = await placementService.fetchSuccessStories();
-            setSuccessStories(storiesData);
-        } catch (err) {
-            console.error("Error fetching success stories:", err);
-            setError(UI_STRINGS.PLACEMENTS.ERROR_LOAD);
-        }
+    const [statsForm, setStatsForm] = useState({
+        companiesCount: 0,
+        studentsPlaced: 0,
+        averagePackage: 0,
+        highestPackage: 0
+    });
+
+    // 4. Real-time Subscriptions
+    useEffect(() => {
+        setLoading(true);
+        setError(null);
+
+        // Subscribe to Stats
+        const unsubStats = placementService.subscribeToPlacementStats(selectedYear, (data) => {
+            setStats(data);
+            if (data) {
+                setStatsForm({
+                    companiesCount: data.companiesCount,
+                    studentsPlaced: data.studentsPlaced,
+                    averagePackage: data.averagePackage,
+                    highestPackage: data.highestPackage
+                });
+            } else {
+                setStatsForm({ companiesCount: 0, studentsPlaced: 0, averagePackage: 0, highestPackage: 0 });
+            }
+        }, (err) => {
+            console.error("Stats subscription error:", err);
+            setError("Could not load placement statistics at this moment.");
+        });
+
+        // Subscribe to Stories
+        const unsubStories = placementService.subscribeToSuccessStories(selectedYear, (data) => {
+            setSuccessStories(data);
+            setLoading(false);
+        }, (err) => {
+            console.error("Stories subscription error:", err);
+            setError("Could not load success stories at this moment.");
+            setLoading(false);
+        });
+
+        return () => {
+            unsubStats();
+            unsubStories();
+        };
+    }, [selectedYear]);
+
+    // 5. Handlers
+    const handleAddStory = () => {
+        setEditingStoryId(null);
+        setStoryForm({
+            studentName: '',
+            company: '',
+            package: '',
+            role: '',
+            studentImage: '',
+            batch: '',
+            testimonial: '',
+            year: selectedYear
+        });
+        setShowStoryModal(true);
     };
 
-    useEffect(() => {
-        async function fetchData() {
-            try {
-                setLoading(true);
-                setError(null);
-                const statsData = await placementService.fetchPlacementStats();
-                setStats(statsData);
-                await fetchStories();
-            } catch (err) {
-                console.error("Error fetching placement stats:", err);
-                setError(UI_STRINGS.PLACEMENTS.ERROR_LOAD);
-            } finally {
-                setLoading(false);
-            }
-        }
-        fetchData();
-    }, []);
-
-    const handleEditClick = (story: SuccessStory) => {
-        setEditingId(story.id);
-        setNewStory({
+    const handleEditStory = (story: SuccessStory) => {
+        setEditingStoryId(story.id);
+        setStoryForm({
             studentName: story.studentName,
             company: story.company,
             package: String(story.package),
             role: story.role || '',
             studentImage: story.studentPhoto || '',
             batch: story.batch || '',
-            testimonial: story.testimonial || ''
+            testimonial: story.testimonial || '',
+            year: story.year || selectedYear
         });
-        setShowModal(true);
+        setShowStoryModal(true);
     };
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            const file = e.target.files[0];
-            setSelectedFile(file);
-            setPreviewUrl(URL.createObjectURL(file));
+    const handleDeleteStory = (id: string) => {
+        setStoryToDelete(id);
+        setShowDeleteModal(true);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!storyToDelete) return;
+        try {
+            setSaving(true);
+            await placementService.deleteSuccessStory(storyToDelete);
+            showToast?.(UI_STRINGS.PLACEMENTS.DELETE_STORY_SUCCESS, "success");
+            setShowDeleteModal(false);
+            setStoryToDelete(null);
+        } catch (err) {
+            console.error("Error deleting story:", err);
+            showToast?.("Failed to delete story. Please try again.", "error");
+        } finally {
+            setSaving(false);
         }
     };
 
@@ -85,141 +148,278 @@ export default function PlacementsPage() {
         e.preventDefault();
         try {
             setSaving(true);
-            setError(null);
-            
-            let imageUrl = newStory.studentImage;
-            
+            let imageUrl = storyForm.studentImage;
             if (selectedFile) {
                 imageUrl = await placementService.uploadStudentPhoto(selectedFile);
             }
 
-            const dataToSave = {
-                studentName: newStory.studentName,
-                company: newStory.company,
-                package: newStory.package,
-                role: newStory.role,
+            const data = {
+                studentName: storyForm.studentName,
+                company: storyForm.company,
+                role: storyForm.role,
+                batch: storyForm.batch,
+                testimonial: storyForm.testimonial,
+                package: typeof storyForm.package === 'string' ? Number(storyForm.package.replace(/[^0-9.]/g, '')) : storyForm.package,
                 studentPhoto: imageUrl,
-                batch: newStory.batch,
-                testimonial: newStory.testimonial
+                year: Number(storyForm.year)
             };
 
-            if (editingId) {
-                await placementService.updateSuccessStory(editingId, dataToSave);
+            if (editingStoryId) {
+                await placementService.updateSuccessStory(editingStoryId, data);
             } else {
-                await placementService.createSuccessStory(dataToSave);
+                await placementService.createPlacement(data);
             }
             
-            await fetchStories();
-            setShowModal(false);
-            resetForm();
+            showToast?.(editingStoryId ? "Success story updated successfully!" : "Success story added successfully!", "success");
+            setShowStoryModal(false);
+            resetStoryForm();
         } catch (err) {
-            console.error("Error saving success story: ", err);
+            console.error("Error saving story:", err);
+            showToast?.("Failed to save story. Please try again.", "error");
             setError(UI_STRINGS.PLACEMENTS.ERROR_SAVE);
         } finally {
             setSaving(false);
         }
     };
 
-    const resetForm = () => {
-        setEditingId(null);
-        setSelectedFile(null);
-        setPreviewUrl(null);
-        setNewStory({ studentName: '', company: '', package: '', role: '', studentImage: '', batch: '', testimonial: '' });
+    const handleSaveStats = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            setSaving(true);
+            await placementService.updatePlacementStats(selectedYear, statsForm);
+            showToast?.(UI_STRINGS.PLACEMENTS.SAVE_STATS_SUCCESS, "success");
+            setShowStatsModal(false);
+        } catch (err) {
+            console.error("Error saving stats:", err);
+            showToast?.("Failed to save statistics.", "error");
+        } finally {
+            setSaving(false);
+        }
     };
 
-    if (loading) {
-        return <LoadingState message={UI_STRINGS.PLACEMENTS.LOADING} />;
-    }
+    const resetStoryForm = () => {
+        setEditingStoryId(null);
+        setSelectedFile(null);
+        setPreviewUrl(null);
+        setStoryForm({
+            studentName: '',
+            company: '',
+            package: '',
+            role: '',
+            studentImage: '',
+            batch: '',
+            testimonial: '',
+            year: selectedYear
+        });
+    };
+
+    if (loading) return <LoadingState message={UI_STRINGS.PLACEMENTS.LOADING} />;
+
+    const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i);
 
     return (
-        <div>
-            {error && !error.includes("placement records") ? (
-                <ErrorAlert message={error} />
-            ) : null}
+        <div className="pb-xl">
+            {error && <ErrorAlert message={error} />}
+            
             <PageHeader
                 title={UI_STRINGS.PLACEMENTS.TITLE}
                 subtitle={UI_STRINGS.PLACEMENTS.SUBTITLE}
                 actionLabel={UI_STRINGS.PLACEMENTS.NEW_BTN}
-                onAction={() => setShowModal(true)}
-            />
+                onAction={handleAddStory}
+            >
+                <div className="flex items-center gap-sm">
+                    <Calendar size={18} className="text-muted" />
+                    <select 
+                        value={selectedYear} 
+                        onChange={(e) => setSelectedYear(Number(e.target.value))}
+                        className="select-input"
+                        style={{ padding: '6px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-card)' }}
+                    >
+                        {years.map(y => <option key={y} value={y}>{y}</option>)}
+                    </select>
+                </div>
+            </PageHeader>
 
-            {stats && (
-                <div className="grid-cards-sm mb-xl">
-                    <StatCard title={UI_STRINGS.PLACEMENTS.STAT_PARTNER_COMPANIES} value={`${stats.companiesCount || stats.topCompanies?.length || 0}+`} icon={Building2} color="accent-blue" />
-                    <StatCard title={UI_STRINGS.PLACEMENTS.STAT_PLACED_STUDENTS} value={`${stats.totalPlaced || stats.studentsPlaced || 0}+`} icon={Users} color="primary" />
-                    <StatCard title={UI_STRINGS.PLACEMENTS.STAT_HIGHEST_PACKAGE} value={`${stats.highestPackage} ${UI_STRINGS.PLACEMENTS.LPA_SUFFIX}`} icon={Briefcase} color="success" />
+            <div className="mb-md flex justify-between items-center">
+                <h2 className="text-lg font-semibold">{selectedYear} Overview</h2>
+                <button 
+                    onClick={() => setShowStatsModal(true)} 
+                    className="btn btn-secondary flex items-center gap-2 text-sm"
+                >
+                    <Pencil size={14} /> {UI_STRINGS.PLACEMENTS.EDIT_STATS}
+                </button>
+            </div>
+
+            <div className="grid-cards-sm mb-xl">
+                <StatCard 
+                    title={UI_STRINGS.PLACEMENTS.STAT_PARTNER_COMPANIES} 
+                    value={`${stats?.companiesCount || 0}+`} 
+                    icon={Building2} 
+                    color="accent-blue" 
+                />
+                <StatCard 
+                    title={UI_STRINGS.PLACEMENTS.STAT_PLACED_STUDENTS} 
+                    value={`${stats?.studentsPlaced || 0}+`} 
+                    icon={Users} 
+                    color="primary" 
+                />
+                <StatCard 
+                    title={UI_STRINGS.PLACEMENTS.STAT_HIGHEST_PACKAGE} 
+                    value={`${stats?.highestPackage || 0} ${UI_STRINGS.PLACEMENTS.LPA_SUFFIX}`} 
+                    icon={Briefcase} 
+                    color="success" 
+                />
+            </div>
+
+            <h2 className="mb-md">{UI_STRINGS.PLACEMENTS.SUCCESS_STORIES_HEADING}</h2>
+            {successStories.length === 0 ? (
+                <div className="card text-center py-xl text-muted">No success stories found for {selectedYear}.</div>
+            ) : (
+                <div className="grid-cards">
+                    {successStories.map(story => (
+                        <div key={story.id} className="card flex gap-4 relative group">
+                            <div style={{ width: '80px', height: '80px', borderRadius: '12px', overflow: 'hidden', flexShrink: 0, backgroundColor: 'var(--bg-card-accent)' }}>
+                                {story.studentPhoto ? (
+                                    <img src={story.studentPhoto} alt={story.studentName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                ) : (
+                                    <div className="flex items-center justify-center" style={{ height: '100%', color: 'var(--text-secondary)' }}>
+                                        <Users size={32} />
+                                    </div>
+                                )}
+                            </div>
+                            <div style={{ flex: 1 }}>
+                                <h3 style={{ margin: 0 }}>{story.studentName}</h3>
+                                <p style={{ color: 'var(--primary)', fontWeight: 600, fontSize: '0.9rem', marginTop: '2px' }}>{story.company}</p>
+                                <div className="text-sm text-muted mt-sm">
+                                    <div>{UI_STRINGS.PLACEMENTS.ROLE_PREFIX} {story.role}</div>
+                                    <div>{UI_STRINGS.PLACEMENTS.PACKAGE_PREFIX} {story.package} LPA</div>
+                                </div>
+                            </div>
+                            <div className="flex gap-1">
+                                <button onClick={() => handleEditStory(story)} className="icon-btn" title={UI_STRINGS.COMMON.EDIT}>
+                                    <Pencil size={18} />
+                                </button>
+                                <button onClick={() => handleDeleteStory(story.id)} className="icon-btn text-error" title={UI_STRINGS.COMMON.DELETE}>
+                                    <Trash2 size={18} />
+                                </button>
+                            </div>
+                        </div>
+                    ))}
                 </div>
             )}
 
-            <h2 className="mb-md">{UI_STRINGS.PLACEMENTS.SUCCESS_STORIES_HEADING}</h2>
-            <div className="grid-cards">
-                {successStories.map(story => (
-                    <div key={story.id} className="card flex gap-4">
-                        <div style={{ width: '80px', height: '80px', borderRadius: '12px', overflow: 'hidden', flexShrink: 0, backgroundColor: 'var(--bg-card-accent)' }}>
-                            {story.studentPhoto ? (
-                                <img src={story.studentPhoto} alt={story.studentName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                            ) : (
-                                <div className="flex items-center justify-center" style={{ height: '100%', color: 'var(--text-secondary)' }}>
-                                    <Users size={32} />
-                                </div>
-                            )}
-                        </div>
-                        <div style={{ flex: 1 }}>
-                            <h3 style={{ margin: 0 }}>{story.studentName}</h3>
-                            <p style={{ color: 'var(--primary)', fontWeight: 600, fontSize: '0.9rem', marginTop: '2px' }}>{story.company}</p>
-                            <div className="text-sm text-muted mt-md">
-                                <div>{story.role ? `${UI_STRINGS.PLACEMENTS.ROLE_PREFIX} ${story.role}` : `${UI_STRINGS.PLACEMENTS.BATCH_PREFIX} ${story.batch}`}</div>
-                                <div>{UI_STRINGS.PLACEMENTS.PACKAGE_PREFIX} {story.package}</div>
-                            </div>
-                        </div>
-                        <button onClick={() => handleEditClick(story)} title={UI_STRINGS.COMMON.EDIT} className="icon-btn" style={{ alignSelf: 'flex-start' }}>
-                            <Pencil size={18} />
-                        </button>
-                    </div>
-                ))}
-            </div>
-
+            {/* Modal: Add/Edit Story */}
             <Modal 
-                isOpen={showModal} 
-                onClose={() => { setShowModal(false); resetForm(); }} 
-                title={editingId ? UI_STRINGS.COMMON.EDIT : UI_STRINGS.PLACEMENTS.MODAL_TITLE}
+                isOpen={showStoryModal} 
+                onClose={() => setShowStoryModal(false)}
+                title={editingStoryId ? UI_STRINGS.COMMON.EDIT : UI_STRINGS.PLACEMENTS.MODAL_TITLE}
             >
                 <form onSubmit={handleSaveStory} className="form-layout">
                     <div style={{ alignSelf: 'center' }} className="mb-sm">
-                        <Avatar src={previewUrl || newStory.studentImage} fallbackIcon={<Users size={40} style={{ color: 'var(--text-secondary)' }} />} size="lg" upload />
+                        <Avatar 
+                            src={previewUrl || storyForm.studentImage} 
+                            fallbackIcon={<Users size={40} style={{ color: 'var(--text-secondary)' }} />} 
+                            size="lg" 
+                            upload 
+                        />
                     </div>
                     <FormField label={UI_STRINGS.PLACEMENTS.FORM_STUDENT_NAME}>
-                        <input type="text" required value={newStory.studentName} onChange={e => setNewStory({ ...newStory, studentName: e.target.value })} />
+                        <input type="text" required value={storyForm.studentName} onChange={e => setStoryForm({ ...storyForm, studentName: e.target.value })} />
                     </FormField>
                     <FormRow>
                         <FormField label={UI_STRINGS.PLACEMENTS.FORM_COMPANY}>
-                            <input type="text" required placeholder={UI_STRINGS.PLACEMENTS.FORM_COMPANY_PLACEHOLDER} value={newStory.company} onChange={e => setNewStory({ ...newStory, company: e.target.value })} />
+                            <input type="text" required placeholder={UI_STRINGS.PLACEMENTS.FORM_COMPANY_PLACEHOLDER} value={storyForm.company} onChange={e => setStoryForm({ ...storyForm, company: e.target.value })} />
                         </FormField>
                         <FormField label={UI_STRINGS.PLACEMENTS.FORM_PACKAGE}>
-                            <input type="text" required placeholder={UI_STRINGS.PLACEMENTS.FORM_PACKAGE_PLACEHOLDER} value={newStory.package} onChange={e => setNewStory({ ...newStory, package: e.target.value })} />
+                            <input type="text" required placeholder={UI_STRINGS.PLACEMENTS.FORM_PACKAGE_PLACEHOLDER} value={storyForm.package} onChange={e => setStoryForm({ ...storyForm, package: e.target.value })} />
                         </FormField>
                     </FormRow>
                     <FormRow>
                         <FormField label={UI_STRINGS.PLACEMENTS.FORM_ROLE}>
-                            <input type="text" required placeholder={UI_STRINGS.PLACEMENTS.FORM_ROLE_PLACEHOLDER} value={newStory.role} onChange={e => setNewStory({ ...newStory, role: e.target.value })} />
+                            <input type="text" required placeholder={UI_STRINGS.PLACEMENTS.FORM_ROLE_PLACEHOLDER} value={storyForm.role} onChange={e => setStoryForm({ ...storyForm, role: e.target.value })} />
                         </FormField>
-                        <FormField label={UI_STRINGS.PLACEMENTS.FORM_BATCH}>
-                            <input type="text" required placeholder={UI_STRINGS.PLACEMENTS.FORM_BATCH_PLACEHOLDER} value={newStory.batch} onChange={e => setNewStory({ ...newStory, batch: e.target.value })} />
+                        <FormField label={UI_STRINGS.PLACEMENTS.FORM_YEAR}>
+                            <input type="number" required value={storyForm.year} onChange={e => setStoryForm({ ...storyForm, year: Number(e.target.value) })} />
                         </FormField>
                     </FormRow>
                     <FormField label={UI_STRINGS.PLACEMENTS.FORM_TESTIMONIAL}>
-                        <textarea rows={2} value={newStory.testimonial} onChange={e => setNewStory({ ...newStory, testimonial: e.target.value })} />
+                        <textarea rows={3} value={storyForm.testimonial} onChange={e => setStoryForm({ ...storyForm, testimonial: e.target.value })} />
                     </FormField>
                     <FormField label={UI_STRINGS.PLACEMENTS.FORM_IMAGE_URL}>
-                        <input type="file" accept="image/png, image/jpeg" onChange={handleFileChange} />
+                        <input type="file" accept="image/png, image/jpeg" onChange={(e) => {
+                            if (e.target.files?.[0]) {
+                                setSelectedFile(e.target.files[0]);
+                                setPreviewUrl(URL.createObjectURL(e.target.files[0]));
+                            }
+                        }} />
                     </FormField>
                     <FormActions>
-                        <button type="button" className="btn btn-secondary" disabled={saving} onClick={() => { setShowModal(false); resetForm(); }}>{UI_STRINGS.COMMON.CANCEL}</button>
+                        <button type="button" className="btn btn-secondary" onClick={() => setShowStoryModal(false)}>{UI_STRINGS.COMMON.CANCEL}</button>
                         <button type="submit" className="btn btn-primary" disabled={saving}>
                             {saving ? UI_STRINGS.COMMON.LOADING : UI_STRINGS.COMMON.SAVE}
                         </button>
                     </FormActions>
                 </form>
+            </Modal>
+
+            {/* Modal: Edit Stats */}
+            <Modal 
+                isOpen={showStatsModal} 
+                onClose={() => setShowStatsModal(false)}
+                title={`${UI_STRINGS.PLACEMENTS.EDIT_STATS} (${selectedYear})`}
+            >
+                <form onSubmit={handleSaveStats} className="form-layout">
+                    <FormRow>
+                        <FormField label={UI_STRINGS.PLACEMENTS.FORM_COMPANIES_COUNT}>
+                            <input type="number" required value={statsForm.companiesCount} onChange={e => setStatsForm({ ...statsForm, companiesCount: Number(e.target.value) })} />
+                        </FormField>
+                        <FormField label={UI_STRINGS.PLACEMENTS.FORM_STUDENTS_PLACED}>
+                            <input type="number" required value={statsForm.studentsPlaced} onChange={e => setStatsForm({ ...statsForm, studentsPlaced: Number(e.target.value) })} />
+                        </FormField>
+                    </FormRow>
+                    <FormRow>
+                        <FormField label={UI_STRINGS.PLACEMENTS.FORM_AVG_PACKAGE}>
+                            <input type="number" step="0.1" required value={statsForm.averagePackage} onChange={e => setStatsForm({ ...statsForm, averagePackage: Number(e.target.value) })} />
+                        </FormField>
+                        <FormField label={UI_STRINGS.PLACEMENTS.FORM_HIGHEST_PACKAGE}>
+                            <input type="number" step="0.1" required value={statsForm.highestPackage} onChange={e => setStatsForm({ ...statsForm, highestPackage: Number(e.target.value) })} />
+                        </FormField>
+                    </FormRow>
+                    <FormActions>
+                        <button type="button" className="btn btn-secondary" onClick={() => setShowStatsModal(false)}>{UI_STRINGS.COMMON.CANCEL}</button>
+                        <button type="submit" className="btn btn-primary" disabled={saving}>
+                            {saving ? UI_STRINGS.COMMON.LOADING : UI_STRINGS.COMMON.SAVE}
+                        </button>
+                    </FormActions>
+                </form>
+            </Modal>
+            
+            {/* Modal: Delete Confirmation */}
+            <Modal
+                isOpen={showDeleteModal}
+                onClose={() => setShowDeleteModal(false)}
+                title="Confirm Deletion"
+            >
+                <div className="py-md text-center">
+                    <p className="mb-lg">{UI_STRINGS.PLACEMENTS.DELETE_STORY_CONFIRM}</p>
+                    <div className="flex justify-center gap-md">
+                        <button 
+                            className="btn btn-secondary" 
+                            disabled={saving}
+                            onClick={() => setShowDeleteModal(false)}
+                        >
+                            {UI_STRINGS.COMMON.CANCEL}
+                        </button>
+                        <button 
+                            className="btn btn-primary" 
+                            style={{ backgroundColor: 'var(--error)' }}
+                            disabled={saving}
+                            onClick={handleConfirmDelete}
+                        >
+                            {saving ? UI_STRINGS.COMMON.LOADING : UI_STRINGS.COMMON.DELETE}
+                        </button>
+                    </div>
+                </div>
             </Modal>
         </div>
     );

@@ -17,9 +17,9 @@ describe('COLLECTIONS', () => {
     expect(COLLECTIONS.COURSES).toBe('courses');
     expect(COLLECTIONS.EXAMS).toBe('exams');
     expect(COLLECTIONS.ANNOUNCEMENTS).toBe('announcements');
-    expect(COLLECTIONS.PLACEMENTS).toBe('placementStats');
+    expect(COLLECTIONS.PLACEMENTS).toBe('placements');
+    expect(COLLECTIONS.PLACEMENT_STATS).toBe('placementStats');
     expect(COLLECTIONS.OPPORTUNITIES).toBe('opportunities');
-    expect(COLLECTIONS.SUCCESS_STORIES).toBe('successStories');
     expect(COLLECTIONS.PROGRESS).toBe('user_progress');
     expect(COLLECTIONS.ATTENDANCE).toBe('attendance');
   });
