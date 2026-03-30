@@ -1090,3 +1090,133 @@ textarea:focus {
   background-color: rgba(var(--primary-rgb), 0.1);
   border-color: rgba(var(--primary-rgb), 0.3);
 }
+
+/* Target Mode Selector */
+.target-mode-selector {
+  display: flex;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+  background: var(--input-bg);
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+}
+
+.target-mode-btn {
+  flex: 1;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.target-mode-btn.active {
+  background: var(--bg-card);
+  color: var(--primary);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  font-weight: 600;
+}
+
+/* Student Picker */
+.student-picker-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: var(--space-sm);
+  background-color: var(--bg-card);
+}
+
+.student-search-input {
+  background-color: var(--input-bg);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-main);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 0.9rem;
+}
+
+.student-search-input:focus {
+  outline: 1px solid var(--primary);
+  border-color: transparent;
+}
+
+.student-list {
+  max-height: 200px;
+  overflow-y: auto;
+  border-top: 1px solid var(--border-subtle);
+  padding-top: var(--space-xs);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.student-list-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.student-list-item:hover {
+  background-color: rgba(var(--primary-rgb), 0.05);
+}
+
+.student-list-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.student-list-name {
+  font-size: 0.85rem;
+  color: var(--text-main);
+  font-weight: 500;
+}
+
+.student-list-meta {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  display: flex;
+  gap: 8px;
+}
+
+.selected-students-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: var(--space-xs);
+}
+
+.student-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background-color: rgba(var(--primary-rgb), 0.1);
+  color: var(--primary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 12px;
+  border: 1px solid rgba(var(--primary-rgb), 0.2);
+}
+
+.student-chip-remove {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.student-chip-remove:hover {
+  color: var(--error);
+}

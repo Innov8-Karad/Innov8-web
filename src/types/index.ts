@@ -143,7 +143,9 @@ export interface Announcement {
     id: string;
     title: string;
     content: string;
+    targetAudience?: 'all' | 'batch' | 'students';
     targetBatches: string[];
+    targetStudentIds?: string[];
     createdAt: Date;
     priority: 'low' | 'medium' | 'high';
     author: string;
