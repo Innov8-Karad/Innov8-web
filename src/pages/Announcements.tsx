@@ -1,55 +1,144 @@
 import { useState, useEffect } from 'react';
-import { Bell, Megaphone, Trash2, Calendar } from 'lucide-react';
+import { Bell, Megaphone, Trash2, Calendar, Edit2 } from 'lucide-react';
 import { announcementService } from '../services/announcementService';
-import { PRIORITY_LEVELS, PRIORITY_COLORS, UI_STRINGS } from '../constants';
+import { PRIORITY_LEVELS, PRIORITY_COLORS, UI_STRINGS, DEFAULT_VALUES } from '../constants';
 import type { Announcement } from '../types';
 import PageHeader from '../components/PageHeader';
 import LoadingState from '../components/LoadingState';
 import ErrorAlert from '../components/ErrorAlert';
 import Modal from '../components/Modal';
 import { FormField, FormRow, FormActions } from '../components/FormField';
+import { useToast } from '../hooks/useToast';
 
 export default function AnnouncementsPage() {
+    const { showToast } = useToast();
     const [announcements, setAnnouncements] = useState<Announcement[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [showModal, setShowModal] = useState(false);
-    const [newAnnouncement, setNewAnnouncement] = useState({
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deleteId, setDeleteId] = useState<string | null>(null);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editId, setEditId] = useState<string | null>(null);
+    const [uniqueBatches, setUniqueBatches] = useState<string[]>([]);
+
+    const initialFormState = {
         title: '',
         content: '',
         priority: PRIORITY_LEVELS.MEDIUM as 'high' | 'medium' | 'low',
         targetBatches: [] as string[]
-    });
+    };
+    const [formData, setFormData] = useState(initialFormState);
 
     useEffect(() => {
-        const fetchAnnouncements = async () => {
+        const fetchData = async () => {
             try {
                 setLoading(true);
                 setError(null);
-                const data = await announcementService.fetchAnnouncements();
+                const [data, batches] = await Promise.all([
+                    announcementService.fetchAnnouncements(),
+                    announcementService.fetchUniqueBatches()
+                ]);
                 setAnnouncements(data);
+                setUniqueBatches(batches);
             } catch (err) {
-                console.error("Error fetching announcements:", err);
+                console.error("Error fetching data:", err);
                 setError(UI_STRINGS.ANNOUNCEMENTS.ERROR_LOAD);
             } finally {
                 setLoading(false);
             }
         };
-        fetchAnnouncements();
+        fetchData();
     }, []);
 
-    const handleCreate = async (e: React.FormEvent) => {
+    const handleOpenCreate = () => {
+        setIsEditing(false);
+        setEditId(null);
+        setFormData(initialFormState);
+        setShowModal(true);
+    };
+
+    const handleOpenEdit = (ann: Announcement) => {
+        setIsEditing(true);
+        setEditId(ann.id);
+        setFormData({
+            title: ann.title,
+            content: ann.content,
+            priority: ann.priority,
+            targetBatches: ann.targetBatches || []
+        });
+        setShowModal(true);
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
             setError(null);
-            const created = await announcementService.createAnnouncement(newAnnouncement);
-            setAnnouncements([created, ...announcements]);
+            
+            // Ensure at least All is targeted if empty
+            const submitData = {
+                ...formData,
+                targetBatches: formData.targetBatches.length > 0 ? formData.targetBatches : [DEFAULT_VALUES.TARGET_BATCH_ALL]
+            };
+
+            if (isEditing && editId) {
+                await announcementService.updateAnnouncement(editId, submitData);
+                setAnnouncements(announcements.map(ann => 
+                    ann.id === editId ? { ...ann, ...submitData } as Announcement : ann
+                ));
+                showToast('Announcement updated successfully', 'success');
+            } else {
+                const created = await announcementService.createAnnouncement(submitData);
+                setAnnouncements([created, ...announcements]);
+                showToast('Announcement created successfully', 'success');
+            }
             setShowModal(false);
-            setNewAnnouncement({ title: '', content: '', priority: PRIORITY_LEVELS.MEDIUM, targetBatches: [] });
         } catch (err) {
-            console.error("Error creating announcement:", err);
-            setError(UI_STRINGS.ANNOUNCEMENTS.ERROR_CREATE);
+            console.error("Error saving announcement:", err);
+            setError(isEditing ? UI_STRINGS.ANNOUNCEMENTS.ERROR_UPDATE : UI_STRINGS.ANNOUNCEMENTS.ERROR_CREATE);
+            showToast(UI_STRINGS.COMMON.ERROR_PRIMARY, 'error');
         }
+    };
+
+    const handleOpenDelete = (id: string) => {
+        setDeleteId(id);
+        setShowDeleteModal(true);
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteId) return;
+        try {
+            setError(null);
+            await announcementService.deleteAnnouncement(deleteId);
+            setAnnouncements(announcements.filter(ann => ann.id !== deleteId));
+            setShowDeleteModal(false);
+            setDeleteId(null);
+            showToast('Announcement deleted successfully', 'success');
+        } catch (err) {
+            console.error("Error deleting announcement:", err);
+            setError(UI_STRINGS.ANNOUNCEMENTS.ERROR_DELETE);
+            showToast(UI_STRINGS.COMMON.ERROR_PRIMARY, 'error');
+        }
+    };
+
+    const toggleBatch = (batch: string) => {
+        if (batch === DEFAULT_VALUES.TARGET_BATCH_ALL) {
+            // Selecting All clears others, unselecting all clears selection
+            setFormData(prev => ({
+                ...prev,
+                targetBatches: prev.targetBatches.includes(DEFAULT_VALUES.TARGET_BATCH_ALL) ? [] : [DEFAULT_VALUES.TARGET_BATCH_ALL]
+            }));
+            return;
+        }
+
+        setFormData(prev => {
+            const current = prev.targetBatches.filter(b => b !== DEFAULT_VALUES.TARGET_BATCH_ALL); // Remove 'All' if selecting specific batch
+            if (current.includes(batch)) {
+                return { ...prev, targetBatches: current.filter(b => b !== batch) };
+            } else {
+                return { ...prev, targetBatches: [...current, batch] };
+            }
+        });
     };
 
     const getPriorityColor = (p: string) => {
@@ -65,7 +154,7 @@ export default function AnnouncementsPage() {
                 title={UI_STRINGS.ANNOUNCEMENTS.TITLE}
                 subtitle={UI_STRINGS.ANNOUNCEMENTS.SUBTITLE}
                 actionLabel={UI_STRINGS.ANNOUNCEMENTS.NEW_BTN}
-                onAction={() => setShowModal(true)}
+                onAction={handleOpenCreate}
             />
 
             <div className="grid-single">
@@ -92,12 +181,21 @@ export default function AnnouncementsPage() {
                                         <Calendar size={14} />
                                         {ann.createdAt.toLocaleDateString()}
                                         <span style={{ margin: '0 4px' }}>•</span>
+                                        <span className={`priority-badge priority-${ann.priority}`}>
+                                            {ann.priority}
+                                        </span>
+                                        <span style={{ margin: '0 4px' }}>•</span>
                                         {UI_STRINGS.ANNOUNCEMENTS.TARGET_LABEL}: {ann.targetBatches.join(', ')}
                                     </div>
                                 </div>
-                                <button className="icon-btn" title={UI_STRINGS.COMMON.DELETE}>
-                                    <Trash2 size={18} />
-                                </button>
+                                <div className="flex gap-2">
+                                    <button className="icon-btn" title={UI_STRINGS.COMMON.EDIT} onClick={() => handleOpenEdit(ann)}>
+                                        <Edit2 size={18} />
+                                    </button>
+                                    <button className="icon-btn" title={UI_STRINGS.COMMON.DELETE} onClick={() => handleOpenDelete(ann.id)}>
+                                        <Trash2 size={18} />
+                                    </button>
+                                </div>
                             </div>
                             <p className="mt-md" style={{ lineHeight: 1.6 }}>{ann.content}</p>
                         </div>
@@ -108,28 +206,101 @@ export default function AnnouncementsPage() {
                 )}
             </div>
 
-            <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={UI_STRINGS.ANNOUNCEMENTS.MODAL_TITLE}>
-                <form onSubmit={handleCreate} className="form-layout" style={{ marginTop: 'var(--space-md)' }}>
-                    <FormField label={UI_STRINGS.ANNOUNCEMENTS.FORM_TITLE}>
-                        <input type="text" value={newAnnouncement.title} onChange={e => setNewAnnouncement({ ...newAnnouncement, title: e.target.value })} required />
-                    </FormField>
-                    <FormField label={UI_STRINGS.ANNOUNCEMENTS.FORM_CONTENT}>
-                        <textarea rows={4} value={newAnnouncement.content} onChange={e => setNewAnnouncement({ ...newAnnouncement, content: e.target.value })} required />
-                    </FormField>
-                    <FormRow>
-                        <FormField label={UI_STRINGS.ANNOUNCEMENTS.FORM_PRIORITY}>
-                            <select value={newAnnouncement.priority} onChange={e => setNewAnnouncement({ ...newAnnouncement, priority: e.target.value as 'high' | 'medium' | 'low' })}>
-                                <option value={PRIORITY_LEVELS.LOW}>Low</option>
-                                <option value={PRIORITY_LEVELS.MEDIUM}>Medium</option>
-                                <option value={PRIORITY_LEVELS.HIGH}>High</option>
-                            </select>
-                        </FormField>
-                    </FormRow>
-                    <FormActions>
-                        <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>{UI_STRINGS.COMMON.CANCEL}</button>
-                        <button type="submit" className="btn btn-primary">{UI_STRINGS.COMMON.PUBLISH}</button>
-                    </FormActions>
-                </form>
+            <Modal 
+                isOpen={showModal} 
+                onClose={() => setShowModal(false)} 
+                title={isEditing ? UI_STRINGS.ANNOUNCEMENTS.EDIT_MODAL_TITLE : UI_STRINGS.ANNOUNCEMENTS.MODAL_TITLE}
+                maxWidth="900px"
+            >
+                <div className="grid-2col" style={{ marginTop: 'var(--space-md)' }}>
+                    {/* Form Section */}
+                    <div>
+                        <form onSubmit={handleSubmit} className="form-layout" style={{ marginTop: 0 }}>
+                            <FormField label={UI_STRINGS.ANNOUNCEMENTS.FORM_TITLE}>
+                                <input type="text" value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} required />
+                            </FormField>
+                            <FormField label={UI_STRINGS.ANNOUNCEMENTS.FORM_CONTENT}>
+                                <textarea rows={4} value={formData.content} onChange={e => setFormData({ ...formData, content: e.target.value })} required />
+                            </FormField>
+                            <FormRow>
+                                <FormField label={UI_STRINGS.ANNOUNCEMENTS.FORM_PRIORITY}>
+                                    <select value={formData.priority} onChange={e => setFormData({ ...formData, priority: e.target.value as 'high' | 'medium' | 'low' })}>
+                                        <option value={PRIORITY_LEVELS.LOW}>Low</option>
+                                        <option value={PRIORITY_LEVELS.MEDIUM}>Medium</option>
+                                        <option value={PRIORITY_LEVELS.HIGH}>High</option>
+                                    </select>
+                                </FormField>
+                            </FormRow>
+                            <FormField label={UI_STRINGS.ANNOUNCEMENTS.TARGET_LABEL}>
+                                <div className="batch-multi-select">
+                                    <label className="batch-checkbox-item">
+                                        <input 
+                                            type="checkbox" 
+                                            checked={formData.targetBatches.includes(DEFAULT_VALUES.TARGET_BATCH_ALL)} 
+                                            onChange={() => toggleBatch(DEFAULT_VALUES.TARGET_BATCH_ALL)} 
+                                        />
+                                        All Batches
+                                    </label>
+                                    {uniqueBatches.map(batch => (
+                                        <label key={batch} className="batch-checkbox-item">
+                                            <input 
+                                                type="checkbox" 
+                                                checked={formData.targetBatches.includes(batch)} 
+                                                onChange={() => toggleBatch(batch)} 
+                                            />
+                                            {batch}
+                                        </label>
+                                    ))}
+                                </div>
+                            </FormField>
+                            <FormActions>
+                                <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>{UI_STRINGS.COMMON.CANCEL}</button>
+                                <button type="submit" className="btn btn-primary">{UI_STRINGS.COMMON.SAVE}</button>
+                            </FormActions>
+                        </form>
+                    </div>
+
+                    {/* Preview Section */}
+                    <div>
+                        <h3 style={{ marginBottom: '16px', fontSize: '1rem', color: 'var(--text-secondary)' }}>{UI_STRINGS.ANNOUNCEMENTS.LIVE_PREVIEW}</h3>
+                        <div className="mobile-preview-frame">
+                            <div className="mobile-preview-header">
+                                <div className="mobile-preview-title">{UI_STRINGS.ANNOUNCEMENTS.TITLE}</div>
+                            </div>
+                            <div className="mobile-preview-content">
+                                {(formData.title || formData.content) ? (
+                                    <div className="mobile-preview-card">
+                                        <div className="flex justify-between items-start">
+                                            <span className={`priority-badge priority-${formData.priority}`}>
+                                                {formData.priority}
+                                            </span>
+                                            <span className="text-xs text-muted">Just now</span>
+                                        </div>
+                                        <div className="mobile-preview-card-title">{formData.title || 'Announcement Title'}</div>
+                                        <div className="mobile-preview-card-text">
+                                            {formData.content || 'Announcement content will appear here.'}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="text-center text-muted" style={{ marginTop: '50px' }}>
+                                        Start typing to see preview
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* Delete Confirmation Modal */}
+            <Modal isOpen={showDeleteModal} onClose={() => setShowDeleteModal(false)} title={UI_STRINGS.ANNOUNCEMENTS.CONFIRM_DELETE_TITLE} maxWidth="400px">
+                <div style={{ marginTop: 'var(--space-md)' }}>
+                    <p>{UI_STRINGS.ANNOUNCEMENTS.CONFIRM_DELETE_DESC}</p>
+                    <div className="flex justify-end gap-2" style={{ marginTop: 'var(--space-lg)' }}>
+                        <button className="btn btn-secondary" onClick={() => setShowDeleteModal(false)}>{UI_STRINGS.COMMON.CANCEL}</button>
+                        <button className="btn btn-danger" onClick={confirmDelete}>{UI_STRINGS.COMMON.DELETE}</button>
+                    </div>
+                </div>
             </Modal>
         </div>
     );

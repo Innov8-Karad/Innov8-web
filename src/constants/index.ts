@@ -26,10 +26,10 @@ export const PRIORITY_LEVELS = {
 } as const;
 
 export const PRIORITY_COLORS = {
-  [PRIORITY_LEVELS.HIGH]: 'var(--error)',
-  [PRIORITY_LEVELS.MEDIUM]: 'var(--primary)',
-  [PRIORITY_LEVELS.LOW]: 'var(--success)',
-  DEFAULT: 'var(--text-secondary)',
+  [PRIORITY_LEVELS.HIGH]: '#EF4444',
+  [PRIORITY_LEVELS.MEDIUM]: '#F59E0B',
+  [PRIORITY_LEVELS.LOW]: '#10B981',
+  DEFAULT: '#6B7280',
 } as const;
 
 export const DEFAULT_VALUES = {
@@ -72,14 +72,21 @@ export const UI_STRINGS = {
     SUBTITLE: 'Send updates and notifications to students',
     NEW_BTN: 'New Announcement',
     MODAL_TITLE: 'New Announcement',
+    EDIT_MODAL_TITLE: 'Edit Announcement',
     LOADING: 'Loading announcements...',
     ERROR_LOAD: 'Failed to load announcements. Please try again later.',
     ERROR_CREATE: 'Failed to create announcement. Please try again.',
+    ERROR_UPDATE: 'Failed to update announcement. Please try again.',
+    ERROR_DELETE: 'Failed to delete announcement. Please try again.',
     EMPTY: 'No announcements found.',
     FORM_TITLE: 'Title',
     FORM_CONTENT: 'Content',
     FORM_PRIORITY: 'Priority',
     TARGET_LABEL: 'Target',
+    CONFIRM_DELETE_TITLE: 'Delete Announcement',
+    CONFIRM_DELETE_DESC: 'Are you sure you want to delete this announcement? This action cannot be undone.',
+    PREVIEW_TITLE: 'Mobile Preview',
+    LIVE_PREVIEW: 'Live Preview',
   },
   // Courses page
   COURSES: {
