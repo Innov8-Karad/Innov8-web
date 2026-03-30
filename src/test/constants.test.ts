@@ -61,11 +61,11 @@ describe('PRIORITY_LEVELS', () => {
 });
 
 describe('PRIORITY_COLORS', () => {
-  it('should map each priority level to a CSS variable', () => {
-    expect(PRIORITY_COLORS[PRIORITY_LEVELS.HIGH]).toContain('var(--');
-    expect(PRIORITY_COLORS[PRIORITY_LEVELS.MEDIUM]).toContain('var(--');
-    expect(PRIORITY_COLORS[PRIORITY_LEVELS.LOW]).toContain('var(--');
-    expect(PRIORITY_COLORS.DEFAULT).toContain('var(--');
+  it('should map each priority level to a Hex color string', () => {
+    expect(PRIORITY_COLORS[PRIORITY_LEVELS.HIGH]).toMatch(/^#/);
+    expect(PRIORITY_COLORS[PRIORITY_LEVELS.MEDIUM]).toMatch(/^#/);
+    expect(PRIORITY_COLORS[PRIORITY_LEVELS.LOW]).toMatch(/^#/);
+    expect(PRIORITY_COLORS.DEFAULT).toMatch(/^#/);
   });
 });
 

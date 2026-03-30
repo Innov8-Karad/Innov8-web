@@ -3,7 +3,10 @@ import {
   getDocs, 
   query, 
   orderBy, 
-  addDoc, 
+  addDoc,
+  doc,
+  updateDoc,
+  deleteDoc,
   Timestamp,
   type DocumentData 
 } from 'firebase/firestore';
@@ -38,6 +41,37 @@ export const announcementService = {
       createdAt: new Date(),
       targetBatches: docData.targetBatches
     } as Announcement;
+  },
+
+  async updateAnnouncement(id: string, data: Partial<Announcement>): Promise<void> {
+    const docRef = doc(db, COLLECTIONS.ANNOUNCEMENTS, id);
+    // Clean undefined values
+    const cleanedData = Object.fromEntries(
+        Object.entries(data).filter((entry) => entry[1] !== undefined)
+    );
+    await updateDoc(docRef, cleanedData);
+  },
+
+  async deleteAnnouncement(id: string): Promise<void> {
+    const docRef = doc(db, COLLECTIONS.ANNOUNCEMENTS, id);
+    await deleteDoc(docRef);
+  },
+
+  async fetchUniqueBatches(): Promise<string[]> {
+    try {
+      const snap = await getDocs(collection(db, COLLECTIONS.USERS));
+      const batches = new Set<string>();
+      
+      snap.forEach(doc => {
+        const batch = doc.data().batch;
+        if (batch) batches.add(batch);
+      });
+      
+      return Array.from(batches).sort();
+    } catch (error) {
+      console.error('Error fetching unique batches:', error);
+      return [];
+    }
   },
 
   mapDocToAnnouncement(doc: DocumentData): Announcement {
