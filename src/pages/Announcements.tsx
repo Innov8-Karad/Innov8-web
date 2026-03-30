@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Bell, Megaphone, Trash2, Calendar, Edit2 } from 'lucide-react';
+import { Bell, Megaphone, Trash2, Calendar, Edit2, X } from 'lucide-react';
 import { announcementService } from '../services/announcementService';
+import { userService } from '../services/userService';
 import { PRIORITY_LEVELS, PRIORITY_COLORS, UI_STRINGS, DEFAULT_VALUES } from '../constants';
-import type { Announcement } from '../types';
+import type { Announcement, User } from '../types';
 import PageHeader from '../components/PageHeader';
 import LoadingState from '../components/LoadingState';
 import ErrorAlert from '../components/ErrorAlert';
@@ -21,12 +22,16 @@ export default function AnnouncementsPage() {
     const [isEditing, setIsEditing] = useState(false);
     const [editId, setEditId] = useState<string | null>(null);
     const [uniqueBatches, setUniqueBatches] = useState<string[]>([]);
+    const [students, setStudents] = useState<User[]>([]);
+    const [searchQuery, setSearchQuery] = useState('');
 
     const initialFormState = {
         title: '',
         content: '',
         priority: PRIORITY_LEVELS.MEDIUM as 'high' | 'medium' | 'low',
-        targetBatches: [] as string[]
+        targetAudience: 'all' as 'all' | 'batch' | 'students',
+        targetBatches: [] as string[],
+        targetStudentIds: [] as string[]
     };
     const [formData, setFormData] = useState(initialFormState);
 
@@ -35,12 +40,14 @@ export default function AnnouncementsPage() {
             try {
                 setLoading(true);
                 setError(null);
-                const [data, batches] = await Promise.all([
+                const [data, batches, usersData] = await Promise.all([
                     announcementService.fetchAnnouncements(),
-                    announcementService.fetchUniqueBatches()
+                    announcementService.fetchUniqueBatches(),
+                    userService.fetchUsers()
                 ]);
                 setAnnouncements(data);
                 setUniqueBatches(batches);
+                setStudents(usersData.filter(u => u.role !== 'admin'));
             } catch (err) {
                 console.error("Error fetching data:", err);
                 setError(UI_STRINGS.ANNOUNCEMENTS.ERROR_LOAD);
@@ -65,7 +72,9 @@ export default function AnnouncementsPage() {
             title: ann.title,
             content: ann.content,
             priority: ann.priority,
-            targetBatches: ann.targetBatches || []
+            targetAudience: ann.targetAudience || 'all',
+            targetBatches: ann.targetBatches || [],
+            targetStudentIds: ann.targetStudentIds || []
         });
         setShowModal(true);
     };
@@ -75,10 +84,8 @@ export default function AnnouncementsPage() {
         try {
             setError(null);
             
-            // Ensure at least All is targeted if empty
             const submitData = {
-                ...formData,
-                targetBatches: formData.targetBatches.length > 0 ? formData.targetBatches : [DEFAULT_VALUES.TARGET_BATCH_ALL]
+                ...formData
             };
 
             if (isEditing && editId) {
@@ -141,6 +148,17 @@ export default function AnnouncementsPage() {
         });
     };
 
+    const toggleStudent = (studentId: string) => {
+        setFormData(prev => {
+            const current = prev.targetStudentIds || [];
+            if (current.includes(studentId)) {
+                return { ...prev, targetStudentIds: current.filter(id => id !== studentId) };
+            } else {
+                return { ...prev, targetStudentIds: [...current, studentId] };
+            }
+        });
+    };
+
     const getPriorityColor = (p: string) => {
         return PRIORITY_COLORS[p as keyof typeof PRIORITY_COLORS] || PRIORITY_COLORS.DEFAULT;
     };
@@ -185,7 +203,12 @@ export default function AnnouncementsPage() {
                                             {ann.priority}
                                         </span>
                                         <span style={{ margin: '0 4px' }}>•</span>
-                                        {UI_STRINGS.ANNOUNCEMENTS.TARGET_LABEL}: {ann.targetBatches.join(', ')}
+                                        {UI_STRINGS.ANNOUNCEMENTS.TARGET_LABEL}: {
+                                            ann.targetAudience === 'students' ? `${ann.targetStudentIds?.length || 0} students` :
+                                            ann.targetAudience === 'all' ? 'All Students' :
+                                            ((!ann.targetAudience && (!ann.targetBatches || ann.targetBatches.includes('All'))) ? 'All Students' :
+                                            (ann.targetBatches && ann.targetBatches.length > 0 ? ann.targetBatches.join(', ') : 'All Students'))
+                                        }
                                     </div>
                                 </div>
                                 <div className="flex gap-2">
@@ -232,26 +255,113 @@ export default function AnnouncementsPage() {
                                 </FormField>
                             </FormRow>
                             <FormField label={UI_STRINGS.ANNOUNCEMENTS.TARGET_LABEL}>
-                                <div className="batch-multi-select">
-                                    <label className="batch-checkbox-item">
-                                        <input 
-                                            type="checkbox" 
-                                            checked={formData.targetBatches.includes(DEFAULT_VALUES.TARGET_BATCH_ALL)} 
-                                            onChange={() => toggleBatch(DEFAULT_VALUES.TARGET_BATCH_ALL)} 
-                                        />
-                                        All Batches
-                                    </label>
-                                    {uniqueBatches.map(batch => (
-                                        <label key={batch} className="batch-checkbox-item">
+                                <div className="target-mode-selector">
+                                    <button 
+                                        type="button"
+                                        className={`target-mode-btn ${formData.targetAudience === 'all' ? 'active' : ''}`}
+                                        onClick={() => setFormData({...formData, targetAudience: 'all'})}
+                                    >
+                                        {UI_STRINGS.ANNOUNCEMENTS.TARGET_ALL}
+                                    </button>
+                                    <button 
+                                        type="button"
+                                        className={`target-mode-btn ${formData.targetAudience === 'batch' ? 'active' : ''}`}
+                                        onClick={() => setFormData({...formData, targetAudience: 'batch'})}
+                                    >
+                                        {UI_STRINGS.ANNOUNCEMENTS.TARGET_BATCH}
+                                    </button>
+                                    <button 
+                                        type="button"
+                                        className={`target-mode-btn ${formData.targetAudience === 'students' ? 'active' : ''}`}
+                                        onClick={() => setFormData({...formData, targetAudience: 'students'})}
+                                    >
+                                        {UI_STRINGS.ANNOUNCEMENTS.TARGET_STUDENTS}
+                                    </button>
+                                </div>
+
+                                {formData.targetAudience === 'batch' && (
+                                    <div className="batch-multi-select" style={{ marginTop: 'var(--space-sm)' }}>
+                                        <label className="batch-checkbox-item">
                                             <input 
                                                 type="checkbox" 
-                                                checked={formData.targetBatches.includes(batch)} 
-                                                onChange={() => toggleBatch(batch)} 
+                                                checked={formData.targetBatches.includes(DEFAULT_VALUES.TARGET_BATCH_ALL)} 
+                                                onChange={() => toggleBatch(DEFAULT_VALUES.TARGET_BATCH_ALL)} 
                                             />
-                                            {batch}
+                                            All Batches
                                         </label>
-                                    ))}
-                                </div>
+                                        {uniqueBatches.map(batch => (
+                                            <label key={batch} className="batch-checkbox-item">
+                                                <input 
+                                                    type="checkbox" 
+                                                    checked={formData.targetBatches.includes(batch)} 
+                                                    onChange={() => toggleBatch(batch)} 
+                                                />
+                                                {batch}
+                                            </label>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {formData.targetAudience === 'students' && (
+                                    <div className="student-picker-container" style={{ marginTop: 'var(--space-sm)' }}>
+                                        {formData.targetStudentIds && formData.targetStudentIds.length > 0 && (
+                                            <div className="selected-students-chips">
+                                                {formData.targetStudentIds.map(id => {
+                                                    const student = students.find(s => s.id === id);
+                                                    return (
+                                                        <div key={id} className="student-chip">
+                                                            {student ? student.name : id}
+                                                            <div 
+                                                                className="student-chip-remove"
+                                                                onClick={(e) => { e.stopPropagation(); toggleStudent(id); }}
+                                                            >
+                                                                <X size={12} />
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                        <input
+                                            type="text"
+                                            className="student-search-input"
+                                            placeholder={UI_STRINGS.ANNOUNCEMENTS.STUDENT_SEARCH_PLACEHOLDER}
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                        />
+                                        <div className="student-list" style={{ marginTop: 'var(--space-sm)' }}>
+                                            {students
+                                                .filter(s => 
+                                                    s.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                                                    s.email.toLowerCase().includes(searchQuery.toLowerCase())
+                                                )
+                                                .map(student => (
+                                                    <div 
+                                                        key={student.id} 
+                                                        className="student-list-item"
+                                                        onClick={() => toggleStudent(student.id)}
+                                                    >
+                                                        <input 
+                                                            type="checkbox" 
+                                                            checked={(formData.targetStudentIds || []).includes(student.id)} 
+                                                            readOnly
+                                                        />
+                                                        <div className="student-list-info" style={{ marginLeft: '8px' }}>
+                                                            <div className="student-list-name">{student.name}</div>
+                                                            <div className="student-list-meta">
+                                                                <span>{student.batch}</span>
+                                                                <span>&bull;</span>
+                                                                <span>{student.email}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            {students.length === 0 && (
+                                                <div className="text-muted text-sm text-center py-2">No students found</div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
                             </FormField>
                             <FormActions>
                                 <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>{UI_STRINGS.COMMON.CANCEL}</button>

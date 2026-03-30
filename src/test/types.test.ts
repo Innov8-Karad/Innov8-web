@@ -111,6 +111,22 @@ describe('Announcement type', () => {
     expect(ann.priority).toBe('high');
     expect(ann.targetBatches).toContain('All');
   });
+
+  it('should accept announcement with student targeting', () => {
+    const ann: Announcement = {
+        id: 'ann-2',
+        title: 'Fee Reminder',
+        content: 'Your fee is overdue',
+        priority: 'high',
+        author: 'Admin',
+        targetAudience: 'students',
+        targetBatches: [],
+        targetStudentIds: ['uid-123', 'uid-456'],
+        createdAt: new Date()
+    };
+    expect(ann.targetAudience).toBe('students');
+    expect(ann.targetStudentIds).toHaveLength(2);
+  });
 });
 
 describe('Placement type', () => {

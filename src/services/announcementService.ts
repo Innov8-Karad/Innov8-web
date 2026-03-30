@@ -29,7 +29,9 @@ export const announcementService = {
       ...data,
       author: DEFAULT_VALUES.AUTHOR_ADMIN,
       createdAt: Timestamp.now(),
-      targetBatches: data.targetBatches.length > 0 ? data.targetBatches : [DEFAULT_VALUES.TARGET_BATCH_ALL]
+      targetAudience: data.targetAudience || 'all',
+      targetBatches: data.targetAudience === 'batch' && data.targetBatches.length > 0 ? data.targetBatches : [DEFAULT_VALUES.TARGET_BATCH_ALL],
+      targetStudentIds: data.targetAudience === 'students' ? (data.targetStudentIds || []) : []
     };
 
     const docRef = await addDoc(collection(db, COLLECTIONS.ANNOUNCEMENTS), docData);
@@ -39,7 +41,9 @@ export const announcementService = {
       ...data,
       author: DEFAULT_VALUES.AUTHOR_ADMIN,
       createdAt: new Date(),
-      targetBatches: docData.targetBatches
+      targetAudience: docData.targetAudience,
+      targetBatches: docData.targetBatches,
+      targetStudentIds: docData.targetStudentIds
     } as Announcement;
   },
 
