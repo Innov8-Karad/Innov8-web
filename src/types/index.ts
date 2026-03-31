@@ -50,10 +50,10 @@ export interface Fee {
 // ─── Exams ───────────────────────────────────────────────────────────────────
 
 export interface Question {
-    id: string;
-    text: string;
+    id?: string;
+    questionText: string;
     options: string[];
-    correctAnswer: number;
+    correctAnswerIndex: number;
     explanation?: string;
 }
 
