@@ -22,6 +22,7 @@ export const feeService = {
       ...doc.data(),
       dueDate: (doc.data() as DocumentData).dueDate?.toDate(),
       paidDate: (doc.data() as DocumentData).paidDate?.toDate(),
+      createdAt: (doc.data() as DocumentData).createdAt?.toDate(),
     } as Fee));
   },
 

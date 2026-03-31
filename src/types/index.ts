@@ -33,13 +33,18 @@ export type FeeStatus = 'paid' | 'pending' | 'overdue';
 export interface Fee {
     id: string;
     userId: string;
+    studentName: string;
+    email: string;
+    course: string;
+    description: string;
     amount: number;
     dueDate: Date;
     paidDate?: Date;
     status: FeeStatus;
-    description?: string;
+    createdAt: Date;
     method?: 'Cash' | 'Card' | 'Online';
     receiptUrl?: string;
+    studentId?: string; // legacy alias
 }
 
 // ─── Exams ───────────────────────────────────────────────────────────────────
