@@ -25,10 +25,14 @@ describe('Fee type', () => {
     const fee: Fee = {
       id: 'fee-1',
       userId: 'user-1',
+      studentName: 'John Doe',
+      email: 'john@example.com',
+      course: 'React Development',
       amount: 50000,
       dueDate: new Date(),
       description: 'Tuition Fee',
       status: 'pending',
+      createdAt: new Date(),
     };
     expect(fee.amount).toBe(50000);
     expect(fee.status).toBe('pending');

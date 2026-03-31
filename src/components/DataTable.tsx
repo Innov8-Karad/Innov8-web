@@ -11,7 +11,7 @@ export interface Column<T> {
 interface DataTableProps<T> {
     columns: Column<T>[];
     data: T[];
-    emptyMessage: string;
+    emptyMessage: ReactNode;
     keyExtractor: (item: T) => string;
 }
 
