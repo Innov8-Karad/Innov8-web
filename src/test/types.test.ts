@@ -171,14 +171,20 @@ describe('SuccessStory type', () => {
 describe('StudentProgress type', () => {
   it('should accept a valid student progress object', () => {
     const progress: StudentProgress = {
-      userId: 'user-1',
-      userName: 'John',
-      attendance: 85,
+      id: 'progress-1',
+      studentId: 'user-1',
+      studentName: 'John',
+      batch: 'Batch A',
+      attendancePercentage: 85,
       overallScore: 78,
       currentModule: 'React Hooks',
-      completedModules: ['HTML', 'CSS', 'JavaScript']
+      completedModules: ['HTML', 'CSS', 'JavaScript'],
+      // Keep legacy fields if needed for test coverage
+      userId: 'user-1',
+      userName: 'John',
+      attendance: 85
     };
-    expect(progress.attendance).toBe(85);
+    expect(progress.attendancePercentage).toBe(85);
     expect(progress.completedModules).toHaveLength(3);
   });
 });
