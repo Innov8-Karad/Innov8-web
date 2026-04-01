@@ -213,13 +213,19 @@ export interface PlacementOpportunity {
 // ─── Progress ────────────────────────────────────────────────────────────────
 
 export interface StudentProgress {
-    userId: string;
-    courseId?: string;
-    userName?: string;
-    overallProgress?: number;
-    attendance: number;
+    id: string;
+    studentId: string;
+    studentName: string;
+    email?: string;
+    batch: string;
+    attendancePercentage: number;
     overallScore: number;
     currentModule: string;
     completedModules: string[];
-    lastAccessed?: Date;
+    updatedAt?: { seconds: number; nanoseconds: number } | Date;
+    userId?: string; // Maintain backward compatibility if needed
+    courseId?: string;
+    userName?: string;
+    attendance?: number;
+    profilePhoto?: string;
 }

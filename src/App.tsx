@@ -1,10 +1,13 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { ToastProvider } from './contexts/ToastProvider';
 import { UserProvider } from './contexts/UserProvider';
+
 import Layout from './components/Layout';
+
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import UsersPage from './pages/Users';
@@ -14,22 +17,21 @@ import AnnouncementsPage from './pages/Announcements';
 import CoursesPage from './pages/Courses';
 import PlacementsPage from './pages/Placements';
 import ProgressPage from './pages/Progress';
+import StudentDetailPage from './pages/StudentDetailPage';
 
-function PrivateRoute({ children }: { children: React.ReactNode }) {
-  const { currentUser } = useAuth()!;
-  return currentUser ? children : <Navigate to="/login" />;
+interface PrivateRouteProps {
+  children: React.ReactNode;
 }
 
-const appRoutes = [
-  { path: '/', component: Dashboard },
-  { path: '/users', component: UsersPage },
-  { path: '/fees', component: FeesPage },
-  { path: '/exams', component: ExamsPage },
-  { path: '/announcements', component: AnnouncementsPage },
-  { path: '/courses', component: CoursesPage },
-  { path: '/placements', component: PlacementsPage },
-  { path: '/progress', component: ProgressPage },
-];
+function PrivateRoute({ children }: PrivateRouteProps) {
+  const auth = useAuth();
+
+  if (!auth?.currentUser) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <>{children}</>;
+}
 
 function App() {
   return (
@@ -40,19 +42,21 @@ function App() {
             <AuthProvider>
               <Routes>
                 <Route path="/login" element={<Login />} />
-                {appRoutes.map(({ path, component: Component }) => (
-                  <Route
-                    key={path}
-                    path={path}
-                    element={
-                      <PrivateRoute>
-                        <Layout>
-                          <Component />
-                        </Layout>
-                      </PrivateRoute>
-                    }
-                  />
-                ))}
+
+                {/* Protected Routes */}
+                <Route path="/" element={<PrivateRoute><Layout><Dashboard /></Layout></PrivateRoute>} />
+                <Route path="/users" element={<PrivateRoute><Layout><UsersPage /></Layout></PrivateRoute>} />
+                <Route path="/fees" element={<PrivateRoute><Layout><FeesPage /></Layout></PrivateRoute>} />
+                <Route path="/exams" element={<PrivateRoute><Layout><ExamsPage /></Layout></PrivateRoute>} />
+                <Route path="/announcements" element={<PrivateRoute><Layout><AnnouncementsPage /></Layout></PrivateRoute>} />
+                <Route path="/courses" element={<PrivateRoute><Layout><CoursesPage /></Layout></PrivateRoute>} />
+                <Route path="/placements" element={<PrivateRoute><Layout><PlacementsPage /></Layout></PrivateRoute>} />
+                <Route path="/progress" element={<PrivateRoute><Layout><ProgressPage /></Layout></PrivateRoute>} />
+                <Route path="/progress/:id" element={<PrivateRoute><Layout><StudentDetailPage /></Layout></PrivateRoute>} />
+
+                {/* Redirects */}
+                <Route path="/profile/:id" element={<Navigate to="/progress" replace />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </AuthProvider>
           </UserProvider>
@@ -62,4 +66,4 @@ function App() {
   );
 }
 
-export default App;
+export default App;
