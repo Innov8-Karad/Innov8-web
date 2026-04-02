@@ -9,6 +9,8 @@ service cloud.firestore {
     }
 
     function isAdmin() {
+      // Direct access to user doc to check role. 
+      // Firestore rules allow this get() if it's authorized by another rule or exists check.
       return isAuthenticated() &&
              exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
@@ -23,13 +25,20 @@ service cloud.firestore {
     // CRITICAL: Students CANNOT change their own 'role' field.
     match /users/{userId} {
       allow read: if isOwner(userId) || isAdmin();
-      allow create: if isOwner(userId)
+      allow create: if isOwner(userId) || isAdmin()
                     && request.resource.data.role == 'student'
                     && request.resource.data.keys().hasAll(['name', 'email', 'role']);
-      allow update: if isAdmin()
-                    || (isOwner(userId)
-                        && request.resource.data.role == resource.data.role);
+      allow update: if (isOwner(userId) && request.resource.data.role == resource.data.role)
+                    || isAdmin();
       allow delete: if isAdmin();
+
+      // NEW: Scoped job applications history for students
+      match /jobApplications/{jobId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId)
+                      && request.resource.data.keys().hasAll(['userId', 'jobId', 'appliedAt', 'status']);
+        allow update: if isAdmin();
+      }
     }
 
     // ── Fees ─────────────────────────────────────────────────────────────
@@ -44,11 +53,11 @@ service cloud.firestore {
     }
 
     // ── Courses ──────────────────────────────────────────────────────────
-    // All authenticated users read; admin creates with required 'title'.
+    // All authenticated users can read courses and their contents.
+    // Admin full CRUD.
     match /courses/{courseId} {
       allow read: if isAuthenticated();
-      allow create: if isAdmin()
-                    && request.resource.data.keys().hasAll(['title']);
+      allow create: if isAdmin() && request.resource.data.keys().hasAll(['title']);
       allow update, delete: if isAdmin();
 
       // ── Course Modules (Curriculum) ──
@@ -66,6 +75,8 @@ service cloud.firestore {
       // ── Course Assignments ──
       match /assignments/{assignmentId} {
         allow read: if isAuthenticated();
+        // Allow write for both admin (CRUD) and student (to submit or update status)
+        // However, admins manage the templates.
         allow write: if isAdmin();
       }
     }
@@ -121,6 +132,14 @@ service cloud.firestore {
     match /jobs/{jobId} {
       allow read: if isAuthenticated();
       allow write: if isAdmin();
+
+      // NEW: Applications sub-collection for students
+      match /applications/{userId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId)
+                      && request.resource.data.keys().hasAll(['userId', 'jobId', 'appliedAt', 'status']);
+        allow update: if isAdmin(); // Only admin can update application status
+      }
     }
 
     // ── Interviews ───────────────────────────────────────────────────────

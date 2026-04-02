@@ -11,10 +11,12 @@ interface AvatarProps {
 export default function Avatar({ src, alt, fallback, fallbackIcon, size = 'sm', upload, className = '' }: AvatarProps) {
     const sizeClass = `avatar-${size}`;
 
+    const isLocalFile = src?.startsWith('file://');
+
     return (
         <div className={`avatar ${sizeClass} ${upload ? 'avatar-upload' : ''} ${className}`}
              style={{ backgroundColor: 'var(--bg-card-accent)' }}>
-            {src ? (
+            {src && !isLocalFile ? (
                 <img src={src} alt={alt || 'Avatar'} />
             ) : fallbackIcon ? (
                 fallbackIcon

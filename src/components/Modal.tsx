@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
 interface ModalProps {
@@ -11,15 +12,16 @@ interface ModalProps {
 export default function Modal({ isOpen, onClose, title, maxWidth = '500px', children }: ModalProps) {
     if (!isOpen) return null;
 
-    return (
+    return createPortal(
         <div className="modal-overlay">
-            <div className="card modal-content" style={{ maxWidth }}>
+            <div className="card modal-content animate-fade-slide-up" style={{ maxWidth }}>
                 <button onClick={onClose} className="modal-close">
                     <X size={20} />
                 </button>
-                <h2>{title}</h2>
+                <h2 className="mb-lg text-2xl font-bold">{title}</h2>
                 {children}
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }

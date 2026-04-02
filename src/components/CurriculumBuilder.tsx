@@ -32,6 +32,11 @@ export default function CurriculumBuilder({ courseId }: CurriculumBuilderProps) 
         const unsubscribeModules = courseService.subscribeToModules(courseId, (fetchedModules) => {
             setModules(fetchedModules);
             setLoading(false);
+            
+            // Expand first module by default if none are expanded
+            if (fetchedModules.length > 0 && expandedModules.size === 0) {
+                setExpandedModules(new Set([fetchedModules[0].id]));
+            }
         });
 
         const unsubscribeResources = courseService.subscribeToResources(courseId, (fetchedResources) => {
@@ -48,7 +53,7 @@ export default function CurriculumBuilder({ courseId }: CurriculumBuilderProps) 
             unsubscribeResources();
             clearTimeout(timer);
         };
-    }, [courseId]);
+    }, [courseId, expandedModules.size]);
 
     const toggleModule = (moduleId: string) => {
         const newExpanded = new Set(expandedModules);

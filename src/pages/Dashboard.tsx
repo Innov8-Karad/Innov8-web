@@ -171,14 +171,14 @@ gap: 'var(--space-lg)'
 
 {/* Growth Chart */}
 
-<div className="card" style={{ padding: 'var(--space-lg)', height: '400px' }}>
+<div className="card" style={{ padding: 'var(--space-lg)', height: '400px', minWidth: 0 }}>
 
 <h3 className="flex items-center gap-2 mb-md">
 <TrendingUp size={20} color="var(--primary)" />
 Growth Trends
 </h3>
 
-<ResponsiveContainer width="100%" height="90%">
+<ResponsiveContainer width="100%" height="90%" minWidth={0}>
 <AreaChart data={trends}>
 <CartesianGrid strokeDasharray="3 3" />
 <XAxis dataKey="month" />
@@ -195,14 +195,14 @@ Growth Trends
 
 {/* Revenue Chart */}
 
-<div className="card" style={{ padding: 'var(--space-lg)', height: '400px' }}>
+<div className="card" style={{ padding: 'var(--space-lg)', height: '400px', minWidth: 0 }}>
 
 <h3 className="flex items-center gap-2 mb-md">
 <IndianRupee size={20} color="var(--success)" />
 Revenue Trend
 </h3>
 
-<ResponsiveContainer width="100%" height="90%">
+<ResponsiveContainer width="100%" height="90%" minWidth={0}>
 <BarChart data={trends}>
 <CartesianGrid strokeDasharray="3 3" />
 <XAxis dataKey="month" />

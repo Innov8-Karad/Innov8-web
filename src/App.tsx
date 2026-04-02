@@ -18,6 +18,7 @@ import CoursesPage from './pages/Courses';
 import PlacementsPage from './pages/Placements';
 import ProgressPage from './pages/Progress';
 import StudentDetailPage from './pages/StudentDetailPage';
+import JobsPage from './pages/JobsPage';
 
 interface PrivateRouteProps {
   children: React.ReactNode;
@@ -38,8 +39,8 @@ function App() {
     <Router>
       <ThemeProvider>
         <ToastProvider>
+        <AuthProvider>
           <UserProvider>
-            <AuthProvider>
               <Routes>
                 <Route path="/login" element={<Login />} />
 
@@ -53,13 +54,14 @@ function App() {
                 <Route path="/placements" element={<PrivateRoute><Layout><PlacementsPage /></Layout></PrivateRoute>} />
                 <Route path="/progress" element={<PrivateRoute><Layout><ProgressPage /></Layout></PrivateRoute>} />
                 <Route path="/progress/:id" element={<PrivateRoute><Layout><StudentDetailPage /></Layout></PrivateRoute>} />
+                <Route path="/jobs" element={<PrivateRoute><Layout><JobsPage /></Layout></PrivateRoute>} />
 
                 {/* Redirects */}
                 <Route path="/profile/:id" element={<Navigate to="/progress" replace />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
-            </AuthProvider>
           </UserProvider>
+        </AuthProvider>
         </ToastProvider>
       </ThemeProvider>
     </Router>

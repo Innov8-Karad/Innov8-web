@@ -75,6 +75,12 @@ export const courseService = {
   // ── Curriculum Builder (Modules) ──
 
   subscribeToModules(courseId: string, callback: (modules: CourseModule[]) => void) {
+    if (!courseId) {
+      console.warn("subscribeToModules called with empty courseId");
+      callback([]);
+      return () => {};
+    }
+
     const q = query(
       collection(db, COLLECTIONS.COURSES, courseId, 'modules'),
       orderBy('order', 'asc')
@@ -83,7 +89,7 @@ export const courseService = {
       const modules = snapshot.docs.map(document => ({ id: document.id, ...document.data() } as CourseModule));
       callback(modules);
     }, (error) => {
-      console.error("Error subscribing to modules:", error);
+      console.error(`Error subscribing to modules for course ${courseId}:`, error);
       callback([]);
     });
   },
@@ -110,12 +116,18 @@ export const courseService = {
   // ── Module Resources ──
 
   subscribeToResources(courseId: string, callback: (resources: CourseResource[]) => void) {
+    if (!courseId) {
+      console.warn("subscribeToResources called with empty courseId");
+      callback([]);
+      return () => {};
+    }
+
     const q = query(collection(db, COLLECTIONS.COURSES, courseId, 'resources'));
     return onSnapshot(q, (snapshot) => {
       const resources = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CourseResource));
       callback(resources);
     }, (error) => {
-      console.error("Error subscribing to resources:", error);
+      console.error(`Error subscribing to resources for course ${courseId}:`, error);
       callback([]);
     });
   },
@@ -141,12 +153,18 @@ export const courseService = {
   // ── Assignments ──
 
   subscribeToAssignments(courseId: string, callback: (assignments: AssignmentType[]) => void) {
+    if (!courseId) {
+      console.warn("subscribeToAssignments called with empty courseId");
+      callback([]);
+      return () => {};
+    }
+
     const q = query(collection(db, COLLECTIONS.COURSES, courseId, 'assignments'));
     return onSnapshot(q, (snapshot) => {
       const assignments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AssignmentType));
       callback(assignments);
     }, (error) => {
-      console.error("Error subscribing to assignments:", error);
+      console.error(`Error subscribing to assignments for course ${courseId}:`, error);
       callback([]);
     });
   },

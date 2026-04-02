@@ -6,6 +6,13 @@
 // Platform-specific display types belong in types/mobile.ts or types/admin.ts.
 // =============================================================================
 
+// ─── Shared ──────────────────────────────────────────────────────────────────
+export interface FirestoreTimestamp {
+    seconds: number;
+    nanoseconds: number;
+    toDate?: () => Date;
+}
+
 // ─── User ────────────────────────────────────────────────────────────────────
 
 export interface User {
@@ -100,8 +107,8 @@ export interface Course {
     icon?: string;
     iconColor?: string;
     iconBg?: string;
-    createdAt?: { seconds: number; nanoseconds: number };
-    updatedAt?: { seconds: number; nanoseconds: number };
+    createdAt?: FirestoreTimestamp;
+    updatedAt?: FirestoreTimestamp;
 }
 
 export interface CourseResource {
@@ -168,8 +175,8 @@ export interface SuccessStory {
     batch?: string;
     testimonial?: string;
     year: number;
-    createdAt?: { seconds: number; nanoseconds: number };
-    updatedAt?: { seconds: number; nanoseconds: number };
+    createdAt?: FirestoreTimestamp;
+    updatedAt?: FirestoreTimestamp;
 }
 
 export interface PlacementStats {
@@ -179,7 +186,7 @@ export interface PlacementStats {
     studentsPlaced: number;
     averagePackage: number;
     highestPackage: number;
-    updatedAt?: { seconds: number; nanoseconds: number };
+    updatedAt?: FirestoreTimestamp;
 }
 
 export interface Placement {
@@ -193,6 +200,35 @@ export interface Placement {
     companiesCount?: number;
     totalPlaced?: number;
     successStories: SuccessStory[];
+}
+
+export interface Job {
+    id: string;
+    companyName: string;
+    companyLogo?: string;
+    role: string;
+    location: string;
+    salary: string; 
+    requirements: string[]; 
+    jobType: 'Full-time' | 'Internship';
+    eligibleBatches: string[];
+    description: string;
+    postedAt: FirestoreTimestamp; // Firestore Timestamp
+    category?: string;
+    link?: string;
+}
+
+export interface JobApplication {
+    id?: string;
+    userId: string;
+    jobId: string;
+    appliedAt: FirestoreTimestamp; // Firestore Timestamp
+    status: 'pending' | 'under_review' | 'interviewed' | 'selected' | 'rejected';
+    studentName?: string;
+    studentEmail?: string;
+    studentPhoto?: string;
+    companyName?: string;
+    role?: string;
 }
 
 export interface PlacementOpportunity {
@@ -222,7 +258,7 @@ export interface StudentProgress {
     overallScore: number;
     currentModule: string;
     completedModules: string[];
-    updatedAt?: { seconds: number; nanoseconds: number } | Date;
+    updatedAt?: FirestoreTimestamp | Date;
     userId?: string; // Maintain backward compatibility if needed
     courseId?: string;
     userName?: string;

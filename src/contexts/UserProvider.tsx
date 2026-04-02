@@ -4,13 +4,27 @@ import { db } from '../lib/firebase';
 import { COLLECTIONS } from '../constants';
 import type { User } from '../types';
 import { UserContext } from './UserContext';
+import { useAuth } from './AuthContext';
 
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [students, setStudents] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { currentUser } = useAuth()!;
 
   useEffect(() => {
+    if (!currentUser) {
+      Promise.resolve().then(() => {
+        setStudents([]);
+        setLoading(false);
+      });
+      return;
+    }
+
+    Promise.resolve().then(() => {
+      setLoading(true);
+    });
+
     // Sync students collection in real-time
     const q = query(
       collection(db, COLLECTIONS.USERS),
@@ -45,7 +59,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
 
     return () => unsubscribe();
-  }, []);
+  }, [currentUser]);
 
   return (
     <UserContext.Provider value={{ students, loading, error }}>

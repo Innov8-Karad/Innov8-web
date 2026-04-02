@@ -43,6 +43,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         { icon: BookOpen, label: UI_STRINGS.NAV.COURSES, path: '/courses' },
         { icon: Award, label: UI_STRINGS.NAV.PROGRESS, path: '/progress' },
         { icon: Bell, label: UI_STRINGS.NAV.ANNOUNCEMENTS, path: '/announcements' },
+        { icon: Briefcase, label: UI_STRINGS.NAV.JOBS, path: '/jobs' },
     ];
 
     return (
