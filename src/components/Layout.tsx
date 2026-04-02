@@ -12,7 +12,8 @@ import {
     Award,
     Bell,
     LogOut,
-    Menu
+    Menu,
+    ClipboardList
 } from 'lucide-react';
 import logo from '../assets/logo.png';
 import { ThemeToggle } from './ThemeToggle';
@@ -39,6 +40,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         { icon: Users, label: UI_STRINGS.NAV.STUDENTS, path: '/users' },
         { icon: CreditCard, label: UI_STRINGS.NAV.FEES, path: '/fees' },
         { icon: FileText, label: UI_STRINGS.NAV.EXAMS, path: '/exams' },
+        { icon: ClipboardList, label: UI_STRINGS.EXAM_RESULTS.TITLE, path: '/exam-results' },
         { icon: Briefcase, label: UI_STRINGS.NAV.PLACEMENTS, path: '/placements' },
         { icon: BookOpen, label: UI_STRINGS.NAV.COURSES, path: '/courses' },
         { icon: Award, label: UI_STRINGS.NAV.PROGRESS, path: '/progress' },

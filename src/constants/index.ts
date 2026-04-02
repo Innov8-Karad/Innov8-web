@@ -10,6 +10,7 @@ export const COLLECTIONS = {
   OPPORTUNITIES: 'opportunities',
   JOBS: 'jobs',
   PROGRESS: 'user_progress',
+  EXAM_RESULTS: 'examResults',
 } as const;
 
 export const FEE_STATUS = {
@@ -318,6 +319,39 @@ export const UI_STRINGS = {
     JOBS: 'Job Management',
     LOGOUT: 'Logout',
     ADMIN: 'Admin',
+  },
+  EXAM_RESULTS: {
+    TITLE: 'Exam Results',
+    SUBTITLE: 'Analyze student performance and scores across all exams',
+    LOADING: 'Loading exam results...',
+    EMPTY_EXAM: 'No results found for this exam.',
+    EMPTY_STUDENT: 'No exams attempted by this student yet.',
+    EXPORT_CSV: 'Export CSV',
+    SEARCH_PLACEHOLDER: 'Search students by name or email...',
+    TAB_BY_EXAM: 'By Exam',
+    TAB_BY_STUDENT: 'By Student',
+    SELECT_EXAM: 'Select Exam',
+    SELECT_EXAM_PLACEHOLDER: '-- Choose an exam --',
+    PASS_THRESHOLD: 'Pass Threshold',
+    PASS_THRESHOLD_DESC: 'Adjust to see pass/fail ratio',
+    // Stat cards
+    STAT_TOTAL_ATTEMPTS: 'Total Attempts',
+    STAT_AVG_SCORE: 'Average Score',
+    STAT_PASS_RATE: 'Pass Rate',
+    STAT_TOP_SCORE: 'Top Score',
+    // Charts
+    CHART_SCORE_DISTRIBUTION: 'Score Distribution',
+    CHART_PASS_FAIL: 'Pass vs Fail',
+    PASSED: 'Passed',
+    FAILED: 'Failed',
+    // Table
+    TH_STUDENT: 'Student',
+    TH_EXAM: 'Exam',
+    TH_SCORE: 'Score',
+    TH_PERCENTAGE: 'Percentage',
+    TH_TIME_TAKEN: 'Time Taken',
+    TH_STATUS: 'Status',
+    TH_DATE: 'Date',
   },
   PROGRESS: {
     TITLE: 'Student Progress',
