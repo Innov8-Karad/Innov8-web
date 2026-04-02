@@ -22,7 +22,8 @@ import {
 } from 'recharts';
 import { UI_STRINGS } from '../constants';
 import { progressService } from '../services/progressService';
-import type { StudentProgress } from '../types';
+import { attendanceService } from '../services/attendanceService';
+import type { StudentProgress, AttendanceRecord } from '../types';
 import LoadingState from '../components/LoadingState';
 import Avatar from '../components/Avatar';
 import PageHeader from '../components/PageHeader';
@@ -35,6 +36,7 @@ export default function ProgressPage() {
     const navigate = useNavigate();
     const { showToast } = useToast();
     const [progressData, setProgressData] = useState<StudentProgress[]>([]);
+    const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
     const [batchStats, setBatchStats] = useState<{ name: string; avgScore: number; avgAttendance: number; avgCompletion: number }[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -56,6 +58,12 @@ export default function ProgressPage() {
                 progressService.fetchProgress(),
                 progressService.getBatchProgress()
             ]);
+            
+            // For Phase 1, we also fetch all attendance records to calculate real-time percentage
+            // This is slightly inefficient but matches the Phase 1 requirement for real-time %
+            const allAttendance = await attendanceService.fetchAll();
+            setAttendanceRecords(allAttendance);
+            
             setProgressData(data);
             setBatchStats(stats);
         } catch (err) {
@@ -110,7 +118,20 @@ export default function ProgressPage() {
     };
 
     const filteredData = useMemo(() => {
-        return progressData.filter(p => {
+        return progressData.map(p => {
+            // Calculate real-time attendance for each student
+            const studentAttendance = attendanceRecords.filter(r => r.studentId === p.studentId);
+            const present = studentAttendance.filter(r => r.status === 'present').length;
+            const late = studentAttendance.filter(r => r.status === 'late').length;
+            const absent = studentAttendance.filter(r => r.status === 'absent').length;
+            
+            const totalClasses = present + late + absent;
+            const realTimePercentage = totalClasses > 0 
+                ? Math.round(((present + late) / totalClasses) * 100) 
+                : p.attendancePercentage; // Fallback to saved percentage
+                
+            return { ...p, attendancePercentage: realTimePercentage };
+        }).filter(p => {
             const searchLower = searchTerm.toLowerCase();
             const matchesSearch = 
                 p.studentName.toLowerCase().includes(searchLower) ||
@@ -121,7 +142,7 @@ export default function ProgressPage() {
             const matchesBatch = selectedBatch === 'All' || p.batch === selectedBatch;
             return matchesSearch && matchesBatch;
         });
-    }, [progressData, searchTerm, selectedBatch]);
+    }, [progressData, attendanceRecords, searchTerm, selectedBatch]);
 
     const batchesList = useMemo(() => {
         const unique = Array.from(new Set(progressData.map(p => p.batch)));

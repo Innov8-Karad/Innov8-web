@@ -17,6 +17,7 @@ import AnnouncementsPage from './pages/Announcements';
 import CoursesPage from './pages/Courses';
 import PlacementsPage from './pages/Placements';
 import ProgressPage from './pages/Progress';
+import AttendancePage from './pages/Attendance';
 import StudentDetailPage from './pages/StudentDetailPage';
 import ExamResultsPage from './pages/ExamResults';
 
@@ -53,6 +54,7 @@ function App() {
                 <Route path="/courses" element={<PrivateRoute><Layout><CoursesPage /></Layout></PrivateRoute>} />
                 <Route path="/placements" element={<PrivateRoute><Layout><PlacementsPage /></Layout></PrivateRoute>} />
                 <Route path="/progress" element={<PrivateRoute><Layout><ProgressPage /></Layout></PrivateRoute>} />
+                <Route path="/attendance" element={<PrivateRoute><Layout><AttendancePage /></Layout></PrivateRoute>} />
                 <Route path="/progress/:id" element={<PrivateRoute><Layout><StudentDetailPage /></Layout></PrivateRoute>} />
                 <Route path="/exam-results" element={<PrivateRoute><Layout><ExamResultsPage /></Layout></PrivateRoute>} />
 
