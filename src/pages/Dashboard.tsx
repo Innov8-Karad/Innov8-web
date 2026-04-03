@@ -171,14 +171,15 @@ gap: 'var(--space-lg)'
 
 {/* Growth Chart */}
 
-<div className="card" style={{ padding: 'var(--space-lg)', height: '400px' }}>
+<div className="card" style={{ padding: 'var(--space-lg)', height: '400px', display: 'flex', flexDirection: 'column' }}>
 
 <h3 className="flex items-center gap-2 mb-md">
 <TrendingUp size={20} color="var(--primary)" />
 Growth Trends
 </h3>
 
-<ResponsiveContainer width="100%" height="90%">
+<div style={{ flex: 1, minHeight: 0 }}>
+<ResponsiveContainer width="100%" height="100%" minHeight={300} debounce={100}>
 <AreaChart data={trends}>
 <CartesianGrid strokeDasharray="3 3" />
 <XAxis dataKey="month" />
@@ -189,20 +190,22 @@ Growth Trends
 <Area type="monotone" dataKey="exams" stroke="var(--accent-blue)" />
 </AreaChart>
 </ResponsiveContainer>
+</div>
 
 </div>
 
 
 {/* Revenue Chart */}
 
-<div className="card" style={{ padding: 'var(--space-lg)', height: '400px' }}>
+<div className="card" style={{ padding: 'var(--space-lg)', height: '400px', display: 'flex', flexDirection: 'column' }}>
 
 <h3 className="flex items-center gap-2 mb-md">
 <IndianRupee size={20} color="var(--success)" />
 Revenue Trend
 </h3>
 
-<ResponsiveContainer width="100%" height="90%">
+<div style={{ flex: 1, minHeight: 0 }}>
+<ResponsiveContainer width="100%" height="100%" minHeight={300} debounce={100}>
 <BarChart data={trends}>
 <CartesianGrid strokeDasharray="3 3" />
 <XAxis dataKey="month" />
@@ -211,6 +214,7 @@ Revenue Trend
 <Bar dataKey="fees" fill="var(--success)" />
 </BarChart>
 </ResponsiveContainer>
+</div>
 
 </div>
 
@@ -254,7 +258,11 @@ borderBottom: '1px solid var(--border-color)'
 </div>
 
 <div>
-{activity.timestamp?.toLocaleDateString()}
+{activity.timestamp instanceof Date 
+  ? activity.timestamp.toLocaleDateString() 
+  : activity.timestamp && 'seconds' in (activity.timestamp as { seconds: number })
+  ? new Date((activity.timestamp as { seconds: number }).seconds * 1000).toLocaleDateString()
+  : '—'}
 </div>
 
 </div>

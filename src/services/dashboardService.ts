@@ -26,6 +26,23 @@ export interface MonthlyTrend {
   exams: number;
 }
 
+const safeDate = (d: unknown): Date => {
+  if (!d) return new Date();
+  if (d instanceof Date) return d;
+  
+  if (typeof d === 'object' && d !== null) {
+    if ('toDate' in d && typeof (d as { toDate?: unknown }).toDate === 'function') {
+      return (d as { toDate: () => Date }).toDate();
+    }
+    if ('seconds' in d && typeof (d as { seconds?: unknown }).seconds === 'number') {
+      return new Date((d as { seconds: number }).seconds * 1000);
+    }
+  }
+
+  const parsed = new Date(d as string | number);
+  return isNaN(parsed.getTime()) ? new Date() : parsed;
+};
+
 export const dashboardService = {
   subscribeToStats(callback: (stats: DashboardStats) => void) {
     const currentStats: DashboardStats = {
@@ -99,7 +116,7 @@ export const dashboardService = {
           type: 'registration' as const,
           title: `New Student: ${data.name || 'Unknown'}`,
           subtitle: `Enrolled in ${data.course || 'course'}`,
-          timestamp: data.createdAt?.toDate() || new Date()
+          timestamp: safeDate(data.createdAt || data.updatedAt)
         };
       });
       activities = [...activities.filter(a => a.type !== 'registration'), ...users];
@@ -116,7 +133,7 @@ export const dashboardService = {
             title: 'Fee Payment Received',
             subtitle: `Student ID: ${data.studentId?.substring(0,6) || 'N/A'}`,
             amount: data.amount,
-            timestamp: data.updatedAt?.toDate() || data.dueDate?.toDate() || new Date()
+            timestamp: safeDate(data.updatedAt || data.dueDate || data.createdAt)
           };
         });
         activities = [...activities.filter(a => a.type !== 'fee'), ...fees];
@@ -132,7 +149,7 @@ export const dashboardService = {
             type: 'exam' as const,
             title: `New Exam Scheduled`,
             subtitle: data.title || 'Assessment',
-            timestamp: data.createdAt?.toDate() || new Date()
+            timestamp: safeDate(data.createdAt)
           };
         });
         activities = [...activities.filter(a => a.type !== 'exam'), ...exams];
@@ -181,7 +198,7 @@ export const dashboardService = {
         const newTrends = getInitialMonths(); // Reset
         
         snap.forEach(doc => {
-            const date = doc.data().createdAt?.toDate();
+            const date = doc.data().createdAt ? safeDate(doc.data().createdAt) : null;
             if(date) {
                const key = format(startOfMonth(date), 'yyyy-MM');
                const monthIndex = newTrends.findIndex(t => t.monthKey === key);
@@ -197,7 +214,7 @@ export const dashboardService = {
     const unsubsFees = onSnapshot(query(collection(db, COLLECTIONS.FEES), where('status', '==', FEE_STATUS.PAID), where('dueDate', '>=', sixMonthsAgoTs)), (snap) => {
         const newTrends = getInitialMonths();
         snap.forEach(doc => {
-            const date = doc.data().dueDate?.toDate();
+            const date = doc.data().dueDate ? safeDate(doc.data().dueDate) : null;
             if(date) {
                const key = format(startOfMonth(date), 'yyyy-MM');
                const monthIndex = newTrends.findIndex(t => t.monthKey === key);
@@ -211,7 +228,7 @@ export const dashboardService = {
     const unsubsExams = onSnapshot(query(collection(db, COLLECTIONS.EXAMS), where('createdAt', '>=', sixMonthsAgoTs)), (snap) => {
         const newTrends = getInitialMonths();
         snap.forEach(doc => {
-            const date = doc.data().createdAt?.toDate();
+            const date = doc.data().createdAt ? safeDate(doc.data().createdAt) : null;
             if(date) {
                const key = format(startOfMonth(date), 'yyyy-MM');
                const monthIndex = newTrends.findIndex(t => t.monthKey === key);

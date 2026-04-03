@@ -211,6 +211,42 @@ export interface PlacementOpportunity {
     description?: string;
 }
 
+// ─── Jobs ────────────────────────────────────────────────────────────────────
+
+export type JobType = 'Full-time' | 'Internship';
+
+export type ApplicationStatus = 'Applied' | 'Under Review' | 'Interviewed' | 'Selected' | 'Rejected';
+
+export interface Job {
+    id: string;
+    companyName: string;
+    role: string;
+    location: string;
+    salary: string;
+    requirements: string[];
+    jobType: JobType;
+    description?: string;
+    eligibleBatches?: string[];
+    applyLink?: string;
+    postedDate: Date;
+    deadline?: Date;
+    isActive: boolean;
+    createdAt?: { seconds: number; nanoseconds: number };
+    updatedAt?: { seconds: number; nanoseconds: number };
+}
+
+export interface JobApplication {
+    id: string;
+    jobId: string;
+    userId: string;
+    userName: string;
+    userEmail: string;
+    userBatch: string;
+    status: ApplicationStatus;
+    appliedAt: Date;
+    updatedAt?: Date;
+}
+
 // ─── Progress ────────────────────────────────────────────────────────────────
 
 export interface StudentProgress {

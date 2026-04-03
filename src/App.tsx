@@ -20,6 +20,7 @@ import ProgressPage from './pages/Progress';
 import AttendancePage from './pages/Attendance';
 import StudentDetailPage from './pages/StudentDetailPage';
 import ExamResultsPage from './pages/ExamResults';
+import JobsPage from './pages/JobsPage';
 
 interface PrivateRouteProps {
   children: React.ReactNode;
@@ -57,6 +58,7 @@ function App() {
                 <Route path="/attendance" element={<PrivateRoute><Layout><AttendancePage /></Layout></PrivateRoute>} />
                 <Route path="/progress/:id" element={<PrivateRoute><Layout><StudentDetailPage /></Layout></PrivateRoute>} />
                 <Route path="/exam-results" element={<PrivateRoute><Layout><ExamResultsPage /></Layout></PrivateRoute>} />
+                <Route path="/jobs" element={<PrivateRoute><Layout><JobsPage /></Layout></PrivateRoute>} />
 
                 {/* Redirects */}
                 <Route path="/profile/:id" element={<Navigate to="/progress" replace />} />
