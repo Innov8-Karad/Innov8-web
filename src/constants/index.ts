@@ -18,6 +18,13 @@ export const FEE_STATUS = {
   OVERDUE: 'overdue',
 } as const;
 
+export const ATTENDANCE_STATUS = {
+  PRESENT: 'present',
+  ABSENT: 'absent',
+  LATE: 'late',
+  EXCUSED: 'excused',
+} as const;
+
 export const ADMIN_USER_ID = 'admin';
 
 export const PRIORITY_LEVELS = {
@@ -66,6 +73,7 @@ export const UI_STRINGS = {
     PUBLISH: 'Publish',
     SEARCH_PLACEHOLDER: 'Search...',
     NO_DATA: 'No results found.',
+    N_A: 'N/A'
   },
   // Announcements page
   ANNOUNCEMENTS: {
@@ -230,6 +238,35 @@ export const UI_STRINGS = {
     ALL_CLEAR: 'All Clear',
     NO_RECORDS: 'No Records',
   },
+  ATTENDANCE: {
+    TITLE: 'Attendance',
+    SUBTITLE: 'Track and manage daily class attendance',
+    LOADING: 'Loading attendance...',
+    ERROR_LOAD: 'Failed to load attendance records.',
+    ERROR_SAVE: 'Failed to save attendance.',
+    SUCCESS_SAVE: 'Attendance saved successfully.',
+    MARK_ATTENDANCE: 'Mark Attendance',
+    CALENDAR_VIEW: 'Calendar View',
+    REPORTS: 'Reports',
+    SELECT_COURSE: 'Select Course',
+    SELECT_BATCH: 'Select Batch',
+    SELECT_DATE: 'Select Date',
+    MARK_ALL_PRESENT: 'Mark All Present',
+    MARK_ALL_ABSENT: 'Mark All Absent',
+    SUBMIT: 'Submit Attendance',
+    TH_STUDENT: 'Student',
+    TH_STATUS: 'Status',
+    TH_BATCH: 'Batch',
+    TH_PRESENT: 'Present',
+    TH_ABSENT: 'Absent',
+    TH_LATE: 'Late',
+    TH_EXCUSED: 'Excused',
+    TH_PERCENTAGE: '%',
+    EMPTY: 'No students found for this selection.',
+    EMPTY_CALENDAR: 'No attendance records found for this month.',
+    STAT_COURSE_AVG: 'Course Average',
+    STAT_STUDENTS: 'Total Students',
+  },
   PLACEMENTS: {
     TITLE: 'Success Stories',
     SUBTITLE: 'Track student placement records and success stories',
@@ -276,13 +313,14 @@ export const UI_STRINGS = {
     DASHBOARD: 'Dashboard',
     STUDENTS: 'Students',
     FEES: 'Fees',
+    ATTENDANCE: 'Attendance',
     EXAMS: 'Exams',
     PLACEMENTS: 'Success Stories',
     COURSES: 'Courses',
     PROGRESS: 'Progress',
     ANNOUNCEMENTS: 'Announcements',
     LOGOUT: 'Logout',
-    ADMIN: 'Admin',
+    ADMIN: 'Admin Portal',
   },
   EXAM_RESULTS: {
     TITLE: 'Exam Results',

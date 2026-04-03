@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import type { User, Fee, Exam, Announcement, Course, Placement, SuccessStory, StudentProgress } from '../types';
+import type { User, Fee, Exam, Announcement, Course, Placement, SuccessStory, StudentProgress, AttendanceRecord } from '../types';
 
 describe('User type', () => {
   it('should accept a valid user object', () => {
@@ -186,5 +186,32 @@ describe('StudentProgress type', () => {
     };
     expect(progress.attendancePercentage).toBe(85);
     expect(progress.completedModules).toHaveLength(3);
+  });
+});
+
+describe('AttendanceRecord type', () => {
+  it('should accept a valid attendance record', () => {
+    const record: AttendanceRecord = {
+      id: 'att-1',
+      studentId: 'user-1',
+      studentName: 'John Doe',
+      courseId: 'course-1',
+      courseName: 'React Development',
+      batchId: '2024-A',
+      studentEmail: 'john@example.com',
+      date: new Date('2026-04-01'),
+      status: 'present',
+      markedBy: 'admin-uid',
+      markedAt: new Date()
+    };
+    expect(record.status).toBe('present');
+    expect(record.batchId).toBe('2024-A');
+  });
+
+  it('should accept all valid attendance proxy status values', () => {
+    const statuses: AttendanceRecord['status'][] = ['present', 'absent', 'late', 'excused'];
+    statuses.forEach(status => {
+      expect(['present', 'absent', 'late', 'excused']).toContain(status);
+    });
   });
 });

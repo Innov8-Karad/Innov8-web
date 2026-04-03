@@ -230,3 +230,22 @@ export interface StudentProgress {
     attendance?: number;
     profilePhoto?: string;
 }
+
+// ─── Attendance ──────────────────────────────────────────────────────────────
+
+export type AttendanceStatus = 'present' | 'absent' | 'late' | 'excused';
+
+export interface AttendanceRecord {
+    id: string;
+    studentId: string;
+    studentName: string;
+    studentEmail: string;
+    courseId: string;
+    courseName: string;
+    batchId: string;
+    date: Date;
+    status: AttendanceStatus;
+    markedBy: string;
+    markedAt: Date;
+    notes?: string;
+}

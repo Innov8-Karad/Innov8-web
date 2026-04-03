@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut, type User } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
@@ -12,14 +12,85 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+const AUTH_TIMEOUT_MS = 10_000; // 10 second timeout for Firebase auth init
+
 // eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
     return useContext(AuthContext);
 }
 
+/** Full-screen loading spinner shown while Firebase auth initializes */
+function AuthLoadingScreen() {
+    return (
+        <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: '100vh',
+            background: 'var(--bg-main, #0a0e1a)',
+            color: 'var(--text-main, #e0e0e0)',
+            gap: '20px',
+        }}>
+            <div style={{
+                width: '48px',
+                height: '48px',
+                border: '4px solid rgba(255,255,255,0.1)',
+                borderTopColor: 'var(--primary, #6366f1)',
+                borderRadius: '50%',
+                animation: 'authSpin 0.8s linear infinite',
+            }} />
+            <p style={{ fontSize: '1rem', opacity: 0.7, margin: 0 }}>Connecting to server...</p>
+            <style>{`@keyframes authSpin { to { transform: rotate(360deg); } }`}</style>
+        </div>
+    );
+}
+
+/** Error screen shown when Firebase auth times out */
+function AuthErrorScreen({ onRetry }: { onRetry: () => void }) {
+    return (
+        <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: '100vh',
+            background: 'var(--bg-main, #0a0e1a)',
+            color: 'var(--text-main, #e0e0e0)',
+            gap: '16px',
+            padding: '24px',
+            textAlign: 'center',
+        }}>
+            <div style={{ fontSize: '3rem' }}>⚠️</div>
+            <h2 style={{ margin: 0, fontSize: '1.4rem' }}>Connection Timeout</h2>
+            <p style={{ margin: 0, opacity: 0.7, maxWidth: '400px', lineHeight: 1.6 }}>
+                Could not connect to the authentication server. Please check your internet connection and try again.
+            </p>
+            <button
+                onClick={onRetry}
+                style={{
+                    marginTop: '12px',
+                    padding: '12px 32px',
+                    backgroundColor: 'var(--primary, #6366f1)',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '12px',
+                    fontSize: '1rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                }}
+            >
+                Retry Connection
+            </button>
+        </div>
+    );
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
+    const [timedOut, setTimedOut] = useState(false);
+    const authResolved = useRef(false);
 
     async function login(email: string, password: string) {
         const credential = await signInWithEmailAndPassword(auth, email, password);
@@ -45,7 +116,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     useEffect(() => {
+        authResolved.current = false;
+
+        // Safety timeout: if onAuthStateChanged never fires, unblock the UI
+        const timeoutId = setTimeout(() => {
+            if (!authResolved.current) {
+                console.warn('[AuthProvider] Firebase auth timed out after', AUTH_TIMEOUT_MS, 'ms');
+                setTimedOut(true);
+                setLoading(false);
+            }
+        }, AUTH_TIMEOUT_MS);
+
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
+            authResolved.current = true;
+            clearTimeout(timeoutId);
+            setTimedOut(false);
+
             if (user) {
                 // Verify admin role on auth state change (e.g., page refresh)
                 try {
@@ -67,8 +153,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setLoading(false);
         });
 
-        return unsubscribe;
+        return () => {
+            clearTimeout(timeoutId);
+            unsubscribe();
+        };
     }, []);
+
+    const handleRetry = () => {
+        // Force a page reload to re-init Firebase
+        window.location.reload();
+    };
 
     const value = {
         currentUser,
@@ -77,9 +171,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         logout
     };
 
+    // Show loading spinner while waiting for Firebase
+    if (loading && !timedOut) {
+        return (
+            <AuthContext.Provider value={value}>
+                <AuthLoadingScreen />
+            </AuthContext.Provider>
+        );
+    }
+
+    // Show error screen if Firebase timed out
+    if (timedOut) {
+        return (
+            <AuthContext.Provider value={value}>
+                <AuthErrorScreen onRetry={handleRetry} />
+            </AuthContext.Provider>
+        );
+    }
+
     return (
         <AuthContext.Provider value={value}>
-            {!loading && children}
+            {children}
         </AuthContext.Provider>
     );
 }

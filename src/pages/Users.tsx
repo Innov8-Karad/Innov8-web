@@ -211,7 +211,7 @@ export default function UsersPage() {
             key: 'joined',
             header: UI_STRINGS.USERS.TH_JOINED,
             width: '15%',
-            render: (user) => user.enrollmentDate?.toLocaleDateString(),
+            render: (user) => user.enrollmentDate?.toLocaleDateString() || UI_STRINGS.COMMON.N_A || 'N/A',
         },
         {
             key: 'actions',
@@ -355,7 +355,7 @@ export default function UsersPage() {
                                 <div className="grid-single" style={{ gap: '8px' }}>
                                     <div className="flex justify-between">
                                         <span className="text-muted">{UI_STRINGS.USERS.ENROLLMENT_DATE_LABEL}</span>
-                                        <span className="font-medium">{viewingUser.enrollmentDate?.toLocaleDateString()}</span>
+                                        <span className="font-medium">{viewingUser.enrollmentDate?.toLocaleDateString() || 'N/A'}</span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-muted">{UI_STRINGS.USERS.CURRENT_STATUS_LABEL}</span>

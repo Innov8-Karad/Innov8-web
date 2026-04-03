@@ -108,7 +108,7 @@ describe('UI_STRINGS', () => {
   it('should have all page sections', () => {
     const requiredSections = [
       'COMMON', 'ANNOUNCEMENTS', 'COURSES', 'USERS', 'EXAMS',
-      'FEES', 'PLACEMENTS', 'NAV', 'PROGRESS', 'LOGIN', 'THEME'
+      'FEES', 'ATTENDANCE', 'PLACEMENTS', 'NAV', 'PROGRESS', 'LOGIN', 'THEME'
     ];
     requiredSections.forEach(section => {
       expect(UI_STRINGS).toHaveProperty(section);
@@ -152,6 +152,7 @@ describe('UI_STRINGS', () => {
     expect(UI_STRINGS.NAV.DASHBOARD).toBe('Dashboard');
     expect(UI_STRINGS.NAV.STUDENTS).toBe('Students');
     expect(UI_STRINGS.NAV.FEES).toBe('Fees');
+    expect(UI_STRINGS.NAV.ATTENDANCE).toBe('Attendance');
     expect(UI_STRINGS.NAV.EXAMS).toBe('Exams');
     expect(UI_STRINGS.NAV.PLACEMENTS).toBe('Success Stories');
     expect(UI_STRINGS.NAV.COURSES).toBe('Courses');
