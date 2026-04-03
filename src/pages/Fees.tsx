@@ -13,6 +13,7 @@ import SearchInput from '../components/SearchInput';
 import Modal from '../components/Modal';
 import DataTable from '../components/DataTable';
 import type { Column } from '../components/DataTable';
+import { useToast } from '../hooks/useToast';
 import StatCard from '../components/StatCard';
 import { FormField, FormRow, FormActions } from '../components/FormField';
 
@@ -29,6 +30,7 @@ interface StudentSummary {
 }
 
 export default function FeesPage() {
+    const { showToast } = useToast();
     const [fees, setFees] = useState<Fee[]>([]);
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
@@ -97,7 +99,7 @@ export default function FeesPage() {
                 });
             }
             setEditingFee(null);
-            alert("Fee record updated successfully!");
+            showToast("saved record successfully", "success");
         } catch (err) {
             console.error("Error editing fee", err);
             setError("Failed to edit fee");
@@ -127,6 +129,7 @@ export default function FeesPage() {
             }
             setShowDeleteModal(false);
             setFeeToDelete(null);
+            showToast("Fee deleted successfully", "success");
         } catch (err) {
             console.error("Error deleting fee", err);
             setError("Failed to delete fee");
@@ -154,6 +157,7 @@ export default function FeesPage() {
                 });
             }
             setSelectedFees(new Set());
+            showToast("Fees marked as paid", "success");
         } catch (err) {
             console.error("Error in bulk update", err);
             setError("Failed to bulk update fees");
@@ -175,7 +179,7 @@ export default function FeesPage() {
         };
         
         console.log("Preparing to send reminder:", reminderData);
-        alert(`Reminder ready for User: ${studentId}\nAmount: ₹${pendingAmount}\nEarliest Due: ${reminderData.dueDate}`);
+        showToast(`Reminder ready for User: ${studentId}. Amount: ₹${pendingAmount}`, "success");
     };
 
     // 5. Export CSV
@@ -215,12 +219,12 @@ export default function FeesPage() {
                     count++;
                 }
             }
-            alert(`Migration Complete! Fixed ${count} legacy fee records. They are now visible in the app.`);
+            showToast(`Migration Complete! Fixed ${count} legacy fee records.`, "success");
             const feesData = await feeService.fetchFees();
             setFees(feesData);
         } catch (err) {
             console.error("Migration failed:", err);
-            alert("Migration failed.");
+            showToast("Migration failed.", "error");
         } finally {
             setLoading(false);
         }
@@ -294,6 +298,7 @@ export default function FeesPage() {
             setFees([addedFee, ...fees]);
             setShowModal(false);
             setNewFee({ userId: '', amount: '', dueDate: '', description: '', status: FEE_STATUS.PENDING as FeeStatus });
+            showToast("Fee added successfully", "success");
         } catch (err) {
             console.error("Error adding fee: ", err);
             setError(UI_STRINGS.FEES.ERROR_CREATE);
