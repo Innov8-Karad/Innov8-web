@@ -167,6 +167,7 @@ export interface SuccessStory {
     role: string;
     batch?: string;
     testimonial?: string;
+    collegeName?: string;
     year: number;
     createdAt?: { seconds: number; nanoseconds: number };
     updatedAt?: { seconds: number; nanoseconds: number };

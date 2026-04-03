@@ -45,6 +45,8 @@ export default function FeesPage() {
     });
     const [editingFee, setEditingFee] = useState<Fee | null>(null);
     const [selectedFees, setSelectedFees] = useState<Set<string>>(new Set());
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [feeToDelete, setFeeToDelete] = useState<string | null>(null);
 
     // 1. Edit Fee Record
     const handleEditSubmit = async (e: React.FormEvent) => {
@@ -103,21 +105,28 @@ export default function FeesPage() {
     };
 
     // 2. Delete Fee Record
-    const handleDeleteFee = async (feeId: string) => {
-        if (!window.confirm("Delete this fee record?")) return;
+    const handleDeleteFee = (feeId: string) => {
+        setFeeToDelete(feeId);
+        setShowDeleteModal(true);
+    };
+
+    const confirmDeleteFee = async () => {
+        if (!feeToDelete) return;
         try {
-            await deleteDoc(doc(db, COLLECTIONS.FEES, feeId));
-            setFees(prev => prev.filter(f => f.id !== feeId));
+            await deleteDoc(doc(db, COLLECTIONS.FEES, feeToDelete));
+            setFees(prev => prev.filter(f => f.id !== feeToDelete));
             if (viewingStudent) {
                 setViewingStudent(prev => {
                     if (!prev) return null;
-                    const updatedRecords = prev.records.filter(f => f.id !== feeId);
+                    const updatedRecords = prev.records.filter(f => f.id !== feeToDelete);
                     const total = updatedRecords.reduce((acc, f) => acc + f.amount, 0);
                     const paid = updatedRecords.filter(f => f.status === 'paid').reduce((acc, f) => acc + f.amount, 0);
                     const pending = updatedRecords.filter(f => f.status !== 'paid').reduce((acc, f) => acc + f.amount, 0);
                     return { ...prev, records: updatedRecords, total, paid, pending };
                 });
             }
+            setShowDeleteModal(false);
+            setFeeToDelete(null);
         } catch (err) {
             console.error("Error deleting fee", err);
             setError("Failed to delete fee");
@@ -650,6 +659,32 @@ export default function FeesPage() {
                     </form>
                 </Modal>
             )}
+
+            {/* Modal: Delete Confirmation */}
+            <Modal
+                isOpen={showDeleteModal}
+                onClose={() => setShowDeleteModal(false)}
+                title="Confirm Deletion"
+            >
+                <div className="py-md text-center">
+                    <p className="mb-lg">Are you sure you want to delete this fee record?</p>
+                    <div className="flex justify-center gap-md">
+                        <button 
+                            className="btn btn-secondary" 
+                            onClick={() => setShowDeleteModal(false)}
+                        >
+                            Cancel
+                        </button>
+                        <button 
+                            className="btn btn-primary" 
+                            style={{ backgroundColor: 'var(--error)' }}
+                            onClick={confirmDeleteFee}
+                        >
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            </Modal>
         </div>
     );
 }

@@ -43,6 +43,7 @@ export default function PlacementsPage() {
         studentImage: '',
         batch: '',
         testimonial: '',
+        collegeName: '',
         year: selectedYear
     });
 
@@ -103,6 +104,7 @@ export default function PlacementsPage() {
             studentImage: '',
             batch: '',
             testimonial: '',
+            collegeName: '',
             year: selectedYear
         });
         setShowStoryModal(true);
@@ -118,6 +120,7 @@ export default function PlacementsPage() {
             studentImage: story.studentPhoto || '',
             batch: story.batch || '',
             testimonial: story.testimonial || '',
+            collegeName: story.collegeName || '',
             year: story.year || selectedYear
         });
         setShowStoryModal(true);
@@ -159,6 +162,7 @@ export default function PlacementsPage() {
                 role: storyForm.role,
                 batch: storyForm.batch,
                 testimonial: storyForm.testimonial,
+                collegeName: storyForm.collegeName,
                 package: typeof storyForm.package === 'string' ? Number(storyForm.package.replace(/[^0-9.]/g, '')) : storyForm.package,
                 studentPhoto: imageUrl,
                 year: Number(storyForm.year)
@@ -209,6 +213,7 @@ export default function PlacementsPage() {
             studentImage: '',
             batch: '',
             testimonial: '',
+            collegeName: '',
             year: selectedYear
         });
     };
@@ -290,6 +295,11 @@ export default function PlacementsPage() {
                             <div style={{ flex: 1 }}>
                                 <h3 style={{ margin: 0 }}>{story.studentName}</h3>
                                 <p style={{ color: 'var(--primary)', fontWeight: 600, fontSize: '0.9rem', marginTop: '2px' }}>{story.company}</p>
+                                {story.collegeName && (
+                                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '2px' }}>
+                                        {story.collegeName}
+                                    </p>
+                                )}
                                 <div className="text-sm text-muted mt-sm">
                                     <div>{UI_STRINGS.PLACEMENTS.ROLE_PREFIX} {story.role}</div>
                                     <div>{UI_STRINGS.PLACEMENTS.PACKAGE_PREFIX} {story.package} LPA</div>
@@ -338,10 +348,13 @@ export default function PlacementsPage() {
                         <FormField label={UI_STRINGS.PLACEMENTS.FORM_ROLE}>
                             <input type="text" required placeholder={UI_STRINGS.PLACEMENTS.FORM_ROLE_PLACEHOLDER} value={storyForm.role} onChange={e => setStoryForm({ ...storyForm, role: e.target.value })} />
                         </FormField>
-                        <FormField label={UI_STRINGS.PLACEMENTS.FORM_YEAR}>
-                            <input type="number" required value={storyForm.year} onChange={e => setStoryForm({ ...storyForm, year: Number(e.target.value) })} />
+                        <FormField label="College Name">
+                            <input type="text" placeholder="Enter college name" value={storyForm.collegeName} onChange={e => setStoryForm({ ...storyForm, collegeName: e.target.value })} />
                         </FormField>
                     </FormRow>
+                    <FormField label={UI_STRINGS.PLACEMENTS.FORM_YEAR}>
+                        <input type="number" required value={storyForm.year} onChange={e => setStoryForm({ ...storyForm, year: Number(e.target.value) })} />
+                    </FormField>
                     <FormField label={UI_STRINGS.PLACEMENTS.FORM_TESTIMONIAL}>
                         <textarea rows={3} value={storyForm.testimonial} onChange={e => setStoryForm({ ...storyForm, testimonial: e.target.value })} />
                     </FormField>
