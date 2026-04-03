@@ -146,8 +146,8 @@ export default function ProgressPage() {
                         <BarChart3 className="text-primary" size={20} />
                         <h3 className="text-lg font-semibold">Average Score by Batch</h3>
                     </div>
-                    <div style={{ width: '100%', height: 350 }}>
-                        <ResponsiveContainer>
+                    <div style={{ width: '100%', height: 350, display: 'flex', flexDirection: 'column' }}>
+                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={100}>
                             <BarChart 
                                 data={batchStats}
                                 margin={{
@@ -192,8 +192,8 @@ export default function ProgressPage() {
                         <TrendingUp className="text-success" size={20} />
                         <h3 className="text-lg font-semibold">Avg Attendance & Completion (%)</h3>
                     </div>
-                    <div style={{ width: '100%', height: 350 }}>
-                        <ResponsiveContainer>
+                    <div style={{ width: '100%', height: 350, display: 'flex', flexDirection: 'column' }}>
+                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={100}>
                             <BarChart 
                                 data={batchStats} 
                                 layout="vertical"

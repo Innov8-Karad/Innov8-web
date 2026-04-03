@@ -19,9 +19,8 @@ service cloud.firestore {
     }
 
     // ── Users ────────────────────────────────────────────────────────────
-    // Students read/write own doc; admin reads/writes all.
-    // CRITICAL: Students CANNOT change their own 'role' field.
     match /users/{userId} {
+      // Allow students to read their own doc without needing isAdmin check
       allow read: if isOwner(userId) || isAdmin();
       allow create: if isOwner(userId)
                     && request.resource.data.role == 'student'
@@ -33,37 +32,34 @@ service cloud.firestore {
     }
 
     // ── Fees ─────────────────────────────────────────────────────────────
-    // Students read own fees (matched by 'studentId' field); admin full.
-    // Mobile query: where('studentId', '==', uid)
+    // Harmonized: allows reading by 'studentId' OR 'userId' field.
     match /fees/{feeId} {
       allow read: if isAuthenticated()
-                  && (resource.data.studentId == request.auth.uid || isAdmin());
+                  && (resource.data.studentId == request.auth.uid 
+                      || resource.data.userId == request.auth.uid 
+                      || isAdmin());
       allow create: if isAdmin()
-                    && request.resource.data.keys().hasAll(['studentId', 'amount', 'dueDate', 'status']);
+                    && request.resource.data.keys().hasAll(['amount', 'status']);
       allow update, delete: if isAdmin();
     }
 
     // ── Courses ──────────────────────────────────────────────────────────
-    // All authenticated users read; admin creates with required 'title'.
     match /courses/{courseId} {
       allow read: if isAuthenticated();
       allow create: if isAdmin()
                     && request.resource.data.keys().hasAll(['title']);
       allow update, delete: if isAdmin();
 
-      // ── Course Modules (Curriculum) ──
       match /modules/{moduleId} {
         allow read: if isAuthenticated();
         allow write: if isAdmin();
       }
 
-      // ── Course Resources ──
       match /resources/{resourceId} {
         allow read: if isAuthenticated();
         allow write: if isAdmin();
       }
 
-      // ── Course Assignments ──
       match /assignments/{assignmentId} {
         allow read: if isAuthenticated();
         allow write: if isAdmin();
@@ -71,7 +67,6 @@ service cloud.firestore {
     }
 
     // ── Exams ────────────────────────────────────────────────────────────
-    // All authenticated users read; admin creates with required fields.
     match /exams/{examId} {
       allow read: if isAuthenticated();
       allow create: if isAdmin()
@@ -80,7 +75,6 @@ service cloud.firestore {
     }
 
     // ── Announcements ────────────────────────────────────────────────────
-    // All authenticated users read; admin creates with required fields.
     match /announcements/{announcementId} {
       allow read: if isAuthenticated();
       allow create: if isAdmin()
@@ -88,72 +82,77 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
-    // ── Placements ───────────────────────────────────────────────────────
-    // HARDENED: Was public (allow read: if true) → now auth-gated.
+    // ── Placements & Success Stories ─────────────────────────────────────
+    // Unified: Both collections are now auth-gated for reading.
     match /placements/{placementId} {
       allow read: if isAuthenticated();
       allow write: if isAdmin();
     }
 
-    // ── Success Stories ──────────────────────────────────────────────────
-    // HARDENED: Was public (allow read: if true) → now auth-gated.
     match /successStories/{storyId} {
       allow read: if isAuthenticated();
       allow write: if isAdmin();
     }
 
-    // ── User Progress (Format: {userId}_{courseId}) ──
+    // ── User Progress ──
     match /user_progress/{docId} {
       allow read, write: if isAuthenticated() && (isAdmin() || docId.split('_')[0] == request.auth.uid);
     }
 
     // ── Exam Results ─────────────────────────────────────────────────────
-    // Field-scoped: students read only docs where userId == their uid.
-    // Mobile query MUST include: where('userId', '==', uid)
     match /examResults/{resultId} {
       allow read: if isAuthenticated()
                   && (resource.data.userId == request.auth.uid || isAdmin());
-      allow write: if isAdmin();
+      allow write: if isAdmin() || (isAuthenticated() && request.resource.data.userId == request.auth.uid);
     }
 
     // ── Jobs ─────────────────────────────────────────────────────────────
-    // Placeholder: authenticated read, admin write.
     match /jobs/{jobId} {
       allow read: if isAuthenticated();
       allow write: if isAdmin();
+
+      // ── Applications sub-collection ──
+      match /applications/{applicationId} {
+        allow read: if isAuthenticated()
+                    && (resource.data.userId == request.auth.uid || isAdmin());
+        allow create: if isAuthenticated()
+                      && request.resource.data.userId == request.auth.uid
+                      && request.resource.data.keys().hasAll(['userId', 'jobId', 'status', 'appliedAt']);
+        allow update: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
+        allow delete: if isAdmin();
+      }
     }
 
-    // ── Interviews ───────────────────────────────────────────────────────
-    // Placeholder: authenticated read, admin write.
+    // ── Collection Group: Applications ───────────────────────────────────
+    match /{path=**}/applications/{applicationId} {
+      allow read: if isAuthenticated()
+                  && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    // ── Interviews & Study Materials ─────────────────────────────────────
     match /interviews/{interviewId} {
       allow read: if isAuthenticated();
       allow write: if isAdmin();
     }
 
-    // ── Study Materials ──────────────────────────────────────────────────
-    // Placeholder: authenticated read, admin write.
     match /studyMaterials/{materialId} {
       allow read: if isAuthenticated();
       allow write: if isAdmin();
     }
 
     // ── Attendance ───────────────────────────────────────────────────────
-    // HARDENED: Was open read → now scoped to student's own records.
     match /attendance/{attendanceId} {
       allow read: if isAuthenticated()
                   && (resource.data.studentId == request.auth.uid || isAdmin());
       allow write: if isAdmin();
     }
 
-    // ── Placement Stats ──────────────────────────────────────────────────
-    // NEW: Was missing entirely → now auth-gated read, admin write.
+    // ── Placement Stats & Opportunities ──────────────────────────────────
     match /placementStats/{statId} {
       allow read: if isAuthenticated();
       allow write: if isAdmin();
     }
 
-    // ── Opportunities ────────────────────────────────────────────────────
-    // NEW: Was missing entirely → now auth-gated read, admin write.
     match /opportunities/{opportunityId} {
       allow read: if isAuthenticated();
       allow write: if isAdmin();
