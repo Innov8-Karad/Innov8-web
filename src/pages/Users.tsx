@@ -62,6 +62,13 @@ export default function UsersPage() {
 
     const handleAddStudent = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        const phoneRegex = /^[0-9]{10}$/;
+        if (!phoneRegex.test(newUser.phone)) {
+            setError("Mobile number must be exactly 10 digits");
+            showToast("Mobile number must be exactly 10 digits", "error");
+            return;
+        }
         try {
             setUploadingPhoto(true);
             let photoUrl = newUser.profilePhoto;
@@ -296,7 +303,16 @@ export default function UsersPage() {
                     </FormRow>
                     <FormRow>
                         <FormField label={UI_STRINGS.USERS.FORM_PHONE}>
-                            <input type="tel" required value={newUser.phone} onChange={e => setNewUser({ ...newUser, phone: e.target.value })} />
+                            <input 
+                                type="tel" 
+                                required 
+                                maxLength={10}
+                                value={newUser.phone} 
+                                onChange={e => {
+                                    const val = e.target.value.replace(/\D/g, '');
+                                    setNewUser({ ...newUser, phone: val });
+                                }} 
+                            />
                         </FormField>
                         <FormField label={UI_STRINGS.USERS.FORM_BATCH}>
                             <input type="text" required placeholder={UI_STRINGS.USERS.FORM_BATCH_PLACEHOLDER} value={newUser.batch} onChange={e => setNewUser({ ...newUser, batch: e.target.value })} />
