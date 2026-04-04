@@ -1,41 +1,71 @@
 rules_version = '2';
 
+// ═══════════════════════════════════════════════════════════════════════════
+// Innov8 Unified Storage Security Rules
+// Firebase Project: innov8-karad
+// Last Updated: 2026-04-04
+// ═══════════════════════════════════════════════════════════════════════════
+
 service firebase.storage {
   match /b/{bucket}/o {
-    // Profile photos — users can read/write their own
+
+    // ── Profile Photos ─────────────────────────────────────────────────
+    // Admin uploads to: profilePhotos/{timestamp}_{random}.ext (flat path)
+    // Students upload to: profilePhotos/{userId}/... (nested path)
+    // Both patterns must be supported.
+
+    // Flat path: Admin uploads directly into profilePhotos/
+    match /profilePhotos/{fileName} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
+    // Nested path: Users upload into their own subfolder
     match /profilePhotos/{userId}/{allPaths=**} {
       allow read: if request.auth != null;
       allow write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Course thumbnails — public read, admin write only
+    // ── Success Story Photos ───────────────────────────────────────────
+    // Admin uploads to: successStories/{timestamp}_{random}.ext
+    match /successStories/{allPaths=**} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
+    // ── Course Thumbnails ──────────────────────────────────────────────
+    // Public read, authenticated write
     match /courseThumbnails/{allPaths=**} {
       allow read: if true;
-      allow write: if false; // Admin SDK only
+      allow write: if request.auth != null;
     }
 
-    // Study materials — authenticated read, admin write only
+    // ── Study Materials ────────────────────────────────────────────────
+    // Authenticated read, authenticated write (admin uploads)
     match /studyMaterials/{allPaths=**} {
       allow read: if request.auth != null;
-      allow write: if false; // Admin SDK only
+      allow write: if request.auth != null;
     }
 
-    // Company logos — public read, admin write only
+    // ── Company Logos ──────────────────────────────────────────────────
+    // Public read, authenticated write
     match /companyLogos/{allPaths=**} {
       allow read: if true;
-      allow write: if false; // Admin SDK only
+      allow write: if request.auth != null;
     }
 
-    // Resumes — users can read/write their own
+    // ── Resumes ────────────────────────────────────────────────────────
+    // Users read/write their own
     match /resumes/{userId}/{allPaths=**} {
       allow read: if request.auth != null && request.auth.uid == userId;
       allow write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Fee receipts — users can read their own, admin write only
+    // ── Fee Receipts ───────────────────────────────────────────────────
+    // Users read their own, admin uploads
     match /receipts/{userId}/{allPaths=**} {
       allow read: if request.auth != null && request.auth.uid == userId;
-      allow write: if false; // Admin SDK only
+      allow write: if request.auth != null;
     }
   }
 }
