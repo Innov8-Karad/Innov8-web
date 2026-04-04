@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Calendar, Clock, Award, Plus, Trash2 } from 'lucide-react';
+import './Exams.css';
 import { examService } from '../services/examService';
 import type { Exam, Question } from '../types';
 import { UI_STRINGS } from '../constants';
@@ -276,7 +277,58 @@ export default function ExamsPage() {
                                 </FormField>
                             </FormRow>
                             <FormField label={UI_STRINGS.EXAMS.FORM_SCHEDULED_DATE}>
-                                <input type="datetime-local" required value={formData.scheduledDate} onChange={e => setFormData({ ...formData, scheduledDate: e.target.value })} />
+                                <div className="att-date-time-grid">
+                                    <div className="att-date-time-inputs">
+                                        <div className="att-date-input-wrapper">
+                                            <input 
+                                                type="date" 
+                                                required 
+                                                value={formData.scheduledDate.split('T')[0] || ''} 
+                                                onChange={e => {
+                                                    const date = e.target.value;
+                                                    const time = formData.scheduledDate.split('T')[1] || '09:00';
+                                                    setFormData({ ...formData, scheduledDate: `${date}T${time}` });
+                                                }} 
+                                            />
+                                        </div>
+                                        <div className="att-time-input-wrapper">
+                                            <input 
+                                                type="time" 
+                                                required 
+                                                value={formData.scheduledDate.split('T')[1] || ''} 
+                                                onChange={e => {
+                                                    const time = e.target.value;
+                                                    const date = formData.scheduledDate.split('T')[0] || new Date().toISOString().split('T')[0];
+                                                    setFormData({ ...formData, scheduledDate: `${date}T${time}` });
+                                                }} 
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="att-quick-options">
+                                        <button 
+                                            type="button" 
+                                            className={`btn-quick-date ${formData.scheduledDate.startsWith(new Date().toISOString().split('T')[0]) ? 'active' : ''}`}
+                                            onClick={() => {
+                                                const date = new Date().toISOString().split('T')[0];
+                                                const time = formData.scheduledDate.split('T')[1] || '09:00';
+                                                setFormData({ ...formData, scheduledDate: `${date}T${time}` });
+                                            }}
+                                        >
+                                            Today
+                                        </button>
+                                        <button 
+                                            type="button" 
+                                            className={`btn-quick-date ${formData.scheduledDate.startsWith(new Date(Date.now() + 86400000).toISOString().split('T')[0]) ? 'active' : ''}`}
+                                            onClick={() => {
+                                                const date = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+                                                const time = formData.scheduledDate.split('T')[1] || '09:00';
+                                                setFormData({ ...formData, scheduledDate: `${date}T${time}` });
+                                            }}
+                                        >
+                                            Tomorrow
+                                        </button>
+                                    </div>
+                                </div>
                             </FormField>
                         </div>
 
