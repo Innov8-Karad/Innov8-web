@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Calendar, Clock, Award, MoreVertical, Plus, Trash2 } from 'lucide-react';
+import { Calendar, Clock, Award, Plus, Trash2 } from 'lucide-react';
 import { examService } from '../services/examService';
 import type { Exam, Question } from '../types';
 import { UI_STRINGS } from '../constants';
@@ -188,20 +188,9 @@ export default function ExamsPage() {
                 {filteredExams.length > 0 ? (
                     filteredExams.map(exam => (
                         <div key={exam.id} className="card flex flex-col gap-4">
-                            <div className="flex justify-between items-start">
-                                <div>
-                                    <span className="section-label">{exam.category}</span>
-                                    <h3 style={{ marginTop: '4px' }}>{exam.title}</h3>
-                                </div>
-                                <div className="dropdown">
-                                    <button className="btn-icon">
-                                        <MoreVertical size={18} />
-                                    </button>
-                                    <div className="dropdown-content">
-                                        <button onClick={() => handleOpenEdit(exam)}>Edit</button>
-                                        <button className="text-error" onClick={() => handleConfirmDelete(exam.id)}>Delete</button>
-                                    </div>
-                                </div>
+                            <div>
+                                <span className="section-label">{exam.category}</span>
+                                <h3 style={{ marginTop: '4px' }}>{exam.title}</h3>
                             </div>
 
                             <p className="text-sm text-muted" style={{ flex: 1 }}>{exam.description}</p>
@@ -226,12 +215,22 @@ export default function ExamsPage() {
                                 <span className="text-sm font-medium">
                                     {exam.questions?.length || 0} {UI_STRINGS.EXAMS.QUESTIONS_SUFFIX}
                                 </span>
-                                <button 
-                                    className="btn btn-secondary btn-sm"
-                                    onClick={() => handleOpenEdit(exam)}
-                                >
-                                    {UI_STRINGS.COMMON.EDIT}
-                                </button>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        className="btn btn-secondary btn-sm"
+                                        onClick={() => handleOpenEdit(exam)}
+                                    >
+                                        {UI_STRINGS.COMMON.EDIT}
+                                    </button>
+                                    <button
+                                        className="btn btn-sm"
+                                        style={{ backgroundColor: 'var(--error)', color: 'white' }}
+                                        onClick={() => handleConfirmDelete(exam.id)}
+                                    >
+                                        <Trash2 size={14} style={{ marginRight: '4px', display: 'inline' }} />
+                                        {UI_STRINGS.COMMON.DELETE}
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     ))
