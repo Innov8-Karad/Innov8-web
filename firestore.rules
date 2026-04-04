@@ -1,161 +1,285 @@
 rules_version = '2';
 
+// ═══════════════════════════════════════════════════════════════════════════
+// Innov8 Unified Firestore Security Rules
+// Firebase Project: innov8-karad
+// Covers: Innov8-web (Admin Portal) + Innov8-mobile (Student App)
+// Last Updated: 2026-04-04
+// ═══════════════════════════════════════════════════════════════════════════
+
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ── Helpers ──────────────────────────────────────────────────────────
+    // ── Helper Functions ─────────────────────────────────────────────────
     function isAuthenticated() {
       return request.auth != null;
     }
 
     function isAdmin() {
-      return isAuthenticated() &&
-             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      return isAuthenticated()
+          && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+          && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
 
     function isOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
-    // ── Users ────────────────────────────────────────────────────────────
+
+    // ═════════════════════════════════════════════════════════════════════
+    // 1. USERS
+    // ─────────────────────────────────────────────────────────────────────
+    // Web Admin:  Reads ALL students (dashboard, exam results, announcements)
+    //             Creates students via addDoc (random doc ID)
+    //             Updates and deletes any user
+    // Mobile:     Reads own doc (profile, dashboard)
+    //             Creates own doc during signup via setDoc(uid)
+    //             Cannot change own role
+    // ═════════════════════════════════════════════════════════════════════
     match /users/{userId} {
-      // Allow students to read their own doc without needing isAdmin check
-      allow read: if isOwner(userId) || isAdmin();
-      allow create: if isOwner(userId)
-                    && request.resource.data.role == 'student'
-                    && request.resource.data.keys().hasAll(['name', 'email', 'role']);
+      allow read: if isAuthenticated();
+
+      allow create: if isAdmin()
+                    || (isOwner(userId)
+                        && request.resource.data.role == 'student'
+                        && request.resource.data.keys().hasAll(['name', 'email', 'role']));
+
       allow update: if isAdmin()
                     || (isOwner(userId)
                         && request.resource.data.role == resource.data.role);
+
       allow delete: if isAdmin();
     }
 
-    // ── Fees ─────────────────────────────────────────────────────────────
-    // Harmonized: allows reading by 'studentId' OR 'userId' field.
+
+    // ═════════════════════════════════════════════════════════════════════
+    // 2. FEES
+    // ─────────────────────────────────────────────────────────────────────
+    // Web Admin:  Reads ALL fees (dashboard totals, listing, charts)
+    //             Creates fee records, updates fee status
+    // Mobile:     Reads own fees via where('studentId', '==', uid)
+    // ═════════════════════════════════════════════════════════════════════
     match /fees/{feeId} {
-      allow read: if isAuthenticated()
-                  && (resource.data.studentId == request.auth.uid 
-                      || resource.data.userId == request.auth.uid 
-                      || isAdmin());
-      allow create: if isAdmin()
-                    && request.resource.data.keys().hasAll(['amount', 'status']);
-      allow update, delete: if isAdmin();
+      allow read: if isAdmin()
+                  || (isAuthenticated()
+                      && (resource.data.studentId == request.auth.uid
+                          || resource.data.userId == request.auth.uid));
+
+      allow create, update, delete: if isAdmin();
     }
 
-    // ── Courses ──────────────────────────────────────────────────────────
+
+    // ═════════════════════════════════════════════════════════════════════
+    // 3. COURSES + SUBCOLLECTIONS
+    // ─────────────────────────────────────────────────────────────────────
+    // Web Admin:  Full CRUD on courses, modules, resources, assignments
+    // Mobile:     Reads all courses and subcollections
+    // ═════════════════════════════════════════════════════════════════════
     match /courses/{courseId} {
       allow read: if isAuthenticated();
-      allow create: if isAdmin()
-                    && request.resource.data.keys().hasAll(['title']);
-      allow update, delete: if isAdmin();
+      allow create, update, delete: if isAdmin();
 
       match /modules/{moduleId} {
         allow read: if isAuthenticated();
-        allow write: if isAdmin();
+        allow create, update, delete: if isAdmin();
       }
 
       match /resources/{resourceId} {
         allow read: if isAuthenticated();
-        allow write: if isAdmin();
+        allow create, update, delete: if isAdmin();
       }
 
       match /assignments/{assignmentId} {
         allow read: if isAuthenticated();
-        allow write: if isAdmin();
+        allow create, update, delete: if isAdmin();
       }
     }
 
-    // ── Exams ────────────────────────────────────────────────────────────
+
+    // ═════════════════════════════════════════════════════════════════════
+    // 4. EXAMS
+    // ─────────────────────────────────────────────────────────────────────
+    // Web Admin:  Full CRUD, dashboard queries with various filters
+    // Mobile:     Reads all exams, reads single exam by ID
+    // ═════════════════════════════════════════════════════════════════════
     match /exams/{examId} {
       allow read: if isAuthenticated();
-      allow create: if isAdmin()
-                    && request.resource.data.keys().hasAll(['title', 'scheduledDate']);
+      allow create, update, delete: if isAdmin();
+    }
+
+
+    // ═════════════════════════════════════════════════════════════════════
+    // 5. EXAM RESULTS
+    // ─────────────────────────────────────────────────────────────────────
+    // Web Admin:  Reads ALL results (exam results dashboard, no filter)
+    // Mobile:     Reads own results via where('userId', '==', uid)
+    //             Creates own result after submitting an exam
+    // ═════════════════════════════════════════════════════════════════════
+    match /examResults/{resultId} {
+      allow read: if isAdmin()
+                  || (isAuthenticated()
+                      && resource.data.userId == request.auth.uid);
+
+      allow create: if isAuthenticated()
+                    && request.resource.data.userId == request.auth.uid;
+
       allow update, delete: if isAdmin();
     }
 
-    // ── Announcements ────────────────────────────────────────────────────
+
+    // ═════════════════════════════════════════════════════════════════════
+    // 6. ANNOUNCEMENTS
+    // ─────────────────────────────────────────────────────────────────────
+    // Web Admin:  Full CRUD
+    // Mobile:     Reads all (client-side filtering by batch/audience)
+    // ═════════════════════════════════════════════════════════════════════
     match /announcements/{announcementId} {
       allow read: if isAuthenticated();
-      allow create: if isAdmin()
-                    && request.resource.data.keys().hasAll(['title', 'content', 'createdAt']);
-      allow update, delete: if isAdmin();
+      allow create, update, delete: if isAdmin();
     }
 
-    // ── Placements & Success Stories ─────────────────────────────────────
-    // Unified: Both collections are now auth-gated for reading.
+
+    // ═════════════════════════════════════════════════════════════════════
+    // 7. ATTENDANCE
+    // ─────────────────────────────────────────────────────────────────────
+    // Web Admin:  Reads ALL (various filters: batchId, studentId, fetchAll)
+    //             Writes via batch writes and single updates
+    // Mobile:     Reads own via where('studentEmail', '==', user.email)
+    //             NOTE: Mobile queries by email, NOT studentId
+    // ═════════════════════════════════════════════════════════════════════
+    match /attendance/{attendanceId} {
+      allow read: if isAdmin()
+                  || (isAuthenticated()
+                      && (resource.data.studentId == request.auth.uid
+                          || resource.data.studentEmail == request.auth.token.email));
+
+      allow create, update, delete: if isAdmin();
+    }
+
+
+    // ═════════════════════════════════════════════════════════════════════
+    // 8. PLACEMENTS (Success Stories)
+    // ─────────────────────────────────────────────────────────────────────
+    // Web Admin:  Full CRUD, dashboard reads entire collection
+    // Mobile:     Reads all (useSuccessStories, usePlacements)
+    // ═════════════════════════════════════════════════════════════════════
     match /placements/{placementId} {
       allow read: if isAuthenticated();
-      allow write: if isAdmin();
+      allow create, update, delete: if isAdmin();
     }
 
-    match /successStories/{storyId} {
+
+    // ═════════════════════════════════════════════════════════════════════
+    // 9. PLACEMENT STATS
+    // ─────────────────────────────────────────────────────────────────────
+    // Web Admin:  Reads/writes (query by year, create/update)
+    // Mobile:     Reads all
+    // ═════════════════════════════════════════════════════════════════════
+    match /placementStats/{statId} {
       allow read: if isAuthenticated();
-      allow write: if isAdmin();
+      allow create, update, delete: if isAdmin();
     }
 
-    // ── User Progress ──
-    match /user_progress/{docId} {
-      allow read, write: if isAuthenticated() && (isAdmin() || docId.split('_')[0] == request.auth.uid);
-    }
 
-    // ── Exam Results ─────────────────────────────────────────────────────
-    match /examResults/{resultId} {
-      allow read: if isAuthenticated()
-                  && (resource.data.userId == request.auth.uid || isAdmin());
-      allow write: if isAdmin() || (isAuthenticated() && request.resource.data.userId == request.auth.uid);
-    }
-
-    // ── Jobs ─────────────────────────────────────────────────────────────
+    // ═════════════════════════════════════════════════════════════════════
+    // 10. JOBS + APPLICATIONS SUBCOLLECTION
+    // ─────────────────────────────────────────────────────────────────────
+    // Web Admin:  Full CRUD on jobs, reads all applications, updates status
+    // Mobile:     Reads all jobs, reads own applications (collectionGroup),
+    //             creates own application
+    // ═════════════════════════════════════════════════════════════════════
     match /jobs/{jobId} {
       allow read: if isAuthenticated();
-      allow write: if isAdmin();
+      allow create, update, delete: if isAdmin();
 
-      // ── Applications sub-collection ──
       match /applications/{applicationId} {
-        allow read: if isAuthenticated()
-                    && (resource.data.userId == request.auth.uid || isAdmin());
+        allow read: if isAdmin()
+                    || (isAuthenticated()
+                        && resource.data.userId == request.auth.uid);
+
         allow create: if isAuthenticated()
-                      && request.resource.data.userId == request.auth.uid
-                      && request.resource.data.keys().hasAll(['userId', 'jobId', 'status', 'appliedAt']);
-        allow update: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
-        allow delete: if isAdmin();
+                      && request.resource.data.userId == request.auth.uid;
+
+        allow update, delete: if isAdmin();
       }
     }
 
-    // ── Collection Group: Applications ───────────────────────────────────
+    // Collection Group query support for applications
+    // Mobile uses: collectionGroup(db, 'applications') with where('userId','==',uid)
     match /{path=**}/applications/{applicationId} {
-      allow read: if isAuthenticated()
-                  && (resource.data.userId == request.auth.uid || isAdmin());
+      allow read: if isAdmin()
+                  || (isAuthenticated()
+                      && resource.data.userId == request.auth.uid);
     }
 
-    // ── Interviews & Study Materials ─────────────────────────────────────
-    match /interviews/{interviewId} {
-      allow read: if isAuthenticated();
-      allow write: if isAdmin();
+
+    // ═════════════════════════════════════════════════════════════════════
+    // 11. USER PROGRESS
+    // ─────────────────────────────────────────────────────────────────────
+    // Web Admin:  Reads ALL (progressService.fetchProgress), updates individual
+    // Mobile:     Reads own doc (ID format: {userId}_{courseId})
+    //             Writes own progress
+    // ═════════════════════════════════════════════════════════════════════
+    match /user_progress/{docId} {
+      allow read: if isAdmin()
+                  || (isAuthenticated()
+                      && docId.split('_')[0] == request.auth.uid);
+
+      allow write: if isAdmin()
+                   || (isAuthenticated()
+                       && docId.split('_')[0] == request.auth.uid);
     }
 
-    match /studyMaterials/{materialId} {
-      allow read: if isAuthenticated();
-      allow write: if isAdmin();
+    // Legacy 'progress' collection (backward compatibility)
+    match /progress/{docId} {
+      allow read: if isAdmin()
+                  || (isAuthenticated()
+                      && (docId == request.auth.uid
+                          || docId.split('_')[0] == request.auth.uid));
+
+      allow write: if isAdmin()
+                   || (isAuthenticated()
+                       && (docId == request.auth.uid
+                           || docId.split('_')[0] == request.auth.uid));
     }
 
-    // ── Attendance ───────────────────────────────────────────────────────
-    match /attendance/{attendanceId} {
-      allow read: if isAuthenticated()
-                  && (resource.data.studentId == request.auth.uid || isAdmin());
-      allow write: if isAdmin();
-    }
 
-    // ── Placement Stats & Opportunities ──────────────────────────────────
-    match /placementStats/{statId} {
-      allow read: if isAuthenticated();
-      allow write: if isAdmin();
-    }
-
+    // ═════════════════════════════════════════════════════════════════════
+    // 12. OPPORTUNITIES
+    // ─────────────────────────────────────────────────────────────────────
+    // Mobile:  Reads all (usePlacements hook)
+    // ═════════════════════════════════════════════════════════════════════
     match /opportunities/{opportunityId} {
       allow read: if isAuthenticated();
-      allow write: if isAdmin();
+      allow create, update, delete: if isAdmin();
     }
+
+
+    // ═════════════════════════════════════════════════════════════════════
+    // 13. INTERVIEWS
+    // ═════════════════════════════════════════════════════════════════════
+    match /interviews/{interviewId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isAdmin();
+    }
+
+
+    // ═════════════════════════════════════════════════════════════════════
+    // 14. SUCCESS STORIES (alternate collection name)
+    // ═════════════════════════════════════════════════════════════════════
+    match /successStories/{storyId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isAdmin();
+    }
+
+
+    // ═════════════════════════════════════════════════════════════════════
+    // 15. STUDY MATERIALS
+    // ═════════════════════════════════════════════════════════════════════
+    match /studyMaterials/{materialId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isAdmin();
+    }
+
   }
 }
