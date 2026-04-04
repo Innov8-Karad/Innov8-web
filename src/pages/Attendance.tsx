@@ -12,7 +12,7 @@ import DataTable from '../components/DataTable';
 import type { Column } from '../components/DataTable';
 import {
     Calendar, ClipboardCheck, BarChart2, CheckCircle2, XCircle, Clock,
-    Users, Search, ChevronDown, Save, AlertTriangle, TrendingUp,
+    Users, Search, ChevronDown, Save, TrendingUp,
     ChevronLeft, ChevronRight, Percent, UserCheck
 } from 'lucide-react';
 import { useToast } from '../hooks/useToast';
@@ -289,11 +289,6 @@ export default function AttendancePage() {
                             <UserCheck size={16} style={{ color: 'var(--primary)' }} />
                             <strong style={{ color: allMarked ? '#22c55e' : 'var(--primary)' }}>{totalChecked}</strong> of {studentsInBatch.length} marked
                         </span>
-                        {!allMarked && totalChecked > 0 && (
-                            <span className="att-bottom-bar__warn">
-                                <AlertTriangle size={14} /> Not all students marked
-                            </span>
-                        )}
                     </div>
                     <button
                         onClick={handleSubmitAttendance}
@@ -539,12 +534,6 @@ export default function AttendancePage() {
                         <Search size={18} />
                     </button>
                 </div>
-                <button
-                    className="att-mark-btn"
-                    onClick={() => { setActiveTab('mark'); }}
-                >
-                    <ClipboardCheck size={18} /> Mark Attendance
-                </button>
             </div>
 
             {/* ── Tabs ── */}

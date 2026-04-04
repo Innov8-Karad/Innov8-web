@@ -44,7 +44,6 @@ export default function ExamResultsPage() {
   const [selectedExamId, setSelectedExamId] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [passThreshold, setPassThreshold] = useState<number>(35);
-  const [activeTab, setActiveTab] = useState<'by-exam' | 'by-student'>('by-exam');
 
   useEffect(() => {
     fetchData();
@@ -212,21 +211,6 @@ export default function ExamResultsPage() {
 
         </div>
 
-        {/* Tabs */}
-        <div className="tabs mt-lg" style={{ borderBottom: '1px solid var(--border-color)' }}>
-          <button 
-            className={`tab ${activeTab === 'by-exam' ? 'active' : ''}`}
-            onClick={() => setActiveTab('by-exam')}
-          >
-            {UI_STRINGS.EXAM_RESULTS.TAB_BY_EXAM}
-          </button>
-          <button 
-            className={`tab ${activeTab === 'by-student' ? 'active' : ''}`}
-            onClick={() => setActiveTab('by-student')}
-          >
-            {UI_STRINGS.EXAM_RESULTS.TAB_BY_STUDENT}
-          </button>
-        </div>
       </div>
 
       {/* Analytics Charts */}
@@ -336,7 +320,7 @@ export default function ExamResultsPage() {
             </table>
           </div>
         ) : (
-          <EmptyState message={activeTab === 'by-exam' ? UI_STRINGS.EXAM_RESULTS.EMPTY_EXAM : UI_STRINGS.EXAM_RESULTS.EMPTY_STUDENT} />
+          <EmptyState message={UI_STRINGS.COMMON.NO_DATA} />
         )}
       </div>
 
