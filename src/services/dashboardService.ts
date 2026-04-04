@@ -1,4 +1,4 @@
-import { collection, query, where, onSnapshot, orderBy, limit, Timestamp } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, limit } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { COLLECTIONS, FEE_STATUS } from '../constants';
 import { startOfMonth, format } from 'date-fns';
@@ -21,6 +21,7 @@ export interface ActivityItem {
 
 export interface MonthlyTrend {
   month: string;
+  monthKey?: string;
   students: number;
   fees: number;
   exams: number;
@@ -164,78 +165,83 @@ export const dashboardService = {
   },
 
   subscribeToMonthlyTrends(callback: (trends: MonthlyTrend[]) => void) {
-    // Generate last 6 months structure
-    const getInitialMonths = () => {
-        const months = [];
-        for (let i = 5; i >= 0; i--) {
-            const d = new Date();
-            d.setMonth(d.getMonth() - i);
-            months.push({
-                month: format(d, 'MMM'),
-                monthKey: format(startOfMonth(d), 'yyyy-MM'),
-                students: 0,
-                fees: 0,
-                exams: 0
-            });
-        }
-        return months;
-    };
-
-    let trends = getInitialMonths();
+    let userAgg: Record<string, number> = {};
+    let feeAgg: Record<string, number> = {};
+    let examAgg: Record<string, number> = {};
 
     const notify = () => {
-        callback([...trends]);
+        const allKeys = new Set([
+            ...Object.keys(userAgg),
+            ...Object.keys(feeAgg),
+            ...Object.keys(examAgg)
+        ]);
+
+        if (allKeys.size === 0) {
+            callback([]);
+            return;
+        }
+
+        const sortedKeys = Array.from(allKeys).sort();
+        const minKey = sortedKeys[0];
+        const maxKey = sortedKeys[sortedKeys.length - 1];
+
+        const trends: MonthlyTrend[] = [];
+        const [minYear, minMonth] = minKey.split('-').map(Number);
+        const [maxYear, maxMonth] = maxKey.split('-').map(Number);
+
+        const start = new Date(minYear, minMonth - 1, 1);
+        const end = new Date(maxYear, maxMonth - 1, 1);
+
+        const currentIter = new Date(start.getTime());
+
+        while (currentIter <= end) {
+            const mKey = format(currentIter, 'yyyy-MM');
+            trends.push({
+                month: format(currentIter, 'MMM'),
+                monthKey: mKey,
+                students: userAgg[mKey] || 0,
+                fees: feeAgg[mKey] || 0,
+                exams: examAgg[mKey] || 0
+            });
+            currentIter.setMonth(currentIter.getMonth() + 1);
+        }
+
+        callback(trends);
     };
 
-    // Calculate six months ago timestamp for filtering (approximate)
-    const sixMonthsAgo = new Date();
-    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
-    sixMonthsAgo.setDate(1);
-    const sixMonthsAgoTs = Timestamp.fromDate(sixMonthsAgo);
-
-
-    const unsubsUsers = onSnapshot(query(collection(db, COLLECTIONS.USERS), where('role', '==', 'student'), where('createdAt', '>=', sixMonthsAgoTs)), (snap) => {
-        const newTrends = getInitialMonths(); // Reset
-        
+    const unsubsUsers = onSnapshot(query(collection(db, COLLECTIONS.USERS), where('role', '==', 'student')), (snap) => {
+        userAgg = {};
         snap.forEach(doc => {
             const date = doc.data().createdAt ? safeDate(doc.data().createdAt) : null;
-            if(date) {
-               const key = format(startOfMonth(date), 'yyyy-MM');
-               const monthIndex = newTrends.findIndex(t => t.monthKey === key);
-               if(monthIndex > -1) newTrends[monthIndex].students += 1;
+            if (date) {
+                const key = format(startOfMonth(date), 'yyyy-MM');
+                userAgg[key] = (userAgg[key] || 0) + 1;
             }
         });
-        
-        // Merge state carefully or just update the current base (simplest is to just rebuild from raw snap data for all 3 streams, but to keep them independent we merge onto a shared base)
-        trends = trends.map((t, i) => ({ ...t, students: newTrends[i].students }));
         notify();
     });
 
-    const unsubsFees = onSnapshot(query(collection(db, COLLECTIONS.FEES), where('status', '==', FEE_STATUS.PAID), where('dueDate', '>=', sixMonthsAgoTs)), (snap) => {
-        const newTrends = getInitialMonths();
+    const unsubsFees = onSnapshot(query(collection(db, COLLECTIONS.FEES), where('status', '==', FEE_STATUS.PAID)), (snap) => {
+        feeAgg = {};
         snap.forEach(doc => {
             const date = doc.data().dueDate ? safeDate(doc.data().dueDate) : null;
-            if(date) {
-               const key = format(startOfMonth(date), 'yyyy-MM');
-               const monthIndex = newTrends.findIndex(t => t.monthKey === key);
-               if(monthIndex > -1) newTrends[monthIndex].fees += (doc.data().amount || 0);
+            if (date) {
+                const key = format(startOfMonth(date), 'yyyy-MM');
+                feeAgg[key] = (feeAgg[key] || 0) + (doc.data().amount || 0);
             }
         });
-        trends = trends.map((t, i) => ({ ...t, fees: newTrends[i].fees }));
         notify();
     });
 
-    const unsubsExams = onSnapshot(query(collection(db, COLLECTIONS.EXAMS), where('createdAt', '>=', sixMonthsAgoTs)), (snap) => {
-        const newTrends = getInitialMonths();
+    const unsubsExams = onSnapshot(query(collection(db, COLLECTIONS.EXAMS)), (snap) => {
+        examAgg = {};
         snap.forEach(doc => {
             const date = doc.data().createdAt ? safeDate(doc.data().createdAt) : null;
-            if(date) {
-               const key = format(startOfMonth(date), 'yyyy-MM');
-               const monthIndex = newTrends.findIndex(t => t.monthKey === key);
-               if(monthIndex > -1) newTrends[monthIndex].exams += 1;
+            if (date) {
+                const key = format(startOfMonth(date), 'yyyy-MM');
+                examAgg[key] = (examAgg[key] || 0) + 1;
             }
         });
-        trends = trends.map((t, i) => ({ ...t, exams: newTrends[i].exams }));
         notify();
     });
 
