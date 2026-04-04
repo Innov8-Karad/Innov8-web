@@ -55,6 +55,7 @@
   --text-secondary: #4B5563;
   --border-subtle: rgba(0, 0, 0, 0.08);
   --input-bg: #FFFFFF;
+  --bg-card-rgb: 255, 255, 255;
   --glass-bg: rgba(255, 255, 255, 0.8);
 }
 
@@ -762,7 +763,7 @@ textarea:focus {
   flex-direction: column;
   position: fixed;
   height: 100vh;
-  z-index: 10;
+  z-index: 100;
 }
 
 .sidebar-header {
