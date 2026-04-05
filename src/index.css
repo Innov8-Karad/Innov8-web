@@ -1270,3 +1270,269 @@ textarea:focus {
 .student-chip-remove:hover {
   color: var(--error);
 }
+
+/* ═══════════════════════════════════════════════════
+   CLOUDINARY UPLOAD COMPONENT
+   ═══════════════════════════════════════════════════ */
+
+.upload-wrapper {
+  width: 100%;
+}
+
+.form-field-label {
+  display: block;
+  margin-bottom: var(--space-xs);
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.upload-zone {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 140px;
+  padding: var(--space-lg);
+  border: 2px dashed var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--input-bg);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.upload-zone:hover {
+  border-color: rgba(var(--primary-rgb), 0.4);
+  background: rgba(var(--primary-rgb), 0.03);
+}
+
+.upload-zone--active {
+  border-color: var(--primary);
+  background: rgba(var(--primary-rgb), 0.08);
+  box-shadow: 0 0 20px rgba(var(--primary-rgb), 0.15);
+}
+
+.upload-zone--error {
+  border-color: rgba(var(--error-rgb), 0.5);
+  background: rgba(var(--error-rgb), 0.05);
+}
+
+.upload-zone--success {
+  border-style: solid;
+  border-color: rgba(var(--success-rgb), 0.3);
+  background: rgba(var(--success-rgb), 0.03);
+}
+
+.upload-hidden-input {
+  display: none;
+}
+
+/* ── Idle State ── */
+
+.upload-idle-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.upload-icon-circle {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(var(--primary-rgb), 0.1);
+  color: var(--primary);
+  border: 1px solid rgba(var(--primary-rgb), 0.2);
+  transition: all 0.3s ease;
+}
+
+.upload-zone:hover .upload-icon-circle {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.2);
+}
+
+.upload-main-text {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.upload-browse-link {
+  color: var(--primary);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.upload-hint-text {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  opacity: 0.7;
+  margin: 0;
+}
+
+/* ── Uploading / Progress ── */
+
+.upload-progress-content {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 0 var(--space-lg);
+}
+
+.upload-progress-bar-container {
+  width: 100%;
+  height: 8px;
+  background: var(--bg-card-accent);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.upload-progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(135deg, var(--primary), #D97706);
+  border-radius: var(--radius-full);
+  transition: width 0.3s ease;
+  box-shadow: 0 0 8px rgba(var(--primary-rgb), 0.4);
+}
+
+.upload-progress-text {
+  color: var(--primary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* ── Success State ── */
+
+.upload-success-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.upload-preview-image-container {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 2px solid rgba(var(--success-rgb), 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.upload-preview-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.upload-success-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--success);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(var(--success-rgb), 0.4);
+}
+
+.upload-doc-preview {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: var(--accent-blue);
+}
+
+.upload-doc-name {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.upload-change-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-card-accent);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.upload-change-btn:hover {
+  color: var(--primary);
+  border-color: rgba(var(--primary-rgb), 0.3);
+  background: rgba(var(--primary-rgb), 0.08);
+}
+
+/* ── Error State ── */
+
+.upload-error-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.upload-error-icon-circle {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(var(--error-rgb), 0.1);
+  color: var(--error);
+  border: 1px solid rgba(var(--error-rgb), 0.2);
+}
+
+.upload-error-message {
+  color: var(--error);
+  font-size: 0.85rem;
+  text-align: center;
+  margin: 0;
+  font-weight: 500;
+}
+
+.upload-retry-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--primary);
+  background: rgba(var(--primary-rgb), 0.1);
+  border: 1px solid rgba(var(--primary-rgb), 0.2);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.upload-retry-btn:hover {
+  background: rgba(var(--primary-rgb), 0.2);
+  box-shadow: 0 2px 8px rgba(var(--primary-rgb), 0.2);
+}

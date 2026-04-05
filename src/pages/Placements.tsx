@@ -10,6 +10,7 @@ import ErrorAlert from '../components/ErrorAlert';
 import Modal from '../components/Modal';
 import StatCard from '../components/StatCard';
 import Avatar from '../components/Avatar';
+import CloudinaryUpload from '../components/CloudinaryUpload';
 import { FormField, FormRow, FormActions } from '../components/FormField';
 
 export default function PlacementsPage() {
@@ -33,8 +34,7 @@ export default function PlacementsPage() {
     const [storyToDelete, setStoryToDelete] = useState<string | null>(null);
     
     // 3. Form States
-    const [selectedFile, setSelectedFile] = useState<File | null>(null);
-    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [uploadedPhotoUrl, setUploadedPhotoUrl] = useState<string | null>(null);
     const [storyForm, setStoryForm] = useState({
         studentName: '',
         company: '',
@@ -151,10 +151,7 @@ export default function PlacementsPage() {
         e.preventDefault();
         try {
             setSaving(true);
-            let imageUrl = storyForm.studentImage;
-            if (selectedFile) {
-                imageUrl = await placementService.uploadStudentPhoto(selectedFile);
-            }
+            const imageUrl = uploadedPhotoUrl || storyForm.studentImage;
 
             const data = {
                 studentName: storyForm.studentName,
@@ -203,8 +200,7 @@ export default function PlacementsPage() {
 
     const resetStoryForm = () => {
         setEditingStoryId(null);
-        setSelectedFile(null);
-        setPreviewUrl(null);
+        setUploadedPhotoUrl(null);
         setStoryForm({
             studentName: '',
             company: '',
@@ -327,7 +323,7 @@ export default function PlacementsPage() {
                 <form onSubmit={handleSaveStory} className="form-layout">
                     <div style={{ alignSelf: 'center' }} className="mb-sm">
                         <Avatar 
-                            src={previewUrl || storyForm.studentImage} 
+                            src={uploadedPhotoUrl || storyForm.studentImage} 
                             fallbackIcon={<Users size={40} style={{ color: 'var(--text-secondary)' }} />} 
                             size="lg" 
                             upload 
@@ -358,14 +354,18 @@ export default function PlacementsPage() {
                     <FormField label={UI_STRINGS.PLACEMENTS.FORM_TESTIMONIAL}>
                         <textarea rows={3} value={storyForm.testimonial} onChange={e => setStoryForm({ ...storyForm, testimonial: e.target.value })} />
                     </FormField>
-                    <FormField label={UI_STRINGS.PLACEMENTS.FORM_IMAGE_URL}>
-                        <input type="file" accept="image/png, image/jpeg" onChange={(e) => {
-                            if (e.target.files?.[0]) {
-                                setSelectedFile(e.target.files[0]);
-                                setPreviewUrl(URL.createObjectURL(e.target.files[0]));
-                            }
-                        }} />
-                    </FormField>
+                    <CloudinaryUpload
+                        label={UI_STRINGS.PLACEMENTS.FORM_IMAGE_URL}
+                        folder="innov8/success-stories"
+                        acceptedTypes={['image/png', 'image/jpeg', 'image/webp']}
+                        maxSizeMB={3}
+                        previewMode="image"
+                        existingUrl={storyForm.studentImage || undefined}
+                        onUploadComplete={(result) => {
+                            setUploadedPhotoUrl(result.url);
+                        }}
+                        onError={(msg) => showToast?.(msg, 'error')}
+                    />
                     <FormActions>
                         <button type="button" className="btn btn-secondary" onClick={() => setShowStoryModal(false)}>{UI_STRINGS.COMMON.CANCEL}</button>
                         <button type="submit" className="btn btn-primary" disabled={saving}>

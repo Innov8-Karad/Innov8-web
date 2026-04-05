@@ -12,6 +12,7 @@ import Modal from '../components/Modal';
 import DataTable from '../components/DataTable';
 import type { Column } from '../components/DataTable';
 import Avatar from '../components/Avatar';
+import CloudinaryUpload from '../components/CloudinaryUpload';
 import { FormField, FormRow, FormActions } from '../components/FormField';
 import { useUser } from '../hooks/useUser';
 import { useToast } from '../hooks/useToast';
@@ -27,8 +28,7 @@ export default function UsersPage() {
     const [courses, setCourses] = useState<Course[]>([]);
     
     // Photo upload states
-    const [selectedFile, setSelectedFile] = useState<File | null>(null);
-    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [uploadedPhotoUrl, setUploadedPhotoUrl] = useState<string | null>(null);
     const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
     const [newUser, setNewUser] = useState({
@@ -71,11 +71,7 @@ export default function UsersPage() {
         }
         try {
             setUploadingPhoto(true);
-            let photoUrl = newUser.profilePhoto;
-            
-            if (selectedFile) {
-                photoUrl = await userService.uploadProfilePhoto(selectedFile);
-            }
+            const photoUrl = uploadedPhotoUrl || newUser.profilePhoto;
 
             const parsedSkills = newUser.skills
                 ? newUser.skills.split(',').map(s => s.trim()).filter(Boolean)
@@ -112,18 +108,11 @@ export default function UsersPage() {
 
     const resetForm = () => {
         setEditingUser(null);
-        setSelectedFile(null);
-        setPreviewUrl(null);
+        setUploadedPhotoUrl(null);
         setNewUser({ name: '', email: '', phone: '', batch: '', course: '', skills: '', profilePhoto: '' });
     };
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            const file = e.target.files[0];
-            setSelectedFile(file);
-            setPreviewUrl(URL.createObjectURL(file));
-        }
-    };
+
 
     const handleToggleStatus = async (user: User) => {
         try {
@@ -167,8 +156,7 @@ export default function UsersPage() {
             skills: user.skills ? (Array.isArray(user.skills) ? user.skills.join(', ') : user.skills) : '',
             profilePhoto: user.profilePhoto || ''
         });
-        setSelectedFile(null);
-        setPreviewUrl(null);
+        setUploadedPhotoUrl(null);
         setShowModal(true);
     };
 
@@ -287,12 +275,18 @@ export default function UsersPage() {
                 title={editingUser ? "Edit Student" : UI_STRINGS.USERS.MODAL_TITLE}
             >
                 <form onSubmit={handleAddStudent} className="form-layout">
-                    <div style={{ alignSelf: 'center' }} className="mb-sm">
-                        <Avatar src={previewUrl || newUser.profilePhoto} fallbackIcon={<UserCheck size={40} style={{ color: 'var(--text-secondary)' }} />} size="lg" upload />
-                    </div>
-                    <FormField label="Profile Photo (PNG/JPG)">
-                        <input type="file" accept="image/png, image/jpeg" onChange={handleFileChange} />
-                    </FormField>
+                    <CloudinaryUpload
+                        label="Profile Photo (PNG/JPG)"
+                        folder="innov8/profile-photos"
+                        acceptedTypes={['image/png', 'image/jpeg', 'image/webp']}
+                        maxSizeMB={2}
+                        previewMode="image"
+                        existingUrl={newUser.profilePhoto || undefined}
+                        onUploadComplete={(result) => {
+                            setUploadedPhotoUrl(result.url);
+                        }}
+                        onError={(msg) => showToast(msg, 'error')}
+                    />
                     <FormRow>
                         <FormField label={UI_STRINGS.USERS.FORM_FULL_NAME}>
                             <input type="text" required value={newUser.name} onChange={e => setNewUser({ ...newUser, name: e.target.value })} />

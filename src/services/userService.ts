@@ -8,8 +8,8 @@ import {
   Timestamp,
   type DocumentData 
 } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { db, storage } from '../lib/firebase';
+import { db } from '../lib/firebase';
+import { uploadWithFallback } from '../lib/cloudinary';
 import { COLLECTIONS } from '../constants';
 import type { User } from '../types';
 
@@ -60,12 +60,18 @@ export const userService = {
     await deleteDoc(docRef);
   },
 
-  async uploadProfilePhoto(file: File): Promise<string> {
-    const fileExtension = file.name.split('.').pop();
-    const fileName = `profilePhotos/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExtension}`;
-    const storageRef = ref(storage, fileName);
-    
-    await uploadBytes(storageRef, file);
-    return await getDownloadURL(storageRef);
+  /**
+   * Upload a profile photo using Cloudinary (with Firebase Storage fallback).
+   * @param file - The image file to upload
+   * @param onProgress - Optional callback for upload progress (0-100)
+   * @returns The uploaded image URL
+   */
+  async uploadProfilePhoto(file: File, onProgress?: (pct: number) => void): Promise<string> {
+    const result = await uploadWithFallback(file, {
+      preset: import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET,
+      folder: 'innov8/profile-photos',
+      onProgress,
+    });
+    return result.url;
   }
 };
