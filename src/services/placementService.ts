@@ -11,8 +11,8 @@ import {
   serverTimestamp,
   type DocumentData 
 } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { db, storage } from '../lib/firebase';
+import { db } from '../lib/firebase';
+import { uploadWithFallback } from '../lib/cloudinary';
 import { COLLECTIONS } from '../constants';
 import type { SuccessStory, PlacementStats } from '../types';
 
@@ -99,13 +99,18 @@ export const placementService = {
     }
   },
 
-  // 5. Asset Upload
-  async uploadStudentPhoto(file: File): Promise<string> {
-    const fileExtension = file.name.split('.').pop();
-    const fileName = `successStories/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExtension}`;
-    const storageRef = ref(storage, fileName);
-    
-    await uploadBytes(storageRef, file);
-    return await getDownloadURL(storageRef);
+  /**
+   * Upload a student photo using Cloudinary (with Firebase Storage fallback).
+   * @param file - The image file to upload
+   * @param onProgress - Optional callback for upload progress (0-100)
+   * @returns The uploaded image URL
+   */
+  async uploadStudentPhoto(file: File, onProgress?: (pct: number) => void): Promise<string> {
+    const result = await uploadWithFallback(file, {
+      preset: import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET,
+      folder: 'innov8/success-stories',
+      onProgress,
+    });
+    return result.url;
   }
 };
