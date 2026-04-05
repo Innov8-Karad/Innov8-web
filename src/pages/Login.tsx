@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Lock, Mail, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import { Lock, Mail, ArrowRight, Eye, EyeOff, X } from 'lucide-react';
 
 import logo from '../assets/logo.png';
 import { UI_STRINGS } from '../constants';
@@ -12,7 +12,10 @@ export default function Login() {
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
-    const { login } = useAuth()!;
+    const [showResetModal, setShowResetModal] = useState(false);
+    const [resetEmail, setResetEmail] = useState('');
+    const [resetLoading, setResetLoading] = useState(false);
+    const { login, resetPassword } = useAuth()!;
     const { showToast } = useToast();
     const navigate = useNavigate();
 
@@ -28,6 +31,23 @@ export default function Login() {
             showToast("invalid email or passward", "error");
         }
         setLoading(false);
+    }
+
+    async function handleResetPassword(e: React.FormEvent) {
+        e.preventDefault();
+        if (!resetEmail) return;
+
+        try {
+            setResetLoading(true);
+            await resetPassword(resetEmail);
+            showToast(UI_STRINGS.LOGIN.FORGOT_PASSWORD_SUCCESS, "success");
+            setShowResetModal(false);
+            setResetEmail('');
+        } catch (err) {
+            console.error("Reset error:", err);
+            showToast(UI_STRINGS.LOGIN.FORGOT_PASSWORD_ERROR, "error");
+        }
+        setResetLoading(false);
     }
 
     return (
@@ -89,6 +109,21 @@ export default function Login() {
                                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                                 </button>
                             </div>
+                            <div className="flex justify-end mt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowResetModal(true)}
+                                    className="text-sm font-medium hover:underline p-0"
+                                    style={{ 
+                                        color: 'var(--primary)', 
+                                        background: 'none', 
+                                        border: 'none', 
+                                        cursor: 'pointer' 
+                                    }}
+                                >
+                                    {UI_STRINGS.LOGIN.FORGOT_PASSWORD_LINK}
+                                </button>
+                            </div>
                         </div>
 
                         <button
@@ -105,6 +140,58 @@ export default function Login() {
                     </form>
                 </div>
             </div>
+
+            {/* Reset Password Modal */}
+            {showResetModal && (
+                <div className="modal-overlay" onClick={() => setShowResetModal(false)}>
+                    <div 
+                        className="modal-content login-form-card relative" 
+                        onClick={e => e.stopPropagation()}
+                        style={{ maxWidth: '400px' }}
+                    >
+                        <button 
+                            className="modal-close"
+                            onClick={() => setShowResetModal(false)}
+                        >
+                            <X size={20} />
+                        </button>
+
+                        <div className="text-center mb-xl">
+                            <h2 className="login-title" style={{ fontSize: '1.5rem' }}>
+                                {UI_STRINGS.LOGIN.FORGOT_PASSWORD_TITLE}
+                            </h2>
+                            <p className="login-subtitle">
+                                {UI_STRINGS.LOGIN.FORGOT_PASSWORD_SUBTITLE}
+                            </p>
+                        </div>
+
+                        <form onSubmit={handleResetPassword} className="flex flex-col gap-5">
+                            <div>
+                                <label className="login-label">{UI_STRINGS.LOGIN.EMAIL_LABEL}</label>
+                                <div style={{ position: 'relative' }}>
+                                    <Mail size={18} className="login-input-icon" />
+                                    <input
+                                        type="email"
+                                        required
+                                        value={resetEmail}
+                                        onChange={(e) => setResetEmail(e.target.value)}
+                                        className="login-input"
+                                        placeholder={UI_STRINGS.LOGIN.EMAIL_PLACEHOLDER}
+                                    />
+                                </div>
+                            </div>
+
+                            <button
+                                type="submit"
+                                className="btn btn-primary login-submit w-full"
+                                disabled={resetLoading}
+                            >
+                                {resetLoading ? UI_STRINGS.COMMON.LOADING : UI_STRINGS.LOGIN.SEND_RESET_LINK}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

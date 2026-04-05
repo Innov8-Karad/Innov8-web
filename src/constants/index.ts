@@ -449,6 +449,12 @@ export const UI_STRINGS = {
     BRANDING_SUFFIX: 'of Digital Learning & Management.',
     EMAIL_PLACEHOLDER: 'Enter email address',
     PASSWORD_PLACEHOLDER: '••••••••',
+    FORGOT_PASSWORD_LINK: 'Forgot Password?',
+    FORGOT_PASSWORD_TITLE: 'Reset Password',
+    FORGOT_PASSWORD_SUBTITLE: 'Enter your admin email to receive a password reset link.',
+    FORGOT_PASSWORD_SUCCESS: 'Password reset email sent! Please check your inbox.',
+    FORGOT_PASSWORD_ERROR: 'Failed to send reset email. Please verify your email or try again.',
+    SEND_RESET_LINK: 'Send Reset Link',
   },
   THEME: {
     SWITCH_DARK: 'Switch to Dark Mode',

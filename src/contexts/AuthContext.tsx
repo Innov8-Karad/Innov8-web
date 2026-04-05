@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
-import { onAuthStateChanged, signInWithEmailAndPassword, signOut, type User } from 'firebase/auth';
+import { onAuthStateChanged, signInWithEmailAndPassword, signOut, sendPasswordResetEmail, type User } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 
@@ -8,6 +8,7 @@ interface AuthContextType {
     loading: boolean;
     login: (email: string, password: string) => Promise<void>;
     logout: () => Promise<void>;
+    resetPassword: (email: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -115,6 +116,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return signOut(auth);
     }
 
+    function resetPassword(email: string) {
+        return sendPasswordResetEmail(auth, email);
+    }
+
     useEffect(() => {
         authResolved.current = false;
 
@@ -168,7 +173,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         currentUser,
         loading,
         login,
-        logout
+        logout,
+        resetPassword
     };
 
     // Show loading spinner while waiting for Firebase
