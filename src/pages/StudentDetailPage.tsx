@@ -14,6 +14,7 @@ import { progressService } from '../services/progressService';
 import type { StudentProgress } from '../types';
 import LoadingState from '../components/LoadingState';
 import PageHeader from '../components/PageHeader';
+import Avatar from '../components/Avatar';
 import { useToast } from '../hooks/useToast';
 
 export default function StudentDetailPage() {
@@ -70,15 +71,26 @@ export default function StudentDetailPage() {
                 <ArrowLeft size={18} /> Back to Progress
             </button>
 
-            <PageHeader
-                title={student.studentName}
-                subtitle={`Batch: ${student.batch}`}
-            >
-                <button className="btn btn-primary" onClick={handleExport}>
-                    <Download size={18} style={{ marginRight: '8px' }} />
-                    Export Report
-                </button>
-            </PageHeader>
+            <div className="flex items-center gap-6 mb-2">
+                <div style={{ marginTop: '-24px' }}>
+                    <Avatar 
+                        src={student.profilePhoto} 
+                        fallback={student.studentName.charAt(0)} 
+                        size="lg" 
+                    />
+                </div>
+                <div style={{ flex: 1 }}>
+                    <PageHeader
+                        title={student.studentName}
+                        subtitle={`Batch: ${student.batch}`}
+                    >
+                        <button className="btn btn-primary" onClick={handleExport}>
+                            <Download size={18} style={{ marginRight: '8px' }} />
+                            Export Report
+                        </button>
+                    </PageHeader>
+                </div>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 <div className="card shadow-sm p-6 flex items-center gap-4">

@@ -17,6 +17,7 @@ export interface User {
     course: string;
     enrollmentDate: Date;
     profilePhoto?: string;
+    profilePhotoPublicId?: string;
     skills: string[];
     resume?: string;
     role?: 'student' | 'admin';

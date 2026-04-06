@@ -199,3 +199,18 @@ export function getRawFileUrl(publicId: string, format: string = 'pdf'): string 
 export function isCloudinaryUrl(url: string): boolean {
   return url.includes('res.cloudinary.com');
 }
+
+/**
+ * Transforms a full Cloudinary URL to include profile transformations on the fly.
+ * Returns the original URL if not a Cloudinary image or already transformed.
+ */
+export function getOptimizedProfileUrl(url: string): string {
+  if (!url || !isCloudinaryUrl(url)) {
+    return url;
+  }
+  const transformations = 'c_fill,w_200,h_200,g_face,q_auto,f_auto';
+  if (url.includes('c_fill')) {
+    return url;
+  }
+  return url.replace('/upload/', `/upload/${transformations}/`);
+}
