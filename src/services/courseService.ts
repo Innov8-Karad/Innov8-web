@@ -13,7 +13,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { COLLECTIONS } from '../constants';
-import type { Course, CourseModule, CourseResource, AssignmentType } from '../types';
+import type { Course, CourseModule, CourseResource, AssignmentType, AssignmentSubmission } from '../types';
 
 export const courseService = {
   subscribeToCourses(callback: (courses: Course[]) => void) {
@@ -166,5 +166,30 @@ export const courseService = {
   async deleteAssignment(courseId: string, assignmentId: string): Promise<void> {
     const docRef = doc(db, COLLECTIONS.COURSES, courseId, 'assignments', assignmentId);
     await deleteDoc(docRef);
+  },
+
+  // ── Assignment Submissions ──
+
+  subscribeToSubmissions(courseId: string, assignmentId: string, callback: (submissions: AssignmentSubmission[]) => void) {
+    const q = query(
+      collection(db, COLLECTIONS.COURSES, courseId, 'assignments', assignmentId, 'submissions'),
+      orderBy('submittedAt', 'desc')
+    );
+    return onSnapshot(q, (snapshot) => {
+      const submissions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AssignmentSubmission));
+      callback(submissions);
+    }, (error) => {
+      console.error("Error subscribing to submissions:", error);
+      callback([]);
+    });
+  },
+
+  async updateSubmissionGrade(courseId: string, assignmentId: string, submissionId: string, data: Partial<AssignmentSubmission>): Promise<void> {
+    const docRef = doc(db, COLLECTIONS.COURSES, courseId, 'assignments', assignmentId, 'submissions', submissionId);
+    await updateDoc(docRef, { 
+      ...data, 
+      status: 'graded', 
+      gradedAt: Timestamp.now() 
+    });
   }
 };
