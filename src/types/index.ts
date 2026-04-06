@@ -114,6 +114,10 @@ export interface CourseResource {
     platform?: 'youtube' | 'vimeo' | 'cloudinary' | 'direct';
     duration?: string;          // e.g. "12:34"
     thumbnailUrl?: string;      // auto-generated or user-provided
+    // ── PDF/Document-specific metadata (populated when type === 'pdf') ──
+    cloudinaryPublicId?: string;
+    size?: string;              // e.g. "2.3 MB"
+    fileFormat?: string;        // e.g. "PDF", "DOC", "DOCX"
 }
 
 export interface CourseModule {
