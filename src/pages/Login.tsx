@@ -109,7 +109,7 @@ export default function Login() {
                                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                                 </button>
                             </div>
-                            <div className="flex justify-end mt-2">
+                            <div className="flex justify-end mt-md">
                                 <button
                                     type="button"
                                     onClick={() => setShowResetModal(true)}
