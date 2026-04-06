@@ -110,6 +110,10 @@ export interface CourseResource {
     title?: string;
     url: string;
     type: 'video' | 'pdf' | 'link';
+    // ── Video-specific metadata (populated when type === 'video') ──
+    platform?: 'youtube' | 'vimeo' | 'cloudinary' | 'direct';
+    duration?: string;          // e.g. "12:34"
+    thumbnailUrl?: string;      // auto-generated or user-provided
 }
 
 export interface CourseModule {

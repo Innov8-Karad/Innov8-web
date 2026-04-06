@@ -1540,4 +1540,120 @@ textarea:focus {
 .upload-retry-btn:hover {
   background: rgba(var(--primary-rgb), 0.2);
   box-shadow: 0 2px 8px rgba(var(--primary-rgb), 0.2);
+}
+
+/* ═══════════════════════════════════════════════════
+   CURRICULUM BUILDER ENHANCED VIDEO STYLES
+   ═══════════════════════════════════════════════════ */
+
+.video-platform-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-size: 0.7rem;
+  font-weight: 600;
+  margin-left: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.video-duration-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary);
+  border-radius: var(--radius-full);
+  font-size: 0.7rem;
+  font-weight: 500;
+  margin-left: 8px;
+  border: 1px solid var(--border-subtle);
+}
+
+.video-url-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.video-platform-detect-badge {
+  position: absolute;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.video-embed-preview {
+  margin-top: var(--space-md);
+  margin-bottom: var(--space-md);
+}
+
+.video-embed-container {
+  position: relative;
+  width: 100%;
+  padding-top: 56.25%; /* 16:9 Aspect Ratio */
+  background: #000;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+}
+
+.video-embed-iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.video-thumbnail-preview {
+  display: flex;
+  gap: var(--space-md);
+  align-items: flex-start;
+  background: var(--bg-card-accent);
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  margin-top: var(--space-sm);
+}
+
+.video-thumb-img {
+  width: 120px;
+  height: 68px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  background-color: #000;
+}
+
+.video-thumb-meta {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.input-error {
+  border-color: var(--error) !important;
+  outline-color: var(--error) !important;
+}
+
+[data-theme='light'] .video-duration-badge {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme='light'] .video-thumbnail-preview {
+  background: #f3f4f6;
 }

@@ -121,8 +121,12 @@ export const courseService = {
   },
 
   async addResource(courseId: string, moduleId: string, resource: Omit<CourseResource, 'id'>): Promise<void> {
+    // Clean undefined values — Firestore rejects them
+    const cleanedResource = Object.fromEntries(
+      Object.entries(resource).filter((entry) => entry[1] !== undefined && entry[1] !== '')
+    );
     await addDoc(collection(db, COLLECTIONS.COURSES, courseId, 'resources'), {
-      ...resource,
+      ...cleanedResource,
       moduleId,
       createdAt: Timestamp.now()
     });
