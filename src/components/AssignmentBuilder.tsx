@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Edit2, Calendar } from 'lucide-react';
+import { Plus, Trash2, Edit2, Calendar, ClipboardList } from 'lucide-react';
 import { courseService } from '../services/courseService';
 import type { AssignmentType } from '../types';
 import { useToast } from '../hooks/useToast';
 import Modal from './Modal';
 import { FormField, FormActions } from './FormField';
+import SubmissionList from './SubmissionList';
 
 interface AssignmentBuilderProps {
     courseId: string;
@@ -19,6 +20,9 @@ export default function AssignmentBuilder({ courseId }: AssignmentBuilderProps) 
     const [showModal, setShowModal] = useState(false);
     const [editingAssignment, setEditingAssignment] = useState<AssignmentType | null>(null);
     const [form, setForm] = useState({ title: '', dueDate: '' });
+
+    // Submission State
+    const [selectedAssignment, setSelectedAssignment] = useState<AssignmentType | null>(null);
 
     useEffect(() => {
         const unsubscribe = courseService.subscribeToAssignments(courseId, (fetchedAssignments) => {
@@ -114,18 +118,43 @@ export default function AssignmentBuilder({ courseId }: AssignmentBuilderProps) 
                                         <span className="text-xs text-muted">Due: {assignment.dueDate || 'No date set'}</span>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <button type="button" className="icon-btn text-muted" onClick={() => openEdit(assignment)}>
-                                        <Edit2 size={16} />
-                                    </button>
-                                    <button type="button" className="icon-btn text-error" onClick={() => handleDelete(assignment.id)}>
-                                        <Trash2 size={16} />
-                                    </button>
+                                    <div className="flex items-center gap-3">
+                                        <button 
+                                            type="button" 
+                                            className="btn btn-secondary" 
+                                            style={{ 
+                                                height: '36px', 
+                                                padding: '0 16px', 
+                                                fontSize: '0.85rem',
+                                                borderRadius: 'var(--radius-sm)'
+                                            }}
+                                            onClick={() => setSelectedAssignment(assignment)}
+                                        >
+                                            <ClipboardList size={16} />
+                                            <span>Submissions</span>
+                                        </button>
+                                        <div className="flex items-center gap-1 border-l border-divider pl-3">
+                                            <button type="button" className="icon-btn text-muted" onClick={() => openEdit(assignment)} title="Edit">
+                                                <Edit2 size={16} />
+                                            </button>
+                                            <button type="button" className="icon-btn text-error" onClick={() => handleDelete(assignment.id)} title="Delete">
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    ))}
-                </div>
+                        ))}
+                    </div>
+                )}
+
+            {selectedAssignment && (
+                <SubmissionList 
+                    courseId={courseId}
+                    assignmentId={selectedAssignment.id}
+                    assignmentTitle={selectedAssignment.title}
+                    onClose={() => setSelectedAssignment(null)}
+                />
             )}
 
             {/* Assignment Modal */}

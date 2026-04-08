@@ -146,6 +146,25 @@ export interface AssignmentType {
     score?: string;
 }
 
+export interface AssignmentSubmission {
+    id: string;
+    assignmentId: string;
+    courseId: string;
+    userId: string;
+    userName: string;
+    userEmail: string;
+    fileUrl: string;            // Cloudinary URL
+    cloudinaryPublicId: string; // For deletion
+    fileName: string;
+    fileType: 'image' | 'pdf';
+    submittedAt: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+    grade?: number;             // Admin assigns
+    feedback?: string;          // Admin comment
+    gradedAt?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+    gradedBy?: string;
+    status: 'submitted' | 'graded' | 'returned';
+}
+
 // ─── Announcements ───────────────────────────────────────────────────────────
 
 export interface Announcement {
