@@ -277,7 +277,7 @@ export default function UsersPage() {
                 <form onSubmit={handleAddStudent} className="form-layout">
                     <CloudinaryUpload
                         label="Profile Photo (PNG/JPG)"
-                        folder="innov8/profile-photos"
+                        folder={editingUser ? `innov8/profile-photos/${editingUser.id}` : "innov8/profile-photos"}
                         acceptedTypes={['image/png', 'image/jpeg', 'image/webp']}
                         maxSizeMB={2}
                         previewMode="image"

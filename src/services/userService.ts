@@ -66,10 +66,11 @@ export const userService = {
    * @param onProgress - Optional callback for upload progress (0-100)
    * @returns The uploaded image URL
    */
-  async uploadProfilePhoto(file: File, onProgress?: (pct: number) => void): Promise<string> {
+  async uploadProfilePhoto(file: File, userId?: string, onProgress?: (pct: number) => void): Promise<string> {
+    const folderPath = userId ? `innov8/profile-photos/${userId}` : 'innov8/profile-photos';
     const result = await uploadWithFallback(file, {
       preset: import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET,
-      folder: 'innov8/profile-photos',
+      folder: folderPath,
       onProgress,
     });
     return result.url;
