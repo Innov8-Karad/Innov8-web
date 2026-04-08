@@ -12,6 +12,7 @@ import StatCard from '../components/StatCard';
 import Avatar from '../components/Avatar';
 import CloudinaryUpload from '../components/CloudinaryUpload';
 import { FormField, FormRow, FormActions } from '../components/FormField';
+import { getOptimizedUrl } from '../lib/cloudinary';
 
 export default function PlacementsPage() {
     // 1. Context
@@ -356,13 +357,14 @@ export default function PlacementsPage() {
                     </FormField>
                     <CloudinaryUpload
                         label={UI_STRINGS.PLACEMENTS.FORM_IMAGE_URL}
-                        folder="innov8/success-stories"
+                        preset="success_story"
+                        folder="innov8/success-stories/"
                         acceptedTypes={['image/png', 'image/jpeg', 'image/webp']}
                         maxSizeMB={3}
                         previewMode="image"
                         existingUrl={storyForm.studentImage || undefined}
                         onUploadComplete={(result) => {
-                            setUploadedPhotoUrl(result.url);
+                            setUploadedPhotoUrl(getOptimizedUrl(result.publicId));
                         }}
                         onError={(msg) => showToast?.(msg, 'error')}
                     />

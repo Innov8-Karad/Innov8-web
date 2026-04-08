@@ -12,7 +12,7 @@ import {
   type DocumentData 
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { uploadWithFallback } from '../lib/cloudinary';
+import { uploadWithFallback, getOptimizedUrl } from '../lib/cloudinary';
 import { COLLECTIONS } from '../constants';
 import type { SuccessStory, PlacementStats } from '../types';
 
@@ -107,10 +107,10 @@ export const placementService = {
    */
   async uploadStudentPhoto(file: File, onProgress?: (pct: number) => void): Promise<string> {
     const result = await uploadWithFallback(file, {
-      preset: import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET,
-      folder: 'innov8/success-stories',
+      preset: 'success_story',
+      folder: 'innov8/success-stories/',
       onProgress,
     });
-    return result.url;
+    return getOptimizedUrl(result.publicId);
   }
 };
