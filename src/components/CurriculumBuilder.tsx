@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Plus, Trash2, Edit2, FileText, Video, Link as LinkIcon, ChevronDown, ChevronUp, Play, ExternalLink, Clock } from 'lucide-react';
+import { Plus, Trash2, Edit2, FileText, Video, Link as LinkIcon, ChevronDown, ChevronUp, Play, ExternalLink, Clock, Upload, Link2 } from 'lucide-react';
 import { courseService } from '../services/courseService';
 import type { CourseModule, CourseResource } from '../types';
 import { useToast } from '../hooks/useToast';
 import Modal from './Modal';
+import CloudinaryUpload from './CloudinaryUpload';
 import { FormField, FormActions } from './FormField';
 import { detectPlatform, validateVideoUrl, getEmbedUrl, getThumbnailUrl, getPlatformLabel, getPlatformColor } from '../lib/videoUtils';
 import type { VideoPlatform } from '../lib/videoUtils';
@@ -21,6 +22,11 @@ interface ResourceFormState {
     platform?: VideoPlatform;
     duration?: string;
     thumbnailUrl?: string;
+    // PDF upload fields
+    pdfInputMode: 'url' | 'upload';
+    cloudinaryPublicId?: string;
+    size?: string;
+    fileFormat?: string;
 }
 
 const INITIAL_RESOURCE_FORM: ResourceFormState = {
@@ -30,6 +36,10 @@ const INITIAL_RESOURCE_FORM: ResourceFormState = {
     platform: undefined,
     duration: '',
     thumbnailUrl: '',
+    pdfInputMode: 'url',
+    cloudinaryPublicId: undefined,
+    size: undefined,
+    fileFormat: undefined,
 };
 
 export default function CurriculumBuilder({ courseId }: CurriculumBuilderProps) {
@@ -159,6 +169,11 @@ export default function CurriculumBuilder({ courseId }: CurriculumBuilderProps) 
             platform: resource.platform,
             duration: resource.duration || '',
             thumbnailUrl: resource.thumbnailUrl || '',
+            // Restore PDF fields
+            pdfInputMode: resource.cloudinaryPublicId ? 'upload' : 'url',
+            cloudinaryPublicId: resource.cloudinaryPublicId,
+            size: resource.size,
+            fileFormat: resource.fileFormat,
         });
 
         setShowResourceModal(true);
@@ -182,6 +197,11 @@ export default function CurriculumBuilder({ courseId }: CurriculumBuilderProps) 
                     platform: resourceForm.platform || detectedPlatform || undefined,
                     duration: resourceForm.duration || undefined,
                     thumbnailUrl: resourceForm.thumbnailUrl || undefined,
+                }),
+                ...(resourceForm.type === 'pdf' && {
+                    cloudinaryPublicId: resourceForm.cloudinaryPublicId || undefined,
+                    size: resourceForm.size || undefined,
+                    fileFormat: resourceForm.fileFormat || undefined,
                 }),
             };
 
@@ -496,17 +516,100 @@ export default function CurriculumBuilder({ courseId }: CurriculumBuilderProps) 
                         </>
                     )}
 
-                    {/* ── PDF / Link URL Field (simple) ── */}
-                    {resourceForm.type !== 'video' && (
+                    {/* ── Link URL Field (simple — unchanged) ── */}
+                    {resourceForm.type === 'link' && (
                         <FormField label="URL">
                             <input
                                 type="url"
                                 required
-                                placeholder={resourceForm.type === 'pdf' ? 'https://... (PDF URL or Cloudinary URL)' : 'https://...'}
+                                placeholder="https://..."
                                 value={resourceForm.url}
                                 onChange={e => setResourceForm({ ...resourceForm, url: e.target.value })}
                             />
                         </FormField>
+                    )}
+
+                    {/* ── PDF / Document Input (dual mode: URL or Upload) ── */}
+                    {resourceForm.type === 'pdf' && (
+                        <>
+                            {/* Input Mode Toggle */}
+                            <div className="flex gap-2 mb-3">
+                                <button
+                                    type="button"
+                                    className={`btn btn-sm flex items-center gap-1 ${resourceForm.pdfInputMode === 'url' ? 'btn-primary' : 'btn-secondary'}`}
+                                    onClick={() => setResourceForm({ ...resourceForm, pdfInputMode: 'url' })}
+                                >
+                                    <Link2 size={14} /> Paste URL
+                                </button>
+                                <button
+                                    type="button"
+                                    className={`btn btn-sm flex items-center gap-1 ${resourceForm.pdfInputMode === 'upload' ? 'btn-primary' : 'btn-secondary'}`}
+                                    onClick={() => setResourceForm({ ...resourceForm, pdfInputMode: 'upload' })}
+                                >
+                                    <Upload size={14} /> Upload File
+                                </button>
+                            </div>
+
+                            {/* Mode: Paste URL */}
+                            {resourceForm.pdfInputMode === 'url' && (
+                                <FormField label="PDF / Document URL">
+                                    <input
+                                        type="url"
+                                        required
+                                        placeholder="https://... (Cloudinary URL or external link)"
+                                        value={resourceForm.url}
+                                        onChange={e => setResourceForm({ ...resourceForm, url: e.target.value })}
+                                    />
+                                </FormField>
+                            )}
+
+                            {/* Mode: Upload File */}
+                            {resourceForm.pdfInputMode === 'upload' && (
+                                <CloudinaryUpload
+                                    label="Upload PDF / Document"
+                                    folder={`innov8/course-notes/${courseId}/${activeModuleId}`}
+                                    acceptedTypes={[
+                                        'application/pdf',
+                                        'application/msword',
+                                        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                                    ]}
+                                    maxSizeMB={10}
+                                    previewMode="document"
+                                    existingUrl={resourceForm.cloudinaryPublicId ? resourceForm.url : undefined}
+                                    onUploadComplete={(result) => {
+                                        const sizeMB = (result.bytes / (1024 * 1024)).toFixed(1);
+                                        const sizeLabel = parseFloat(sizeMB) < 1
+                                            ? `${(result.bytes / 1024).toFixed(0)} KB`
+                                            : `${sizeMB} MB`;
+                                        const format = result.format?.toUpperCase() || 'PDF';
+                                        setResourceForm(prev => ({
+                                            ...prev,
+                                            url: result.url,
+                                            cloudinaryPublicId: result.publicId,
+                                            size: sizeLabel,
+                                            fileFormat: format,
+                                        }));
+                                    }}
+                                    onError={(msg) => showToast(msg, 'error')}
+                                />
+                            )}
+
+                            {/* Preview link after upload */}
+                            {resourceForm.pdfInputMode === 'upload' && resourceForm.url && resourceForm.cloudinaryPublicId && (
+                                <div className="flex items-center gap-2 mt-2 p-2 rounded-md bg-secondary/30 text-sm">
+                                    <FileText size={16} className="text-error" />
+                                    <span className="truncate flex-1">{resourceForm.fileFormat} • {resourceForm.size}</span>
+                                    <a
+                                        href={resourceForm.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-primary text-xs flex items-center gap-1 hover:underline"
+                                    >
+                                        <ExternalLink size={12} /> Open
+                                    </a>
+                                </div>
+                            )}
+                        </>
                     )}
 
                     <FormActions>
@@ -514,7 +617,10 @@ export default function CurriculumBuilder({ courseId }: CurriculumBuilderProps) 
                         <button
                             type="submit"
                             className="btn btn-primary"
-                            disabled={resourceForm.type === 'video' && !!videoUrlError && !!resourceForm.url}
+                            disabled={
+                                (resourceForm.type === 'video' && !!videoUrlError && !!resourceForm.url) ||
+                                (resourceForm.type === 'pdf' && resourceForm.pdfInputMode === 'upload' && !resourceForm.url)
+                            }
                         >
                             {editingResource ? 'Update Resource' : 'Save Resource'}
                         </button>
