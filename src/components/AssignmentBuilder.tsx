@@ -101,52 +101,56 @@ export default function AssignmentBuilder({ courseId }: AssignmentBuilderProps) 
             </div>
 
             {assignments.length === 0 ? (
-                <div className="p-xl text-center text-muted border-dashed rounded-md bg-secondary">
+                <div className="p-xl text-center text-muted border-dashed border-2 border-white/5 rounded-xl bg-white/[0.02]">
                     No assignments added yet.
                 </div>
             ) : (
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col" style={{ gap: '10px' }}>
                     {assignments.map(assignment => (
-                        <div key={assignment.id} className="glass-card" style={{ padding: '0', overflow: 'hidden' }}>
-                            <div className="flex justify-between items-center p-3">
-                                <div className="flex items-center gap-3">
-                                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary">
-                                        <Calendar size={16} />
-                                    </div>
-                                    <div>
-                                        <h4 className="font-semibold">{assignment.title}</h4>
-                                        <span className="text-xs text-muted">Due: {assignment.dueDate || 'No date set'}</span>
+                        <div key={assignment.id} className="card" style={{ padding: '0', overflow: 'hidden', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
+                            <div className="flex justify-between items-center"
+                                style={{ padding: '14px 16px', transition: 'background 0.2s' }}
+                                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
+                                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                            >
+                                <div className="flex items-center" style={{ gap: '12px', minWidth: 0, flex: 1 }}>
+                                    <span style={{
+                                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                                        width: '28px', height: '28px', borderRadius: 'var(--radius-sm)', flexShrink: 0,
+                                        background: 'rgba(var(--accent-blue-rgb), 0.15)', color: 'var(--accent-blue)'
+                                    }}>
+                                        <Calendar size={14} />
+                                    </span>
+                                    <div style={{ minWidth: 0, flex: 1 }}>
+                                        <div style={{ fontSize: '0.95rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                            {assignment.title}
+                                        </div>
+                                        <span className="text-muted" style={{ fontSize: '0.75rem' }}>
+                                            Due: {assignment.dueDate || 'No date set'}
+                                        </span>
                                     </div>
                                 </div>
-                                    <div className="flex items-center gap-3">
-                                        <button 
-                                            type="button" 
-                                            className="btn btn-secondary" 
-                                            style={{ 
-                                                height: '36px', 
-                                                padding: '0 16px', 
-                                                fontSize: '0.85rem',
-                                                borderRadius: 'var(--radius-sm)'
-                                            }}
-                                            onClick={() => setSelectedAssignment(assignment)}
-                                        >
-                                            <ClipboardList size={16} />
-                                            <span>Submissions</span>
-                                        </button>
-                                        <div className="flex items-center gap-1 border-l border-divider pl-3">
-                                            <button type="button" className="icon-btn text-muted" onClick={() => openEdit(assignment)} title="Edit">
-                                                <Edit2 size={16} />
-                                            </button>
-                                            <button type="button" className="icon-btn text-error" onClick={() => handleDelete(assignment.id)} title="Delete">
-                                                <Trash2 size={16} />
-                                            </button>
-                                        </div>
-                                    </div>
+                                <div className="flex items-center" style={{ gap: '4px', flexShrink: 0 }}>
+                                    <button 
+                                        type="button" 
+                                        className="btn btn-secondary"
+                                        style={{ padding: '4px 10px', fontSize: '0.7rem', borderRadius: 'var(--radius-sm)', height: 'auto' }}
+                                        onClick={() => setSelectedAssignment(assignment)}
+                                    >
+                                        <ClipboardList size={12} /> Submissions
+                                    </button>
+                                    <button type="button" className="icon-btn" style={{ width: '28px', height: '28px', border: 'none', background: 'transparent' }} onClick={() => openEdit(assignment)} title="Edit">
+                                        <Edit2 size={13} />
+                                    </button>
+                                    <button type="button" className="icon-btn" style={{ width: '28px', height: '28px', border: 'none', background: 'transparent', color: 'var(--error)' }} onClick={() => handleDelete(assignment.id)} title="Delete">
+                                        <Trash2 size={13} />
+                                    </button>
                                 </div>
                             </div>
-                        ))}
-                    </div>
-                )}
+                        </div>
+                    ))}
+                </div>
+            )}
 
             {selectedAssignment && (
                 <SubmissionList 

@@ -277,71 +277,120 @@ export default function CurriculumBuilder({ courseId }: CurriculumBuilderProps) 
                     No modules yet. Add a module to build the curriculum.
                 </div>
             ) : (
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col" style={{ gap: '12px' }}>
                     {modules.map(module => (
-                        <div key={module.id} className="glass-card" style={{ padding: '0', overflow: 'hidden' }}>
+                        <div key={module.id} className="card" style={{ padding: '0', overflow: 'hidden', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
+                            {/* Module Header — collapsed row */}
                             <div 
-                                className="flex justify-between items-center p-3 cursor-pointer hover:bg-secondary/50 transition-colors"
+                                className="flex justify-between items-center cursor-pointer group"
+                                style={{ padding: '14px 16px', transition: 'background 0.2s' }}
                                 onClick={() => toggleModule(module.id)}
+                                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
+                                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                             >
-                                <div className="flex items-center gap-3">
-                                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm">
+                                <div className="flex items-center" style={{ gap: '12px', minWidth: 0, flex: 1 }}>
+                                    <span style={{
+                                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                                        width: '28px', height: '28px', borderRadius: 'var(--radius-sm)',
+                                        background: 'rgba(var(--primary-rgb), 0.15)', color: 'var(--primary)',
+                                        fontWeight: 700, fontSize: '0.8rem', flexShrink: 0
+                                    }}>
                                         {module.order}
-                                    </div>
-                                    <div>
-                                        <h4 className="font-semibold">{module.title}</h4>
-                                        <span className="text-xs text-muted">{resources.filter(r => r.moduleId === module.id).length} resources</span>
+                                    </span>
+                                    <div style={{ minWidth: 0, flex: 1 }}>
+                                        <h4 style={{ fontSize: '0.95rem', fontWeight: 600, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                            {module.title}
+                                        </h4>
+                                        <span className="text-muted" style={{ fontSize: '0.75rem' }}>
+                                            {resources.filter(r => r.moduleId === module.id).length} resources
+                                        </span>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
-                                    <button type="button" className="icon-btn text-muted" onClick={() => { setEditingModule(module); setModuleForm({ title: module.title, description: module.description, order: module.order }); setShowModuleModal(true); }}>
-                                        <Edit2 size={16} />
+                                <div className="flex items-center" style={{ gap: '4px', flexShrink: 0 }} onClick={e => e.stopPropagation()}>
+                                    <button type="button" className="icon-btn" style={{ width: '30px', height: '30px', border: 'none', background: 'transparent' }} onClick={() => { setEditingModule(module); setModuleForm({ title: module.title, description: module.description, order: module.order }); setShowModuleModal(true); }} title="Edit Module">
+                                        <Edit2 size={14} />
                                     </button>
-                                    <button type="button" className="icon-btn text-error" onClick={() => handleDeleteModule(module.id)}>
-                                        <Trash2 size={16} />
+                                    <button type="button" className="icon-btn" style={{ width: '30px', height: '30px', border: 'none', background: 'transparent', color: 'var(--error)' }} onClick={() => handleDeleteModule(module.id)} title="Delete Module">
+                                        <Trash2 size={14} />
                                     </button>
-                                    <button type="button" className="icon-btn text-muted ml-2" onClick={() => toggleModule(module.id)}>
-                                        {expandedModules.has(module.id) ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                                    <button type="button" style={{
+                                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                                        width: '30px', height: '30px', borderRadius: '50%',
+                                        border: '1px solid var(--border-subtle)', background: 'var(--bg-card)',
+                                        color: 'var(--text-secondary)', cursor: 'pointer', transition: 'all 0.2s',
+                                        marginLeft: '2px'
+                                    }} onClick={() => toggleModule(module.id)}>
+                                        {expandedModules.has(module.id) ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                                     </button>
                                 </div>
                             </div>
 
+                            {/* Expanded content */}
                             {expandedModules.has(module.id) && (
-                                <div className="p-4 border-t border-divider bg-card">
-                                    <p className="text-sm text-muted mb-4">{module.description}</p>
-                                    
-                                    <div className="flex justify-between items-center mb-3">
-                                        <h5 className="font-medium text-sm">Resources</h5>
-                                        <button type="button" className="text-primary text-xs flex items-center gap-1 hover:underline" onClick={() => openAddResource(module.id)}>
-                                            <Plus size={14} /> Add Resource
+                                <div style={{ borderTop: '1px solid var(--border-subtle)', padding: '16px', background: 'rgba(0,0,0,0.15)' }}>
+                                    {/* Description */}
+                                    {module.description && (
+                                        <div style={{ marginBottom: '16px', padding: '10px 12px', borderRadius: 'var(--radius-sm)', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-subtle)' }}>
+                                            <p className="text-muted" style={{ fontSize: '0.8rem', margin: 0, lineHeight: 1.5 }}>{module.description}</p>
+                                        </div>
+                                    )}
+
+                                    {/* Resources header */}
+                                    <div className="flex justify-between items-center" style={{ marginBottom: '10px' }}>
+                                        <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>Resources</span>
+                                        <button type="button" className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: '0.75rem', borderRadius: 'var(--radius-sm)', height: 'auto' }} onClick={() => openAddResource(module.id)}>
+                                            <Plus size={12} /> Add
                                         </button>
                                     </div>
 
-                                    <div className="flex flex-col gap-2">
+                                    {/* Resource list */}
+                                    <div className="flex flex-col" style={{ gap: '6px' }}>
                                         {resources.filter(r => r.moduleId === module.id).length === 0 ? (
-                                            <div className="text-xs text-muted text-center py-2">No resources in this module.</div>
+                                            <div className="text-muted" style={{ textAlign: 'center', padding: '20px 12px', fontSize: '0.8rem', border: '1px dashed var(--border-subtle)', borderRadius: 'var(--radius-sm)' }}>
+                                                No resources yet
+                                            </div>
                                         ) : (
                                             resources.filter(r => r.moduleId === module.id).map(resource => (
-                                                <div key={resource.id} className="flex justify-between items-center p-2 rounded-md bg-secondary/30 text-sm">
-                                                    <div className="flex items-center gap-2 flex-1 overflow-hidden">
-                                                        <span className="text-muted">{getResourceIcon(resource.type)}</span>
-                                                        <span className="truncate">{resource.title || resource.type}</span>
-                                                        {renderPlatformBadge(resource)}
-                                                        {resource.type === 'video' && resource.duration && (
-                                                            <span className="video-duration-badge">
-                                                                <Clock size={10} /> {resource.duration}
-                                                            </span>
-                                                        )}
+                                                <div key={resource.id} className="flex justify-between items-center" style={{
+                                                    padding: '10px 12px', borderRadius: 'var(--radius-sm)',
+                                                    background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-subtle)',
+                                                    transition: 'all 0.2s', cursor: 'default'
+                                                }}
+                                                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.borderColor = 'rgba(var(--primary-rgb), 0.3)'; }}
+                                                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.borderColor = 'var(--border-subtle)'; }}
+                                                >
+                                                    <div className="flex items-center" style={{ gap: '10px', minWidth: 0, flex: 1 }}>
+                                                        <span style={{
+                                                            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                                                            width: '28px', height: '28px', borderRadius: 'var(--radius-sm)', flexShrink: 0,
+                                                            background: resource.type === 'video' ? 'rgba(99,102,241,0.15)' : resource.type === 'pdf' ? 'rgba(239,68,68,0.15)' : 'rgba(16,185,129,0.15)',
+                                                            color: resource.type === 'video' ? '#818CF8' : resource.type === 'pdf' ? '#F87171' : '#34D399'
+                                                        }}>
+                                                            {getResourceIcon(resource.type)}
+                                                        </span>
+                                                        <div style={{ minWidth: 0, flex: 1 }}>
+                                                            <div style={{ fontSize: '0.85rem', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                                {resource.title || resource.type}
+                                                            </div>
+                                                            <div className="flex items-center" style={{ gap: '6px', marginTop: '2px' }}>
+                                                                {renderPlatformBadge(resource)}
+                                                                {resource.type === 'pdf' && resource.size && (
+                                                                    <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>
+                                                                        {resource.size} • {resource.fileFormat}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                    <div className="flex items-center gap-1">
-                                                        <a href={resource.url} target="_blank" rel="noopener noreferrer" className="icon-btn bg-transparent text-primary" style={{ padding: '4px' }}>
-                                                            <ExternalLink size={14} />
+                                                    <div className="flex items-center" style={{ gap: '2px', flexShrink: 0, marginLeft: '8px' }}>
+                                                        <a href={resource.url} target="_blank" rel="noopener noreferrer" className="icon-btn" style={{ width: '28px', height: '28px', border: 'none', background: 'transparent' }} title="Open">
+                                                            <ExternalLink size={13} />
                                                         </a>
-                                                        <button type="button" className="icon-btn bg-transparent text-muted" onClick={() => openEditResource(module.id, resource)} style={{ padding: '4px' }}>
-                                                            <Edit2 size={14} />
+                                                        <button type="button" className="icon-btn" style={{ width: '28px', height: '28px', border: 'none', background: 'transparent' }} onClick={() => openEditResource(module.id, resource)} title="Edit">
+                                                            <Edit2 size={13} />
                                                         </button>
-                                                        <button type="button" className="icon-btn bg-transparent text-error" onClick={() => handleDeleteResource(resource.id)} style={{ padding: '4px' }}>
-                                                            <Trash2 size={14} />
+                                                        <button type="button" className="icon-btn" style={{ width: '28px', height: '28px', border: 'none', background: 'transparent', color: 'var(--error)' }} onClick={() => handleDeleteResource(resource.id)} title="Delete">
+                                                            <Trash2 size={13} />
                                                         </button>
                                                     </div>
                                                 </div>

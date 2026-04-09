@@ -6,8 +6,8 @@
 
 // ── Configuration ─────────────────────────────────────────────────────────────
 
-const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
-const DEFAULT_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+const CLOUD_NAME = (import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || '').trim();
+const DEFAULT_PRESET = (import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || '').trim();
 const UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}`;
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -121,6 +121,7 @@ export function uploadToCloudinary(
       } else {
         try {
           const errData = JSON.parse(xhr.responseText);
+          console.error(`[Cloudinary Upload Error Details] (Preset: ${preset}):`, errData);
           reject(new Error(errData.error?.message || `Upload failed with status ${xhr.status}`));
         } catch {
           reject(new Error(`Upload failed with status ${xhr.status}`));
