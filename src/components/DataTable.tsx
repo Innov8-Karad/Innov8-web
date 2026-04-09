@@ -1,4 +1,4 @@
-import { useState, useMemo, type ReactNode } from 'react';
+import React, { useState, useMemo, type ReactNode } from 'react';
 import { Search, ChevronUp, ChevronDown } from 'lucide-react';
 
 export interface Column<T> {
@@ -17,6 +17,7 @@ interface DataTableProps<T> {
     keyExtractor: (item: T) => string;
     searchable?: boolean;
     searchPlaceholder?: string;
+    renderAfterRow?: (item: T) => ReactNode;
 }
 
 export default function DataTable<T>({ 
@@ -25,7 +26,8 @@ export default function DataTable<T>({
     emptyMessage, 
     keyExtractor,
     searchable = false,
-    searchPlaceholder = "Search..."
+    searchPlaceholder = "Search...",
+    renderAfterRow
 }: DataTableProps<T>) {
     const [searchTerm, setSearchTerm] = useState('');
     const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
@@ -110,7 +112,8 @@ export default function DataTable<T>({
                     <tbody>
                         {processedData.length > 0 ? (
                             processedData.map(item => (
-                                <tr key={keyExtractor(item)}>
+                                <React.Fragment key={keyExtractor(item)}>
+                                <tr>
                                     {columns.map(col => (
                                         <td key={col.key as string} style={{ textAlign: col.align }}>
                                             {col.render 
@@ -120,6 +123,8 @@ export default function DataTable<T>({
                                         </td>
                                     ))}
                                 </tr>
+                                {renderAfterRow && renderAfterRow(item)}
+                                </React.Fragment>
                             ))
                         ) : (
                             <tr>

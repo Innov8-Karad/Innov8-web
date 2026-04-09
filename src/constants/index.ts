@@ -2,6 +2,7 @@ export const COLLECTIONS = {
   ANNOUNCEMENTS: 'announcements',
   USERS: 'users',
   FEES: 'fees',
+  PAYMENT_HISTORY: 'paymentHistory',
   COURSES: 'courses',
   ATTENDANCE: 'attendance',
   EXAMS: 'exams',
@@ -17,7 +18,14 @@ export const FEE_STATUS = {
   PAID: 'paid',
   PENDING: 'pending',
   OVERDUE: 'overdue',
+  PARTIAL: 'partial',
 } as const;
+
+export const PAYMENT_METHODS = [
+  { id: 'Cash', label: 'Cash' },
+  { id: 'Bank', label: 'Bank Transfer' },
+  { id: 'Manual', label: 'Manual Entry' },
+] as const;
 
 export const ATTENDANCE_STATUS = {
   PRESENT: 'present',
@@ -235,8 +243,17 @@ export const UI_STRINGS = {
     TH_DETAIL_DUE_DATE: 'Due Date',
     TH_DETAIL_STATUS: 'Status',
     TH_DETAIL_ACTION: 'Action',
+    // Installment strings
+    ADD_INSTALLMENT: 'Add Installment',
+    INSTALLMENT_HISTORY: 'Installment History',
+    INSTALLMENT_AMOUNT: 'Amount (₹)',
+    INSTALLMENT_METHOD: 'Payment Method',
+    INSTALLMENT_DATE: 'Payment Date',
+    INSTALLMENT_NOTES: 'Notes (Optional)',
+    INSTALLMENT_EMPTY: 'No installments recorded yet.',
     // Status values
     ALL_CLEAR: 'All Clear',
+    STATUS_PARTIAL: 'Partial',
     NO_RECORDS: 'No Records',
   },
   ATTENDANCE: {

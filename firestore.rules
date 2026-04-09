@@ -66,6 +66,13 @@ service cloud.firestore {
                           || resource.data.userId == request.auth.uid));
 
       allow create, update, delete: if isAdmin();
+
+      // Payment history subcollection (installments)
+      match /paymentHistory/{paymentId} {
+        allow read: if isAdmin()
+                    || (isAuthenticated());
+        allow create, update, delete: if isAdmin();
+      }
     }
 
 
