@@ -223,11 +223,20 @@ service cloud.firestore {
     match /user_progress/{docId} {
       allow read: if isAdmin()
                   || (isAuthenticated()
-                      && docId.split('_')[0] == request.auth.uid);
+                      && (docId == request.auth.uid 
+                          || docId.matches("^" + request.auth.uid + "(_.*)?$")
+                          || resource.data.userId == request.auth.uid));
+
+      allow list: if isAdmin()
+                  || (isAuthenticated()
+                      && (resource.data.userId == request.auth.uid
+                          || resource.data.email == request.auth.token.email));
 
       allow write: if isAdmin()
                    || (isAuthenticated()
-                       && docId.split('_')[0] == request.auth.uid);
+                       && (docId == request.auth.uid 
+                           || docId.matches("^" + request.auth.uid + "(_.*)?$")
+                           || request.resource.data.userId == request.auth.uid));
     }
 
     // Legacy 'progress' collection (backward compatibility)
@@ -235,12 +244,12 @@ service cloud.firestore {
       allow read: if isAdmin()
                   || (isAuthenticated()
                       && (docId == request.auth.uid
-                          || docId.split('_')[0] == request.auth.uid));
+                          || docId.matches("^" + request.auth.uid + "(_.*)?$")));
 
       allow write: if isAdmin()
                    || (isAuthenticated()
                        && (docId == request.auth.uid
-                           || docId.split('_')[0] == request.auth.uid));
+                           || docId.matches("^" + request.auth.uid + "(_.*)?$")));
     }
 
 

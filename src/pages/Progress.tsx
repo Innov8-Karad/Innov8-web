@@ -95,8 +95,12 @@ export default function ProgressPage() {
 
         try {
             setLoading(true);
-            await progressService.updateProgress(editingProgress.id as string, editForm);
-            showToast("Progress updated successfully");
+            await progressService.updateProgress(editingProgress.id as string, {
+                ...editForm,
+                email: editingProgress.email,
+                studentName: editingProgress.studentName,
+            });
+            showToast("Progress Updated Successfully");
             setShowEditModal(false);
             fetchData();
         } catch (err) {

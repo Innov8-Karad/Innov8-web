@@ -2,8 +2,8 @@ import {
   collection, 
   getDocs, 
   doc, 
-  updateDoc, 
   serverTimestamp,
+  setDoc,
   type DocumentData 
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -19,9 +19,13 @@ export const progressService = {
     ]);
 
     const progressMap = new Map<string, DocumentData>();
-    progressSnap.docs.forEach(doc => progressMap.set(pdata(doc).studentId || doc.id, { ...pdata(doc), id: doc.id }));
+    progressSnap.docs.forEach(doc => {
+      const p = doc.data();
+      const docUserId = doc.id.split('_')[0];
+      const key = p.userId || p.studentId || docUserId;
+      progressMap.set(key, { ...p, id: doc.id });
+    });
 
-    function pdata(doc: { data: () => DocumentData }) { return doc.data(); }
 
     return usersSnap.docs
       .map(doc => ({ id: doc.id, ...doc.data() } as User))
@@ -30,7 +34,7 @@ export const progressService = {
         const progressData = progressMap.get(userData.id) || {};
         
         return {
-          id: progressData.id || `temp-${userData.id}`,
+          id: progressData.id || `${userData.id}_${userData.course || 'default'}`,
           studentId: userData.id,
           studentName: userData.name || 'Unknown Student',
           email: userData.email || '',
@@ -50,10 +54,16 @@ export const progressService = {
 
   async updateProgress(id: string, data: Partial<StudentProgress>): Promise<void> {
     const docRef = doc(db, COLLECTIONS.PROGRESS, id);
-    await updateDoc(docRef, {
+    const [userId, courseId] = id.split('_');
+    await setDoc(docRef, {
       ...data,
+      userId: userId || id,
+      studentId: userId || id,
+      courseId: courseId || 'default',
+      email: data.email || '',
+      studentName: data.studentName || '',
       updatedAt: serverTimestamp()
-    });
+    }, { merge: true });
   },
 
   async getBatchProgress() {
