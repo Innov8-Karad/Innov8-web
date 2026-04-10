@@ -29,7 +29,7 @@ export interface User {
 
 // ─── Fees ────────────────────────────────────────────────────────────────────
 
-export type FeeStatus = 'paid' | 'pending' | 'overdue';
+export type FeeStatus = 'paid' | 'pending' | 'overdue' | 'partial';
 
 export interface Fee {
     id: string;
@@ -42,10 +42,21 @@ export interface Fee {
     dueDate: Date;
     paidDate?: Date;
     status: FeeStatus;
+    totalPaid?: number;
     createdAt: Date;
-    method?: 'Cash' | 'Card' | 'Online';
+    method?: 'Cash' | 'Bank' | 'Manual';
     receiptUrl?: string;
     studentId?: string; // legacy alias
+}
+
+export interface InstallmentPayment {
+    id: string;
+    amount: number;
+    paidDate: Date;
+    method: 'Cash' | 'Bank' | 'Manual';
+    notes?: string;
+    recordedBy?: string;
+    createdAt: Date;
 }
 
 // ─── Exams ───────────────────────────────────────────────────────────────────

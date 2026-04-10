@@ -233,6 +233,18 @@ body {
   border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
+.badge-warning {
+  background-color: rgba(245, 158, 11, 0.15);
+  color: #F59E0B;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.badge-secondary {
+  background-color: rgba(107, 114, 128, 0.15);
+  color: var(--text-secondary);
+  border: 1px solid rgba(107, 114, 128, 0.2);
+}
+
 .icon-hover-scale {
   transition: transform 0.3s ease;
 }

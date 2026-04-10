@@ -38,10 +38,11 @@ describe('FEE_STATUS', () => {
     expect(FEE_STATUS.PAID).toBe('paid');
     expect(FEE_STATUS.PENDING).toBe('pending');
     expect(FEE_STATUS.OVERDUE).toBe('overdue');
+    expect(FEE_STATUS.PARTIAL).toBe('partial');
   });
 
-  it('should only have exactly 3 status values', () => {
-    expect(Object.keys(FEE_STATUS)).toHaveLength(3);
+  it('should only have exactly 4 status values', () => {
+    expect(Object.keys(FEE_STATUS)).toHaveLength(4);
   });
 });
 
