@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { IndianRupee, AlertTriangle, Clock, ChevronDown, ChevronUp } from 'lucide-react';
 import { feeService } from '../services/feeService';
 import { userService } from '../services/userService';
+import { announcementService } from '../services/announcementService';
 import type { Fee, User, InstallmentPayment } from '../types';
 import { UI_STRINGS, FEE_STATUS, ADMIN_USER_ID, PAYMENT_METHODS } from '../constants';
 import PageHeader from '../components/PageHeader';
@@ -68,6 +69,7 @@ export default function FeesPage() {
     const [expandedFeeId, setExpandedFeeId] = useState<string | null>(null);
     const [installmentsMap, setInstallmentsMap] = useState<Record<string, InstallmentPayment[]>>({});
     const [loadingInstallments, setLoadingInstallments] = useState<string | null>(null);
+    const [isBulkSending, setIsBulkSending] = useState(false);
 
     // ═════════════════════════════════════════════════════════════════════════
     // DATA LOADING — single source of truth refresh
@@ -283,10 +285,34 @@ export default function FeesPage() {
     // ═════════════════════════════════════════════════════════════════════════
     // SEND REMINDER (stub)
     // ═════════════════════════════════════════════════════════════════════════
-    const handleSendReminder = (studentId: string, records: Fee[]) => {
-        const pendingFees = records.filter(f => f.status !== FEE_STATUS.PAID);
-        const pendingAmount = pendingFees.reduce((sum, f) => sum + f.amount, 0);
-        showToast(`Reminder ready for User: ${studentId}. Amount: ₹${pendingAmount}`, 'success');
+    const handleSendReminder = async (studentId: string, records: Fee[]) => {
+        try {
+            const pendingFees = records.filter(f => f.status !== FEE_STATUS.PAID);
+            if (pendingFees.length === 0) {
+                showToast('No pending fees for this student.', 'success');
+                return;
+            }
+
+            const totalPending = pendingFees.reduce((sum, f) => sum + (f.amount - (f.totalPaid || 0)), 0);
+            const nearestDueDate = pendingFees
+                .sort((a, b) => (a.dueDate?.getTime?.() || 0) - (b.dueDate?.getTime?.() || 0))[0]?.dueDate;
+            
+            const dueDateStr = nearestDueDate?.toLocaleDateString() || 'N/A';
+
+            await announcementService.createAnnouncement({
+                title: 'Fee Payment Reminder',
+                content: `You have a total pending balance of ₹${totalPending.toLocaleString()}. The next due date is ${dueDateStr}. Please clear your dues of ₹${totalPending.toLocaleString()} to avoid penalties.`,
+                priority: 'high',
+                targetAudience: 'students',
+                targetStudentIds: [studentId],
+                targetBatches: [],
+            });
+
+            showToast(`Reminder sent successfully to ${studentId}`, 'success');
+        } catch (err) {
+            console.error('Error sending reminder:', err);
+            showToast('Failed to send reminder.', 'error');
+        }
     };
 
     // ═════════════════════════════════════════════════════════════════════════
@@ -310,20 +336,46 @@ export default function FeesPage() {
     };
 
     // ═════════════════════════════════════════════════════════════════════════
-    // MIGRATE LEGACY
+    // BULK REMINDERS
     // ═════════════════════════════════════════════════════════════════════════
-    const handleMigrateLegacyFees = async () => {
-        if (!window.confirm('This will scan and fix all legacy fee records. Proceed?')) return;
+    const handleBulkSendReminders = async () => {
+        const pendingStudents = studentSummaries.filter(s => s.pending > 0);
+        if (pendingStudents.length === 0) {
+            showToast('No students have pending fees.', 'success');
+            return;
+        }
+
         try {
-            setLoading(true);
-            const count = await feeService.migrateLegacyFees();
-            await refreshFees();
-            showToast(`Migration Complete! Fixed ${count} records.`, 'success');
+            showToast(`Sending reminders to ${pendingStudents.length} students...`, 'success');
+            setIsBulkSending(true);
+            let sentCount = 0;
+            
+            const promises = pendingStudents.map(async (student) => {
+                const totalPending = student.pending;
+                const nearestDueDate = student.records
+                    .filter(f => f.status !== FEE_STATUS.PAID)
+                    .sort((a, b) => (a.dueDate?.getTime?.() || 0) - (b.dueDate?.getTime?.() || 0))[0]?.dueDate;
+                
+                const dueDateStr = nearestDueDate?.toLocaleDateString() || 'N/A';
+
+                await announcementService.createAnnouncement({
+                    title: 'Fee Payment Reminder',
+                    content: `You have a total pending balance of ₹${totalPending.toLocaleString()}. The next due date is ${dueDateStr}. Please clear your dues at the earliest.`,
+                    priority: 'high',
+                    targetAudience: 'students',
+                    targetStudentIds: [student.userId],
+                    targetBatches: [],
+                });
+                sentCount++;
+            });
+
+            await Promise.all(promises);
+            showToast(`Successfully sent reminders to ${sentCount} students.`, 'success');
         } catch (err) {
-            console.error('Migration failed:', err);
-            showToast('Migration failed.', 'error');
+            console.error('Bulk reminder failed:', err);
+            showToast('Failed to send some reminders.', 'error');
         } finally {
-            setLoading(false);
+            setIsBulkSending(false);
         }
     };
 
@@ -344,9 +396,9 @@ export default function FeesPage() {
         .map(user => {
             const userFees = fees.filter(f => (f.studentId || f.userId) === user.id);
             const total = userFees.reduce((a, f) => a + f.amount, 0);
-            const paid = userFees.filter(f => f.status === FEE_STATUS.PAID).reduce((a, f) => a + f.amount, 0);
-            const overdue = userFees.filter(f => f.status === FEE_STATUS.OVERDUE).reduce((a, f) => a + f.amount, 0);
-            const pending = userFees.filter(f => f.status === FEE_STATUS.PENDING || f.status === FEE_STATUS.PARTIAL).reduce((a, f) => a + f.amount, 0);
+            const paid = userFees.reduce((a, f) => a + (f.totalPaid || 0), 0);
+            const overdue = userFees.filter(f => f.status === FEE_STATUS.OVERDUE).reduce((a, f) => a + (f.amount - (f.totalPaid || 0)), 0);
+            const pending = userFees.filter(f => f.status === FEE_STATUS.PENDING || f.status === FEE_STATUS.PARTIAL).reduce((a, f) => a + (f.amount - (f.totalPaid || 0)), 0);
 
             let status: string = UI_STRINGS.FEES.ALL_CLEAR;
             if (overdue > 0) status = UI_STRINGS.FEES.STATUS_OVERDUE;
@@ -367,9 +419,9 @@ export default function FeesPage() {
     );
 
     const stats = {
-        collected: fees.filter(f => f.status === FEE_STATUS.PAID).reduce((a, f) => a + f.amount, 0),
-        pending: fees.filter(f => f.status === FEE_STATUS.PENDING || f.status === FEE_STATUS.PARTIAL).reduce((a, f) => a + f.amount, 0),
-        overdue: fees.filter(f => f.status === FEE_STATUS.OVERDUE).reduce((a, f) => a + f.amount, 0),
+        collected: fees.reduce((a, f) => a + (f.totalPaid || 0), 0),
+        pending: fees.filter(f => f.status === FEE_STATUS.PENDING || f.status === FEE_STATUS.PARTIAL).reduce((a, f) => a + (f.amount - (f.totalPaid || 0)), 0),
+        overdue: fees.filter(f => f.status === FEE_STATUS.OVERDUE).reduce((a, f) => a + (f.amount - (f.totalPaid || 0)), 0),
     };
 
     // ═════════════════════════════════════════════════════════════════════════
@@ -511,7 +563,15 @@ export default function FeesPage() {
             <PageHeader title={UI_STRINGS.FEES.TITLE} subtitle={UI_STRINGS.FEES.SUBTITLE} actionLabel={UI_STRINGS.FEES.NEW_BTN} onAction={() => setShowCreateModal(true)} />
 
             <div className="flex gap-2 mb-4" style={{ justifyContent: 'flex-end', marginTop: '-30px' }}>
-                <button className="btn btn-primary" onClick={handleMigrateLegacyFees} style={{ backgroundColor: 'var(--primary)' }}>Fix Legacy Records</button>
+                <button 
+                    className="btn btn-primary" 
+                    onClick={handleBulkSendReminders} 
+                    disabled={isBulkSending}
+                    style={{ backgroundColor: isBulkSending ? 'var(--text-muted)' : 'var(--primary)', display: 'flex', alignItems: 'center' }}
+                >
+                    <AlertTriangle size={14} style={{ marginRight: 6 }} />
+                    {isBulkSending ? 'Sending Reminders...' : 'Send Bulk Reminders'}
+                </button>
                 <button className="btn btn-secondary" onClick={handleExportCSV}>Export CSV</button>
             </div>
 
