@@ -194,26 +194,4 @@ export const feeService = {
     });
   },
 
-  // ─── MIGRATION ──────────────────────────────────────────────────────────────
-  async migrateLegacyFees(): Promise<number> {
-    const snap = await getDocs(collection(db, COLLECTIONS.FEES));
-    let count = 0;
-    for (const d of snap.docs) {
-      const data = d.data();
-      const needsFix =
-        (data.userId && !data.studentId) ||
-        typeof data.amount !== 'number' ||
-        typeof data.totalPaid !== 'number';
-
-      if (needsFix) {
-        await updateDoc(doc(db, COLLECTIONS.FEES, d.id), {
-          studentId: data.studentId || data.userId || '',
-          amount: num(data.amount),
-          totalPaid: num(data.totalPaid),
-        });
-        count++;
-      }
-    }
-    return count;
-  },
 };
