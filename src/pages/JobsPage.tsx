@@ -352,7 +352,7 @@ export default function JobsPage() {
           <h1>Job Management</h1>
           <p>Orchestrate placement opportunities and track student engagement.</p>
         </div>
-        <button className="btn-amber-glow" onClick={handleAddJob}>
+        <button className="btn btn-primary" onClick={handleAddJob}>
           <Plus size={20} /> Create Opening
         </button>
       </header>
@@ -500,24 +500,6 @@ export default function JobsPage() {
           margin-top: 0.5rem;
         }
 
-        .btn-amber-glow {
-          background: #F59E0B;
-          color: #000;
-          border: none;
-          padding: 0.75rem 1.5rem;
-          border-radius: 12px;
-          font-weight: 700;
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          cursor: pointer;
-          box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
-          transition: all 0.3s ease;
-        }
-        .btn-amber-glow:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 0 30px rgba(245, 158, 11, 0.5);
-        }
         .btn-cancel {
           background: rgba(163, 170, 196, 0.1);
           color: var(--text-secondary);
@@ -945,7 +927,7 @@ export default function JobsPage() {
             </FormRow>
             <FormActions>
               <button type="button" className="btn-cancel" onClick={() => setShowJobModal(false)}>Discard</button>
-              <button type="submit" className="btn-amber-glow" disabled={saving}>
+              <button type="submit" className="btn btn-primary" disabled={saving}>
                 {saving ? 'Synchronizing...' : (editingJobId ? 'Update Posting' : 'Publish Opportunity')}
               </button>
             </FormActions>

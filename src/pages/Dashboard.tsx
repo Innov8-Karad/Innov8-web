@@ -181,13 +181,13 @@ Growth Trends
 <div style={{ flex: 1, minHeight: 0 }}>
 <ResponsiveContainer width="100%" height="100%" minHeight={300} debounce={100}>
 <AreaChart data={trends}>
-<CartesianGrid strokeDasharray="3 3" />
-<XAxis dataKey="month" />
-<YAxis />
-<Tooltip />
+<CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
+<XAxis dataKey="month" stroke="var(--chart-axis)" fontSize={12} tickLine={false} axisLine={false} />
+<YAxis stroke="var(--chart-axis)" fontSize={12} tickLine={false} axisLine={false} />
+<Tooltip contentStyle={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }} />
 <Legend />
-<Area type="monotone" dataKey="students" stroke="var(--primary)" />
-<Area type="monotone" dataKey="exams" stroke="var(--accent-blue)" />
+<Area type="monotone" dataKey="students" stroke="var(--primary)" fill="rgba(var(--primary-rgb), 0.1)" />
+<Area type="monotone" dataKey="exams" stroke="var(--accent-blue)" fill="rgba(var(--accent-blue-rgb), 0.1)" />
 </AreaChart>
 </ResponsiveContainer>
 </div>
@@ -207,11 +207,11 @@ Revenue Trend
 <div style={{ flex: 1, minHeight: 0 }}>
 <ResponsiveContainer width="100%" height="100%" minHeight={300} debounce={100}>
 <BarChart data={trends}>
-<CartesianGrid strokeDasharray="3 3" />
-<XAxis dataKey="month" />
-<YAxis />
-<Tooltip />
-<Bar dataKey="fees" fill="var(--success)" />
+<CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
+<XAxis dataKey="month" stroke="var(--chart-axis)" fontSize={12} tickLine={false} axisLine={false} />
+<YAxis stroke="var(--chart-axis)" fontSize={12} tickLine={false} axisLine={false} />
+<Tooltip contentStyle={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-main)' }} />
+<Bar dataKey="fees" fill="var(--success)" radius={[4, 4, 0, 0]} barSize={40} />
 </BarChart>
 </ResponsiveContainer>
 </div>

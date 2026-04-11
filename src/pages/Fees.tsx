@@ -600,9 +600,9 @@ export default function FeesPage() {
                 )}
 
                 {viewMode === 'students' ? (
-                    <DataTable columns={summaryColumns} data={filteredSummaries} emptyMessage={UI_STRINGS.FEES.EMPTY} keyExtractor={s => s.userId} />
+                    <DataTable columns={summaryColumns} data={filteredSummaries} emptyMessage={UI_STRINGS.FEES.EMPTY} keyExtractor={s => s.userId} pageSize={10} />
                 ) : (
-                    <DataTable columns={allFeesColumns} data={filteredAllFees} emptyMessage="No fee records found." keyExtractor={f => f.id} renderAfterRow={f => renderInstallmentHistory(f.id)} />
+                    <DataTable columns={allFeesColumns} data={filteredAllFees} emptyMessage="No fee records found." keyExtractor={f => f.id} renderAfterRow={f => renderInstallmentHistory(f.id)} pageSize={10} />
                 )}
             </div>
 
