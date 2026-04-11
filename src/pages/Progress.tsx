@@ -182,19 +182,23 @@ export default function ProgressPage() {
                                     bottom: 50
                                 }}
                             >
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--chart-grid)" />
                                 <XAxis 
                                     dataKey="name" 
-                                    axisLine={true} 
-                                    tickLine={true}
+                                    axisLine={false} 
+                                    tickLine={false}
+                                    stroke="var(--chart-axis)"
+                                    fontSize={12}
                                 />
-                                <YAxis axisLine={true} tickLine={true} />
+                                <YAxis axisLine={false} tickLine={false} stroke="var(--chart-axis)" fontSize={12} />
                                 <Tooltip 
                                     contentStyle={{ 
+                                        backgroundColor: 'var(--bg-card)', 
                                         borderRadius: '12px', 
-                                        border: 'none', 
+                                        border: '1px solid var(--border-subtle)', 
                                         boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
-                                        padding: '12px'
+                                        padding: '12px',
+                                        color: 'var(--text-main)'
                                     }}
                                 />
                                 <Bar dataKey="avgScore" name="Avg Score" radius={[6, 6, 0, 0]} barSize={40}>
@@ -229,21 +233,25 @@ export default function ProgressPage() {
                                     bottom: 20
                                 }}
                             >
-                                <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--chart-grid)" />
                                 <XAxis type="number" hide />
                                 <YAxis 
                                     dataKey="name" 
                                     type="category" 
-                                    axisLine={true} 
-                                    tickLine={true} 
+                                    axisLine={false} 
+                                    tickLine={false} 
                                     width={80}
+                                    stroke="var(--chart-axis)"
+                                    fontSize={12}
                                 />
                                 <Tooltip 
                                     contentStyle={{ 
+                                        backgroundColor: 'var(--bg-card)',
                                         borderRadius: '12px', 
-                                        border: 'none', 
+                                        border: '1px solid var(--border-subtle)', 
                                         boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
-                                        padding: '12px'
+                                        padding: '12px',
+                                        color: 'var(--text-main)'
                                     }}
                                 />
                                 <Legend wrapperStyle={{ paddingTop: '20px' }} />

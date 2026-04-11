@@ -473,6 +473,7 @@ export default function AttendancePage() {
                             searchPlaceholder="Search students..."
                             searchable
                             emptyMessage={UI_STRINGS.ATTENDANCE.EMPTY}
+                            pageSize={10}
                         />
                     </div>
                 </div>

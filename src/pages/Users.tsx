@@ -257,13 +257,16 @@ export default function UsersPage() {
                     />
                 </div>
 
-                <DataTable
-                    columns={columns}
-                    data={filteredUsers}
-                    emptyMessage={UI_STRINGS.USERS.EMPTY}
-                    keyExtractor={(user) => user.id}
-                />
-            </div>
+                 <DataTable
+                 columns={columns}
+                 data={filteredUsers}
+                 keyExtractor={(user) => user.id}
+                 emptyMessage={UI_STRINGS.USERS.EMPTY}
+                 searchPlaceholder="Search users by name, email, or role..."
+                 searchable
+                 pageSize={10}
+             />
+</div>
 
             {/* Add Student Modal */}
             <Modal 

@@ -25,12 +25,12 @@ import StatCard from '../components/StatCard';
 import LoadingState from '../components/LoadingState';
 import ErrorAlert from '../components/ErrorAlert';
 import SearchInput from '../components/SearchInput';
-import EmptyState from '../components/EmptyState';
 import { examResultService, type EnrichedExamResult } from '../services/examResultService';
 import { examService } from '../services/examService';
 import type { Exam } from '../types';
 import { UI_STRINGS } from '../constants';
 import Avatar from '../components/Avatar';
+import DataTable, { type Column } from '../components/DataTable';
 
 const COLORS = ['#10B981', '#EF4444']; // Green for Pass, Red for Fail
 
@@ -122,6 +122,66 @@ export default function ExamResultsPage() {
       { name: UI_STRINGS.EXAM_RESULTS.FAILED, value: data.failed }
     ];
   }, [filteredResults, passThreshold]);
+
+  // Table Columns
+  const columns: Column<EnrichedExamResult>[] = [
+    {
+      key: 'student',
+      header: UI_STRINGS.EXAM_RESULTS.TH_STUDENT,
+      render: (result) => (
+        <div className="flex items-center gap-3">
+          <Avatar fallback={result.studentName.charAt(0)} />
+          <div>
+            <div className="font-medium">{result.studentName}</div>
+            <div className="text-xs text-muted">{result.studentEmail}</div>
+          </div>
+        </div>
+      )
+    },
+    {
+      key: 'examTitle',
+      header: UI_STRINGS.EXAM_RESULTS.TH_EXAM,
+      render: (result) => <div className="font-medium">{result.examTitle}</div>
+    },
+    {
+      key: 'score',
+      header: UI_STRINGS.EXAM_RESULTS.TH_SCORE,
+      render: (result) => `${result.score} / ${result.totalMarks}`
+    },
+    {
+      key: 'percentage',
+      header: UI_STRINGS.EXAM_RESULTS.TH_PERCENTAGE,
+      render: (result) => (
+        <span className="font-bold" style={{ color: result.percentage >= passThreshold ? 'var(--success)' : 'var(--error)' }}>
+          {result.percentage.toFixed(1)}%
+        </span>
+      )
+    },
+    {
+      key: 'timeTaken',
+      header: UI_STRINGS.EXAM_RESULTS.TH_TIME_TAKEN,
+      render: (result) => (
+        <div className="flex items-center gap-1 text-muted">
+          <Clock size={14} />
+          {Math.floor(result.timeTaken / 60)}m {result.timeTaken % 60}s
+        </div>
+      )
+    },
+    {
+      key: 'status',
+      header: UI_STRINGS.EXAM_RESULTS.TH_STATUS,
+      render: (result) => (
+        <span className={`status-badge ${result.percentage >= passThreshold ? 'success' : 'error'}`}>
+          {result.percentage >= passThreshold ? UI_STRINGS.EXAM_RESULTS.PASSED : UI_STRINGS.EXAM_RESULTS.FAILED}
+        </span>
+      )
+    },
+    {
+      key: 'submittedAt',
+      header: UI_STRINGS.EXAM_RESULTS.TH_DATE,
+      render: (result) => <span className="text-muted text-sm">{result.submittedAt.toLocaleDateString()}</span>
+    }
+  ];
 
   if (loading && results.length === 0) {
     return <LoadingState message={UI_STRINGS.EXAM_RESULTS.LOADING} />;
@@ -221,11 +281,11 @@ export default function ExamResultsPage() {
             <div style={{ width: '100%', height: 300, display: 'flex', flexDirection: 'column' }}>
               <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={300} debounce={100}>
                 <BarChart data={scoreDistribution} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" vertical={false} />
-                  <XAxis dataKey="range" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
-                  <YAxis stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
+                  <XAxis dataKey="range" stroke="var(--chart-axis)" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis stroke="var(--chart-axis)" fontSize={12} tickLine={false} axisLine={false} />
                   <Tooltip 
-                    contentStyle={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '8px' }}
+                    contentStyle={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: '8px', color: 'var(--text-main)' }}
                     itemStyle={{ color: 'var(--primary)' }}
                   />
                   <Bar dataKey="count" fill="var(--primary)" radius={[4, 4, 0, 0]} barSize={40} />
@@ -267,61 +327,13 @@ export default function ExamResultsPage() {
 
       {/* Data Table */}
       <div className="card list-container">
-        {filteredResults.length > 0 ? (
-          <div className="table-responsive">
-            <table className="table w-full">
-              <thead>
-                <tr>
-                  <th>{UI_STRINGS.EXAM_RESULTS.TH_STUDENT}</th>
-                  <th>{UI_STRINGS.EXAM_RESULTS.TH_EXAM}</th>
-                  <th>{UI_STRINGS.EXAM_RESULTS.TH_SCORE}</th>
-                  <th>{UI_STRINGS.EXAM_RESULTS.TH_PERCENTAGE}</th>
-                  <th>{UI_STRINGS.EXAM_RESULTS.TH_TIME_TAKEN}</th>
-                  <th>{UI_STRINGS.EXAM_RESULTS.TH_STATUS}</th>
-                  <th>{UI_STRINGS.EXAM_RESULTS.TH_DATE}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredResults.map(result => (
-                  <tr key={result.id}>
-                    <td>
-                      <div className="flex items-center gap-3">
-                        <Avatar fallback={result.studentName.charAt(0)} />
-                        <div>
-                          <div className="font-medium">{result.studentName}</div>
-                          <div className="text-xs text-muted">{result.studentEmail}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <div className="font-medium">{result.examTitle}</div>
-                    </td>
-                    <td>{result.score} / {result.totalMarks}</td>
-                    <td>
-                      <span className="font-bold" style={{ color: result.percentage >= passThreshold ? 'var(--success)' : 'var(--error)' }}>
-                        {result.percentage.toFixed(1)}%
-                      </span>
-                    </td>
-                    <td className="text-muted">
-                      <div className="flex items-center gap-1">
-                        <Clock size={14} />
-                        {Math.floor(result.timeTaken / 60)}m {result.timeTaken % 60}s
-                      </div>
-                    </td>
-                    <td>
-                      <span className={`status-badge ${result.percentage >= passThreshold ? 'success' : 'error'}`}>
-                        {result.percentage >= passThreshold ? UI_STRINGS.EXAM_RESULTS.PASSED : UI_STRINGS.EXAM_RESULTS.FAILED}
-                      </span>
-                    </td>
-                    <td className="text-muted text-sm">{result.submittedAt.toLocaleDateString()}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <EmptyState message={UI_STRINGS.COMMON.NO_DATA} />
-        )}
+        <DataTable
+          columns={columns}
+          data={filteredResults}
+          keyExtractor={(item) => item.id}
+          emptyMessage={UI_STRINGS.COMMON.NO_DATA}
+          pageSize={10}
+        />
       </div>
 
     </div>
