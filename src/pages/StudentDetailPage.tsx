@@ -75,14 +75,14 @@ export default function StudentDetailPage() {
                 <div style={{ marginTop: '-24px' }}>
                     <Avatar 
                         src={student.profilePhoto} 
-                        fallback={student.studentName.charAt(0)} 
+                        fallback={(student.studentName || '?').charAt(0)} 
                         size="lg" 
                     />
                 </div>
                 <div style={{ flex: 1 }}>
                     <PageHeader
-                        title={student.studentName}
-                        subtitle={`Batch: ${student.batch}`}
+                        title={student.studentName || 'Student Detail'}
+                        subtitle={`Batch: ${student.batch || 'Unassigned'}`}
                     >
                         <button className="btn btn-primary" onClick={handleExport}>
                             <Download size={18} style={{ marginRight: '8px' }} />
@@ -99,7 +99,7 @@ export default function StudentDetailPage() {
                     </div>
                     <div>
                         <p className="text-sm text-muted">Attendance</p>
-                        <h3 className="text-2xl font-bold">{student.attendancePercentage}%</h3>
+                        <h3 className="text-2xl font-bold">{student.attendancePercentage ?? 0}%</h3>
                     </div>
                 </div>
                 <div className="card shadow-sm p-6 flex items-center gap-4">
@@ -108,7 +108,7 @@ export default function StudentDetailPage() {
                     </div>
                     <div>
                         <p className="text-sm text-muted">Overall Score</p>
-                        <h3 className="text-2xl font-bold">{student.overallScore}</h3>
+                        <h3 className="text-2xl font-bold">{student.overallScore ?? 0}</h3>
                     </div>
                 </div>
                 <div className="card shadow-sm p-6 flex items-center gap-4">
@@ -117,7 +117,7 @@ export default function StudentDetailPage() {
                     </div>
                     <div>
                         <p className="text-sm text-muted">Modules Done</p>
-                        <h3 className="text-2xl font-bold">{student.completedModules.length}</h3>
+                        <h3 className="text-2xl font-bold">{(student.completedModules || []).length}</h3>
                     </div>
                 </div>
             </div>
@@ -134,14 +134,14 @@ export default function StudentDetailPage() {
                         <div className="flex flex-col gap-6">
                             <div className="flex justify-between items-center">
                                 <span className="text-muted">Current Module</span>
-                                <span className="font-medium bg-light px-3 py-1 rounded-full text-sm">{student.currentModule}</span>
+                                <span className="font-medium bg-light px-3 py-1 rounded-full text-sm">{student.currentModule || 'None'}</span>
                             </div>
                             <div className="flex justify-between items-center">
                                 <span className="text-muted">Completion Rate</span>
-                                <span className="font-semibold text-primary">{Math.round((student.completedModules.length / 10) * 100)}%</span>
+                                <span className="font-semibold text-primary">{Math.round(((student.completedModules || []).length / 10) * 100)}%</span>
                             </div>
                             <div className="w-full bg-light rounded-full h-2">
-                                <div className="bg-primary h-2 rounded-full" style={{ width: `${(student.completedModules.length / 10) * 100}%` }}></div>
+                                <div className="bg-primary h-2 rounded-full" style={{ width: `${((student.completedModules || []).length / 10) * 100}%` }}></div>
                             </div>
                             <div className="flex justify-between items-center text-xs text-muted italic">
                                 <span>Based on 10 core modules</span>
@@ -160,13 +160,13 @@ export default function StudentDetailPage() {
                     </div>
                     <div className="p-6">
                         <div className="flex flex-col gap-4 max-h-[300px] overflow-y-auto pr-2">
-                            {student.completedModules.map((m, i) => (
+                            {(student.completedModules || []).map((m, i) => (
                                 <div key={i} className="flex items-center gap-3 p-3 bg-light/30 rounded-lg border border-divider/50">
                                     <CheckCircle2 size={16} className="text-success" />
                                     <span className="text-sm font-medium">{m}</span>
                                 </div>
                             ))}
-                            {student.completedModules.length === 0 && (
+                            {(student.completedModules || []).length === 0 && (
                                 <div className="text-center py-10 opacity-50">
                                     <Circle size={40} className="mx-auto mb-2 text-muted" />
                                     <p>No modules completed yet.</p>

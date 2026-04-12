@@ -71,13 +71,13 @@ export const progressService = {
     const batches: Record<string, { totalScore: number; totalAttendance: number; totalModules: number; count: number }> = {};
 
     progress.forEach(p => {
-      const b = p.batch;
+      const b = p.batch || 'Unassigned';
       if (!batches[b]) {
         batches[b] = { totalScore: 0, totalAttendance: 0, totalModules: 0, count: 0 };
       }
-      batches[b].totalScore += p.overallScore;
-      batches[b].totalAttendance += p.attendancePercentage;
-      batches[b].totalModules += p.completedModules.length;
+      batches[b].totalScore += p.overallScore ?? 0;
+      batches[b].totalAttendance += p.attendancePercentage ?? 0;
+      batches[b].totalModules += (p.completedModules || []).length;
       batches[b].count += 1;
     });
 
@@ -115,11 +115,11 @@ export const progressService = {
     doc.text(`Current Module:`, 20, startY + lineSpacing * 4);
     
     doc.setFont('helvetica', 'normal');
-    doc.text(student.studentName, 60, startY);
-    doc.text(student.batch, 60, startY + lineSpacing);
-    doc.text(`${student.attendancePercentage}%`, 60, startY + lineSpacing * 2);
-    doc.text(`${student.overallScore}`, 60, startY + lineSpacing * 3);
-    doc.text(student.currentModule, 60, startY + lineSpacing * 4);
+    doc.text(student.studentName || 'Unknown', 60, startY);
+    doc.text(student.batch || 'N/A', 60, startY + lineSpacing);
+    doc.text(`${student.attendancePercentage ?? 0}%`, 60, startY + lineSpacing * 2);
+    doc.text(`${student.overallScore ?? 0}`, 60, startY + lineSpacing * 3);
+    doc.text(student.currentModule || 'None', 60, startY + lineSpacing * 4);
     
     // Completed Modules
     doc.setFont('helvetica', 'bold');
@@ -127,8 +127,9 @@ export const progressService = {
     doc.setFont('helvetica', 'normal');
     
     const moduleY = startY + lineSpacing * 7;
-    if (student.completedModules.length > 0) {
-      student.completedModules.forEach((m, index) => {
+    const completedModules = student.completedModules || [];
+    if (completedModules.length > 0) {
+      completedModules.forEach((m, index) => {
         doc.text(`• ${m}`, 25, moduleY + (index * 7));
       });
     } else {
@@ -141,6 +142,7 @@ export const progressService = {
     doc.setTextColor(150, 150, 150);
     doc.text(`Generated on ${new Date().toLocaleDateString()} | Innov8 Learning Platform`, 105, pageHeight - 10, { align: 'center' });
     
-    doc.save(`${student.studentName.replace(/\s+/g, '_')}_Progress.pdf`);
+    const fileName = (student.studentName || 'Student').replace(/\s+/g, '_');
+    doc.save(`${fileName}_Progress.pdf`);
   }
 };

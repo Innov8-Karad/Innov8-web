@@ -81,10 +81,10 @@ export default function ProgressPage() {
     const handleEdit = (student: StudentProgress) => {
         setEditingProgress(student);
         setEditForm({
-            attendancePercentage: student.attendancePercentage,
-            overallScore: student.overallScore,
-            currentModule: student.currentModule,
-            completedModules: student.completedModules
+            attendancePercentage: student.attendancePercentage ?? 0,
+            overallScore: student.overallScore ?? 0,
+            currentModule: student.currentModule || '',
+            completedModules: student.completedModules || []
         });
         setShowEditModal(true);
     };
@@ -129,19 +129,19 @@ export default function ProgressPage() {
             const late = studentAttendance.filter(r => r.status === 'late').length;
             const absent = studentAttendance.filter(r => r.status === 'absent').length;
             
-            const totalClasses = present + late + absent;
+                const totalClasses = present + late + absent;
             const realTimePercentage = totalClasses > 0 
                 ? Math.round(((present + late) / totalClasses) * 100) 
-                : p.attendancePercentage; // Fallback to saved percentage
+                : (p.attendancePercentage ?? 0); // Fallback to saved percentage
                 
             return { ...p, attendancePercentage: realTimePercentage };
         }).filter(p => {
             const searchLower = searchTerm.toLowerCase();
             const matchesSearch = 
-                p.studentName.toLowerCase().includes(searchLower) ||
+                (p.studentName || '').toLowerCase().includes(searchLower) ||
                 (p.email && p.email.toLowerCase().includes(searchLower)) ||
-                p.batch.toLowerCase().includes(searchLower) ||
-                p.currentModule.toLowerCase().includes(searchLower);
+                (p.batch || '').toLowerCase().includes(searchLower) ||
+                (p.currentModule || '').toLowerCase().includes(searchLower);
 
             const matchesBatch = selectedBatch === 'All' || p.batch === selectedBatch;
             return matchesSearch && matchesBatch;
@@ -149,7 +149,7 @@ export default function ProgressPage() {
     }, [progressData, attendanceRecords, searchTerm, selectedBatch]);
 
     const batchesList = useMemo(() => {
-        const unique = Array.from(new Set(progressData.map(p => p.batch)));
+        const unique = Array.from(new Set(progressData.map(p => p.batch))).filter((b): b is string => !!b);
         return ['All', ...unique];
     }, [progressData]);
 
@@ -327,11 +327,11 @@ export default function ProgressPage() {
                                         <div className="flex items-center">
                                             <Avatar 
                                                 src={student.profilePhoto} 
-                                                fallback={student.studentName.charAt(0) || '?'} 
+                                                fallback={(student.studentName || '?').charAt(0)} 
                                                 size="sm" 
                                             />
                                             <div style={{ marginLeft: '12px' }}>
-                                                <div className="font-medium text-sm">{student.studentName}</div>
+                                                <div className="font-medium text-sm">{student.studentName || 'Unknown Student'}</div>
                                                 {student.email && (
                                                     <div className="text-xs text-muted" style={{ fontSize: '0.75rem' }}>
                                                         {student.email}
@@ -355,7 +355,7 @@ export default function ProgressPage() {
                                     <td className="px-6 py-4 text-sm">{student.currentModule}</td>
                                     <td className="px-6 py-4 text-sm">
                                         <span className="flex items-center gap-1 text-success font-medium">
-                                            <CheckCircle2 size={14} /> {student.completedModules.length} Modules
+                                            <CheckCircle2 size={14} /> {(student.completedModules || []).length} Modules
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 text-right">

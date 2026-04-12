@@ -5,6 +5,34 @@
 // Both Innov8-web and Innov8-mobile must keep this file identical.
 // Platform-specific display types belong in types/mobile.ts or types/admin.ts.
 // =============================================================================
+//
+// ─── CHANGELOG ───────────────────────────────────────────────────────────────
+// 2026-04-11 | feature/Shared-Type-System-Sync/101
+//   • Synchronized types/index.ts across Innov8-web and Innov8-mobile
+//   • FeeStatus: added 'partial' to mobile (was web-only)
+//   • Fee: merged web fields (studentName, email, course, createdAt,
+//     totalPaid, studentId) and mobile fields (Card/Online methods) into one
+//     unified interface; all platform-specific fields made optional;
+//     added receiptCloudinaryPublicId for Cloudinary cleanup
+//   • InstallmentPayment: added to mobile (was web-only)
+//   • Course: added createdAt/updatedAt Firestore timestamp fields to mobile
+//     added thumbnailCloudinaryPublicId for Cloudinary cleanup
+//   • CourseResource: added to mobile (was web-only); fileFormat widened to
+//     include mobile's PPT/XLS plus arbitrary strings
+//   • Resource: added as type alias of CourseResource for mobile compat
+//   • CourseModule: added to mobile (was web-only)
+//   • AssignmentSubmission: merged — cloudinaryPublicId made optional,
+//     storagePath kept for Firebase Storage legacy paths
+//   • SuccessStory: added collegeName (web-only) and studentPhotoPublicId
+//   • AppNotification: added to web (was mobile-only)
+//   • StudentProgress: merged all fields from both platforms; web-only
+//     fields (studentId, studentName, email, batch, attendancePercentage)
+//     and mobile-only fields (completedModuleIds, overallProgress) all made
+//     optional so both platforms compile without providing the other's fields
+//   • Added cloudinaryPublicId fields to types with file/media URLs:
+//     Fee (receiptCloudinaryPublicId), Course (thumbnailCloudinaryPublicId),
+//     SuccessStory (studentPhotoPublicId)
+// ─────────────────────────────────────────────────────────────────────────────
 
 // ─── User ────────────────────────────────────────────────────────────────────
 
@@ -34,19 +62,20 @@ export type FeeStatus = 'paid' | 'pending' | 'overdue' | 'partial';
 export interface Fee {
     id: string;
     userId: string;
-    studentName: string;
-    email: string;
-    course: string;
-    description: string;
+    studentName?: string;
+    email?: string;
+    course?: string;
     amount: number;
     dueDate: Date;
     paidDate?: Date;
     status: FeeStatus;
+    description?: string;
     totalPaid?: number;
-    createdAt: Date;
-    method?: 'Cash' | 'Bank' | 'Manual';
+    method?: 'Cash' | 'Card' | 'Online' | 'Bank' | 'Manual';
     receiptUrl?: string;
-    studentId?: string; // legacy alias
+    receiptCloudinaryPublicId?: string;
+    studentId?: string;
+    createdAt?: Date;
 }
 
 export interface InstallmentPayment {
@@ -104,6 +133,7 @@ export interface Course {
     duration: string;
     instructor: string;
     thumbnail?: string;
+    thumbnailCloudinaryPublicId?: string;
     rating?: number;
     enrolled?: number;
     category?: string;
@@ -122,15 +152,18 @@ export interface CourseResource {
     title?: string;
     url: string;
     type: 'video' | 'pdf' | 'link';
-    // ── Video-specific metadata (populated when type === 'video') ──
+    size?: string;
+    fileFormat?: 'PDF' | 'DOC' | 'DOCX' | 'PPT' | 'XLS' | string;
+    // ── Video-specific metadata ──
     platform?: 'youtube' | 'vimeo' | 'cloudinary' | 'direct';
     duration?: string;          // e.g. "12:34"
     thumbnailUrl?: string;      // auto-generated or user-provided
-    // ── PDF/Document-specific metadata (populated when type === 'pdf') ──
+    // ── PDF/Document-specific metadata ──
     cloudinaryPublicId?: string;
-    size?: string;              // e.g. "2.3 MB"
-    fileFormat?: string;        // e.g. "PDF", "DOC", "DOCX"
 }
+
+/** @alias CourseResource — kept for mobile backward compatibility */
+export type Resource = CourseResource;
 
 export interface CourseModule {
     id: string;
@@ -169,8 +202,9 @@ export interface AssignmentSubmission {
     userId: string;
     userName: string;
     userEmail: string;
-    fileUrl: string;            // Cloudinary URL
-    cloudinaryPublicId: string; // For deletion
+    fileUrl: string;            // Cloudinary or Firebase Storage URL
+    storagePath?: string;       // For Firebase Storage deletion (legacy)
+    cloudinaryPublicId?: string; // For Cloudinary deletion
     fileName: string;
     fileType: 'image' | 'pdf';
     submittedAt: any; // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -195,12 +229,23 @@ export interface Announcement {
     author: string;
 }
 
+export interface AppNotification {
+    id: string;
+    title: string;
+    body: string;
+    type: 'exam' | 'fee' | 'announcement' | 'general';
+    referenceId?: string;     // ID of exam, fee, or announcement
+    isRead: boolean;
+    createdAt: number;        // Unix timestamp (ms) for easy sorting
+}
+
 // ─── Placements ──────────────────────────────────────────────────────────────
 
 export interface SuccessStory {
     id: string;
     studentName: string;
     studentPhoto?: string;
+    studentPhotoPublicId?: string;
     company: string;
     package: string | number;
     role: string;
@@ -289,20 +334,25 @@ export interface JobApplication {
 // ─── Progress ────────────────────────────────────────────────────────────────
 
 export interface StudentProgress {
-    id: string;
-    studentId: string;
-    studentName: string;
-    email?: string;
-    batch: string;
-    attendancePercentage: number;
-    overallScore: number;
-    currentModule: string;
-    completedModules: string[];
-    updatedAt?: { seconds: number; nanoseconds: number } | Date;
-    userId?: string; // Maintain backward compatibility if needed
+    id?: string;
+    userId: string;
     courseId?: string;
     userName?: string;
+    // ── Web admin fields ──
+    studentId?: string;
+    studentName?: string;
+    email?: string;
+    batch?: string;
+    attendancePercentage?: number;
+    // ── Shared fields ──
+    overallProgress?: number;
     attendance?: number;
+    overallScore?: number;
+    currentModule?: string;
+    completedModules?: string[];
+    completedModuleIds?: string[];
+    lastAccessed?: Date;
+    updatedAt?: { seconds: number; nanoseconds: number } | Date;
     profilePhoto?: string;
 }
 

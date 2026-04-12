@@ -39,9 +39,9 @@ describe('Fee type', () => {
   });
 
   it('should accept all valid status values', () => {
-    const statuses: Fee['status'][] = ['paid', 'pending', 'overdue'];
+    const statuses: Fee['status'][] = ['paid', 'pending', 'overdue', 'partial'];
     statuses.forEach(status => {
-      expect(['paid', 'pending', 'overdue']).toContain(status);
+      expect(['paid', 'pending', 'overdue', 'partial']).toContain(status);
     });
   });
 });
