@@ -99,6 +99,20 @@ service cloud.firestore {
       match /assignments/{assignmentId} {
         allow read: if isAuthenticated();
         allow create, update, delete: if isAdmin();
+
+        // ── Assignment Submissions (students upload, admins grade) ──
+        match /submissions/{submissionId} {
+          allow read: if isAdmin()
+                      || (isAuthenticated()
+                          && resource.data.userId == request.auth.uid);
+
+          allow create: if isAuthenticated()
+                        && request.resource.data.userId == request.auth.uid;
+
+          allow update: if isAdmin();
+
+          allow delete: if isAdmin();
+        }
       }
     }
 

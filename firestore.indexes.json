@@ -51,7 +51,11 @@
           "arrayConfig": "CONTAINS"
         },
         {
-          "fieldPath": "date",
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "scheduledDate",
           "order": "ASCENDING"
         }
       ]
