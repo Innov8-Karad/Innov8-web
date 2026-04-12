@@ -168,7 +168,7 @@ export default function FeesPage() {
         setEditForm({
             amount: String(fee.amount),
             dueDate: fee.dueDate instanceof Date ? fee.dueDate.toISOString().split('T')[0] : '',
-            description: fee.description,
+            description: fee.description || '',
         });
         setEditingFee(fee);
     };

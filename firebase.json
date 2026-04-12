@@ -1,4 +1,9 @@
 {
+    "functions": {
+        "source": "functions",
+        "runtime": "nodejs20",
+        "codebase": "innov8-functions"
+    },
     "firestore": {
         "rules": "firestore.rules",
         "indexes": "firestore.indexes.json"

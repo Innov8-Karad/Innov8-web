@@ -102,7 +102,7 @@ export default function SubmissionList({ courseId, assignmentId, assignmentTitle
                                             </div>
                                         </td>
                                         <td>
-                                            {sub.submittedAt?.toDate ? sub.submittedAt.toDate().toLocaleDateString() : new Date(sub.submittedAt).toLocaleDateString()}
+                                            {'seconds' in sub.submittedAt ? new Date(sub.submittedAt.seconds * 1000).toLocaleDateString() : new Date(sub.submittedAt).toLocaleDateString()}
                                         </td>
                                         <td>
                                             <div className="flex items-center gap-1 text-primary">

@@ -12,11 +12,9 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
-console.log('[Firebase] Initializing with scoped imports...');
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-console.log('[Firebase] App instance:', app.name);
 
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
-console.log('[Firebase] Scoped services exported.');
+

@@ -23,6 +23,7 @@ export interface User {
     role?: 'student' | 'admin';
     status?: 'active' | 'inactive';
     isBlocked?: boolean;
+    fcmTokens?: string[];            // FCM device tokens for push notifications
     createdAt: Date;
     updatedAt?: Date;
 }
@@ -34,19 +35,19 @@ export type FeeStatus = 'paid' | 'pending' | 'overdue' | 'partial';
 export interface Fee {
     id: string;
     userId: string;
-    studentName: string;
-    email: string;
-    course: string;
-    description: string;
+    studentName?: string;            // Denormalized for admin display
+    email?: string;                  // Denormalized for admin display
+    course?: string;                 // Denormalized for admin display
     amount: number;
     dueDate: Date;
     paidDate?: Date;
     status: FeeStatus;
-    totalPaid?: number;
-    createdAt: Date;
-    method?: 'Cash' | 'Bank' | 'Manual';
+    description?: string;
+    totalPaid?: number;              // Partial payment tracking
+    method?: 'Cash' | 'Card' | 'Online' | 'Bank' | 'Manual';
     receiptUrl?: string;
-    studentId?: string; // legacy alias
+    studentId?: string;              // Legacy alias for userId
+    createdAt?: Date;
 }
 
 export interface InstallmentPayment {
@@ -162,6 +163,20 @@ export interface AssignmentType {
     score?: string;
 }
 
+/** Mobile uses this as 'Resource', keeping alias for backward compatibility */
+export interface Resource {
+    id: string;
+    title: string;
+    type: 'video' | 'pdf' | 'link';
+    url: string;
+    size?: string;
+    fileFormat?: 'PDF' | 'DOC' | 'DOCX' | 'PPT' | 'XLS';
+    // ── Video-specific metadata ──
+    platform?: 'youtube' | 'vimeo' | 'cloudinary' | 'direct';
+    duration?: string;
+    thumbnailUrl?: string;
+}
+
 export interface AssignmentSubmission {
     id: string;
     assignmentId: string;
@@ -169,14 +184,15 @@ export interface AssignmentSubmission {
     userId: string;
     userName: string;
     userEmail: string;
-    fileUrl: string;            // Cloudinary URL
-    cloudinaryPublicId: string; // For deletion
+    fileUrl: string;                // Cloudinary URL
+    storagePath?: string;           // For Firebase Storage deletion (legacy)
+    cloudinaryPublicId?: string;    // For Cloudinary deletion
     fileName: string;
     fileType: 'image' | 'pdf';
-    submittedAt: any; // eslint-disable-line @typescript-eslint/no-explicit-any
-    grade?: number;             // Admin assigns
-    feedback?: string;          // Admin comment
-    gradedAt?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+    submittedAt: Date | { seconds: number; nanoseconds: number };
+    grade?: number;                 // Admin assigns
+    feedback?: string;              // Admin comment
+    gradedAt?: Date | { seconds: number; nanoseconds: number };
     gradedBy?: string;
     status: 'submitted' | 'graded' | 'returned';
 }
@@ -193,6 +209,16 @@ export interface Announcement {
     createdAt: Date;
     priority: 'low' | 'medium' | 'high';
     author: string;
+}
+
+export interface AppNotification {
+    id: string;
+    title: string;
+    body: string;
+    type: 'exam' | 'fee' | 'announcement' | 'general' | 'assignment';
+    referenceId?: string;     // ID of exam, fee, or announcement
+    isRead: boolean;
+    createdAt: number;        // Unix timestamp (ms) for easy sorting
 }
 
 // ─── Placements ──────────────────────────────────────────────────────────────
@@ -289,21 +315,24 @@ export interface JobApplication {
 // ─── Progress ────────────────────────────────────────────────────────────────
 
 export interface StudentProgress {
-    id: string;
-    studentId: string;
-    studentName: string;
-    email?: string;
-    batch: string;
-    attendancePercentage: number;
-    overallScore: number;
-    currentModule: string;
-    completedModules: string[];
-    updatedAt?: { seconds: number; nanoseconds: number } | Date;
-    userId?: string; // Maintain backward compatibility if needed
+    id?: string;
+    userId?: string;
+    studentId?: string;              // Web alias
     courseId?: string;
-    userName?: string;
-    attendance?: number;
+    studentName?: string;
+    userName?: string;               // Mobile alias
+    email?: string;
+    batch?: string;
     profilePhoto?: string;
+    overallProgress?: number;
+    attendance?: number;
+    attendancePercentage?: number;   // Web alias
+    overallScore?: number;
+    currentModule?: string;
+    completedModules?: string[];     // Legacy
+    completedModuleIds?: string[];   // Reactive implementation (mobile)
+    lastAccessed?: Date;
+    updatedAt?: { seconds: number; nanoseconds: number } | Date;
 }
 
 // ─── Attendance ──────────────────────────────────────────────────────────────
@@ -323,4 +352,19 @@ export interface AttendanceRecord {
     markedBy: string;
     markedAt: Date;
     notes?: string;
+}
+
+// ─── Interviews ──────────────────────────────────────────────────────────────
+
+export interface Interview {
+    id: string;
+    company: string;
+    role: string;
+    scheduledDate: Date;
+    status: 'scheduled' | 'completed' | 'cancelled';
+    eligibleBatches: string[];
+    location?: string;
+    notes?: string;
+    createdAt?: Date;
+    updatedAt?: Date;
 }
