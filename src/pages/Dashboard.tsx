@@ -124,7 +124,6 @@ title={DASHBOARD_METRICS.TOTAL_STUDENTS}
 value={stats.totalStudents.toString()}
 icon={GraduationCap}
 color="primary"
-trend={DASHBOARD_METRICS.TREND_MONTHLY}
 loading={loading}
 />
 
@@ -133,7 +132,6 @@ title={DASHBOARD_METRICS.FEES_COLLECTED}
 value={formatRupees(stats.totalFeesCollected)}
 icon={IndianRupee}
 color="success"
-trend={DASHBOARD_METRICS.TREND_GROWTH}
 loading={loading}
 />
 
@@ -142,7 +140,6 @@ title={DASHBOARD_METRICS.EXAMS_CONDUCTED}
 value={stats.totalExams.toString()}
 icon={ClipboardCheck}
 color="accent-blue"
-trend={DASHBOARD_METRICS.TREND_EXAMS}
 loading={loading}
 />
 
@@ -151,7 +148,6 @@ title={DASHBOARD_METRICS.SUCCESS_PLACEMENTS}
 value={`${stats.placementSuccessRate}%`}
 icon={Target}
 color="teal-accent"
-trend={DASHBOARD_METRICS.TREND_PLACEMENTS}
 loading={loading}
 />
 

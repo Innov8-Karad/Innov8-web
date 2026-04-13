@@ -597,7 +597,7 @@ export default function JobsPage() {
           background: transparent;
           border: none;
           padding: 0.9rem 0;
-          color: #fff;
+          color: var(--text-main);
           width: 100%;
           outline: none;
         }
@@ -614,7 +614,7 @@ export default function JobsPage() {
         .control-select {
           background: transparent;
           border: none;
-          color: #fff;
+          color: var(--text-main);
           font-weight: 600;
           outline: none;
           cursor: pointer;
