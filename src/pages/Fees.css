@@ -1,0 +1,500 @@
+/* ═══════════════════════════════════════════════════
+   FEES PAGE STYLES
+   Clean, theme-aware styling for the admin fee section
+   ═══════════════════════════════════════════════════ */
+
+/* Page Layout */
+.fees-page {
+  animation: fadeIn 0.5s ease-out;
+}
+
+/* Header Section */
+.fees-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--space-xl);
+  gap: var(--space-md);
+}
+
+.fees-header-left h1 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  font-family: var(--font-headline);
+  margin-bottom: 4px;
+}
+
+.fees-header-left p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.fees-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+/* Stats Grid */
+.fees-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-md);
+  margin-bottom: var(--space-xl);
+}
+
+.fees-stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.fees-stat-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  border-radius: 0 4px 4px 0;
+}
+
+.fees-stat-card.stat-collected::before { background: var(--success); }
+.fees-stat-card.stat-pending::before { background: var(--primary); }
+.fees-stat-card.stat-overdue::before { background: var(--error); }
+
+.fees-stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+}
+
+.fees-stat-info .fees-stat-label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.fees-stat-info .fees-stat-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  font-family: var(--font-headline);
+}
+
+.fees-stat-card.stat-collected .fees-stat-value { color: var(--success); }
+.fees-stat-card.stat-pending .fees-stat-value { color: var(--primary); }
+.fees-stat-card.stat-overdue .fees-stat-value { color: var(--error); }
+
+.fees-stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.stat-collected .fees-stat-icon {
+  background: rgba(var(--success-rgb), 0.1);
+  color: var(--success);
+  border: 1px solid rgba(var(--success-rgb), 0.2);
+}
+
+.stat-pending .fees-stat-icon {
+  background: rgba(var(--primary-rgb), 0.1);
+  color: var(--primary);
+  border: 1px solid rgba(var(--primary-rgb), 0.2);
+}
+
+.stat-overdue .fees-stat-icon {
+  background: rgba(var(--error-rgb), 0.1);
+  color: var(--error);
+  border: 1px solid rgba(var(--error-rgb), 0.2);
+}
+
+/* Main Table Card */
+.fees-table-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.fees-table-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-lg);
+  border-bottom: 1px solid var(--border-subtle);
+  gap: var(--space-md);
+}
+
+.fees-view-tabs {
+  display: flex;
+  background: var(--bg-card-accent);
+  border-radius: var(--radius-sm);
+  padding: 3px;
+  gap: 2px;
+}
+
+.fees-view-tab {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+}
+
+.fees-view-tab:hover {
+  color: var(--text-main);
+}
+
+.fees-view-tab.active {
+  background: var(--primary);
+  color: #000;
+  box-shadow: 0 2px 8px rgba(var(--primary-rgb), 0.3);
+}
+
+.fees-table-content {
+  padding: 0;
+}
+
+/* Bulk Selection Banner */
+.fees-bulk-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-md) var(--space-lg);
+  background: rgba(var(--primary-rgb), 0.08);
+  border-bottom: 1px solid rgba(var(--primary-rgb), 0.15);
+}
+
+.fees-bulk-banner span {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--primary);
+}
+
+/* Progress Bar */
+.fees-progress-wrap {
+  min-width: 130px;
+}
+
+.fees-progress-text {
+  font-size: 0.8rem;
+  margin-bottom: 4px;
+  color: var(--text-secondary);
+}
+
+.fees-progress-bar {
+  width: 100%;
+  height: 6px;
+  background: var(--bg-card-accent);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.fees-progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.fees-progress-fill.complete { background: var(--success); }
+.fees-progress-fill.partial { background: #F59E0B; }
+.fees-progress-fill.empty { background: var(--error); }
+
+/* Action Buttons */
+.fees-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.fees-action-btn {
+  padding: 5px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 6px;
+  border: 1px solid var(--border-subtle);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.fees-action-btn:hover {
+  transform: translateY(-1px);
+}
+
+.fees-action-btn.action-paid {
+  background: rgba(var(--success-rgb), 0.1);
+  color: var(--success);
+  border-color: rgba(var(--success-rgb), 0.25);
+}
+
+.fees-action-btn.action-paid:hover {
+  background: rgba(var(--success-rgb), 0.2);
+  box-shadow: 0 2px 8px rgba(var(--success-rgb), 0.2);
+}
+
+.fees-action-btn.action-install {
+  background: rgba(245, 158, 11, 0.1);
+  color: #F59E0B;
+  border-color: rgba(245, 158, 11, 0.25);
+}
+
+.fees-action-btn.action-install:hover {
+  background: rgba(245, 158, 11, 0.2);
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
+}
+
+.fees-action-btn.action-history {
+  background: rgba(var(--accent-blue-rgb), 0.1);
+  color: var(--accent-blue);
+  border-color: rgba(var(--accent-blue-rgb), 0.25);
+}
+
+.fees-action-btn.action-history:hover {
+  background: rgba(var(--accent-blue-rgb), 0.2);
+}
+
+.fees-action-btn.action-edit {
+  background: var(--glass-bg);
+  color: var(--text-main);
+}
+
+.fees-action-btn.action-edit:hover {
+  background: var(--bg-card-accent);
+}
+
+.fees-action-btn.action-delete {
+  background: rgba(var(--error-rgb), 0.1);
+  color: var(--error);
+  border-color: rgba(var(--error-rgb), 0.25);
+}
+
+.fees-action-btn.action-delete:hover {
+  background: rgba(var(--error-rgb), 0.2);
+  box-shadow: 0 2px 8px rgba(var(--error-rgb), 0.2);
+}
+
+/* Installment History Panel */
+.fees-installment-panel {
+  background: var(--bg-card-accent);
+  border-left: 3px solid var(--accent-blue);
+  padding: var(--space-lg) var(--space-xl);
+}
+
+.fees-installment-panel h4 {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: var(--space-md);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-main);
+}
+
+.fees-installment-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.fees-installment-table th {
+  padding: 6px 14px;
+  font-size: 0.72rem;
+  text-align: left;
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.fees-installment-table td {
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.fees-installment-table .inst-amount {
+  color: var(--success);
+  font-weight: 700;
+}
+
+/* Student Detail Modal */
+.fees-student-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md);
+  margin: var(--space-lg) 0;
+}
+
+.fees-student-stat {
+  padding: var(--space-md);
+  background: var(--bg-card-accent);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+}
+
+.fees-student-stat .label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.fees-student-stat h3 {
+  font-family: var(--font-headline);
+}
+
+/* Fee Record Card in Modal */
+.fees-record-card {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  margin-bottom: var(--space-md);
+  transition: border-color 0.2s ease;
+}
+
+.fees-record-card:hover {
+  border-color: rgba(var(--primary-rgb), 0.3);
+}
+
+.fees-record-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-md) var(--space-lg);
+  background: var(--bg-card);
+  gap: var(--space-md);
+}
+
+.fees-record-info {
+  flex: 1;
+}
+
+.fees-record-info .title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.fees-record-info .meta {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.fees-record-progress {
+  width: 200px;
+  height: 4px;
+  background: var(--bg-card-accent);
+  border-radius: 2px;
+  margin-top: 6px;
+  overflow: hidden;
+}
+
+.fees-record-progress .fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+/* Installment Timeline in Modal */
+.fees-timeline {
+  border-top: 1px solid var(--border-subtle);
+  padding: var(--space-md) var(--space-lg);
+  background: var(--bg-card-accent);
+}
+
+.fees-timeline h5 {
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-bottom: var(--space-sm);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary);
+}
+
+.fees-timeline-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.fees-timeline-item:last-child {
+  border-bottom: none;
+}
+
+.fees-timeline-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--success);
+  flex-shrink: 0;
+}
+
+.fees-timeline-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Installment Info in Modal */
+.fees-installment-info {
+  background: rgba(var(--accent-blue-rgb), 0.06);
+  padding: var(--space-md) var(--space-lg);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-lg);
+  border: 1px solid rgba(var(--accent-blue-rgb), 0.12);
+}
+
+.fees-installment-info p:first-child {
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 4px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .fees-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .fees-header {
+    flex-direction: column;
+  }
+
+  .fees-table-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .fees-student-stats {
+    grid-template-columns: 1fr;
+  }
+}

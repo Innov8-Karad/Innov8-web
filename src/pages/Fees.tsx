@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import './Fees.css';
 import { IndianRupee, AlertTriangle, Clock, ChevronDown, ChevronUp } from 'lucide-react';
 import { feeService } from '../services/feeService';
 import { userService } from '../services/userService';
 import { announcementService } from '../services/announcementService';
 import type { Fee, User, InstallmentPayment } from '../types';
 import { UI_STRINGS, FEE_STATUS, ADMIN_USER_ID, PAYMENT_METHODS } from '../constants';
-import PageHeader from '../components/PageHeader';
 import LoadingState from '../components/LoadingState';
 import ErrorAlert from '../components/ErrorAlert';
 import SearchInput from '../components/SearchInput';
@@ -13,7 +13,6 @@ import Modal from '../components/Modal';
 import DataTable from '../components/DataTable';
 import type { Column } from '../components/DataTable';
 import { useToast } from '../hooks/useToast';
-import StatCard from '../components/StatCard';
 import { FormField, FormRow, FormActions } from '../components/FormField';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -452,11 +451,7 @@ export default function FeesPage() {
             render: (r: Fee) => r.status !== FEE_STATUS.PAID ? (
                 <input type="checkbox" checked={selectedFees.has(r.id)} onChange={e => {
                     const s = new Set(selectedFees);
-                    if (e.target.checked) {
-                        s.add(r.id);
-                    } else {
-                        s.delete(r.id);
-                    }
+                    if (e.target.checked) { s.add(r.id); } else { s.delete(r.id); }
                     setSelectedFees(s);
                 }} />
             ) : null,
@@ -469,11 +464,12 @@ export default function FeesPage() {
             render: (r: Fee) => {
                 const tp = r.totalPaid || 0;
                 const pct = r.amount > 0 ? Math.min((tp / r.amount) * 100, 100) : 0;
+                const fillClass = pct >= 100 ? 'complete' : pct > 0 ? 'partial' : 'empty';
                 return (
-                    <div style={{ minWidth: '120px' }}>
-                        <div style={{ fontSize: '0.8rem', marginBottom: '4px' }}>₹{tp.toLocaleString()} / ₹{r.amount.toLocaleString()}</div>
-                        <div style={{ width: '100%', height: '6px', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '3px', overflow: 'hidden' }}>
-                            <div style={{ width: `${pct}%`, height: '100%', backgroundColor: pct >= 100 ? 'var(--success)' : pct > 0 ? '#F59E0B' : 'var(--error)', borderRadius: '3px', transition: 'width 0.3s ease' }} />
+                    <div className="fees-progress-wrap">
+                        <div className="fees-progress-text">₹{tp.toLocaleString()} / ₹{r.amount.toLocaleString()}</div>
+                        <div className="fees-progress-bar">
+                            <div className={`fees-progress-fill ${fillClass}`} style={{ width: `${pct}%` }} />
                         </div>
                     </div>
                 );
@@ -487,19 +483,18 @@ export default function FeesPage() {
         {
             key: 'action', header: UI_STRINGS.FEES.TH_DETAIL_ACTION,
             render: (r: Fee) => (
-                <div className="flex items-center gap-2" style={{ flexWrap: 'wrap' }}>
+                <div className="fees-actions">
                     {r.status !== FEE_STATUS.PAID && (
                         <>
-                            <button className="btn btn-primary" style={{ padding: '4px 8px', fontSize: '0.7rem' }} onClick={() => handleMarkPaid(r)}>Mark Paid</button>
-                            <button className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '0.7rem', backgroundColor: '#F59E0B', color: '#000' }}
-                                onClick={() => { setInstallmentFee(r); setShowInstallmentModal(true); }}>+ Installment</button>
+                            <button className="fees-action-btn action-paid" onClick={() => handleMarkPaid(r)}>✓ Mark Paid</button>
+                            <button className="fees-action-btn action-install" onClick={() => { setInstallmentFee(r); setShowInstallmentModal(true); }}>+ Installment</button>
                         </>
                     )}
-                    <button className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '0.7rem' }} onClick={() => toggleInstallments(r.id)}>
-                        {expandedFeeId === r.id ? 'Hide' : 'History'}
+                    <button className="fees-action-btn action-history" onClick={() => toggleInstallments(r.id)}>
+                        {expandedFeeId === r.id ? 'Hide' : '⏱ History'}
                     </button>
-                    <button className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '0.7rem' }} onClick={() => openEditModal(r)}>Edit</button>
-                    <button className="btn btn-error" style={{ padding: '4px 8px', fontSize: '0.7rem', backgroundColor: 'var(--error)' }} onClick={() => handleDeleteFee(r.id)}>Delete</button>
+                    <button className="fees-action-btn action-edit" onClick={() => openEditModal(r)}>✎ Edit</button>
+                    <button className="fees-action-btn action-delete" onClick={() => handleDeleteFee(r.id)}>✕ Delete</button>
                 </div>
             ),
         },
@@ -516,31 +511,29 @@ export default function FeesPage() {
         return (
             <tr>
                 <td colSpan={9} style={{ padding: 0, border: 'none' }}>
-                    <div style={{ backgroundColor: 'rgba(56, 189, 248, 0.05)', borderLeft: '3px solid var(--primary)', padding: '16px 24px' }}>
-                        <h4 style={{ fontSize: '0.9rem', fontWeight: '600', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <Clock size={14} /> {UI_STRINGS.FEES.INSTALLMENT_HISTORY}
-                        </h4>
+                    <div className="fees-installment-panel">
+                        <h4><Clock size={14} /> {UI_STRINGS.FEES.INSTALLMENT_HISTORY}</h4>
                         {isLoading ? (
-                            <p className="text-muted" style={{ fontSize: '0.85rem' }}>Loading installments...</p>
+                            <p className="text-muted text-sm">Loading installments...</p>
                         ) : !installments || installments.length === 0 ? (
-                            <p className="text-muted" style={{ fontSize: '0.85rem' }}>{UI_STRINGS.FEES.INSTALLMENT_EMPTY}</p>
+                            <p className="text-muted text-sm">{UI_STRINGS.FEES.INSTALLMENT_EMPTY}</p>
                         ) : (
-                            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                            <table className="fees-installment-table">
                                 <thead>
-                                    <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-                                        <th style={{ padding: '6px 12px', fontSize: '0.75rem', textAlign: 'left', color: 'var(--text-muted)' }}>Date</th>
-                                        <th style={{ padding: '6px 12px', fontSize: '0.75rem', textAlign: 'left', color: 'var(--text-muted)' }}>Amount</th>
-                                        <th style={{ padding: '6px 12px', fontSize: '0.75rem', textAlign: 'left', color: 'var(--text-muted)' }}>Method</th>
-                                        <th style={{ padding: '6px 12px', fontSize: '0.75rem', textAlign: 'left', color: 'var(--text-muted)' }}>Notes</th>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Amount</th>
+                                        <th>Method</th>
+                                        <th>Notes</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {installments.map(inst => (
-                                        <tr key={inst.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                                            <td style={{ padding: '8px 12px', fontSize: '0.85rem' }}>{inst.paidDate?.toLocaleDateString?.() || 'N/A'}</td>
-                                            <td style={{ padding: '8px 12px', fontSize: '0.85rem', color: 'var(--success)', fontWeight: '600' }}>₹{inst.amount.toLocaleString()}</td>
-                                            <td style={{ padding: '8px 12px', fontSize: '0.85rem' }}><span className="badge badge-secondary" style={{ fontSize: '0.7rem', padding: '2px 8px' }}>{inst.method}</span></td>
-                                            <td style={{ padding: '8px 12px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>{inst.notes || '—'}</td>
+                                        <tr key={inst.id}>
+                                            <td>{inst.paidDate?.toLocaleDateString?.() || 'N/A'}</td>
+                                            <td className="inst-amount">₹{inst.amount.toLocaleString()}</td>
+                                            <td><span className="badge badge-secondary">{inst.method}</span></td>
+                                            <td className="text-muted">{inst.notes || '—'}</td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -558,52 +551,78 @@ export default function FeesPage() {
     if (loading) return <LoadingState message={UI_STRINGS.FEES.LOADING} />;
 
     return (
-        <div>
+        <div className="fees-page">
             <ErrorAlert message={error} />
-            <PageHeader title={UI_STRINGS.FEES.TITLE} subtitle={UI_STRINGS.FEES.SUBTITLE} actionLabel={UI_STRINGS.FEES.NEW_BTN} onAction={() => setShowCreateModal(true)} />
 
-            <div className="flex gap-2 mb-4" style={{ justifyContent: 'flex-end', marginTop: '-30px' }}>
-                <button 
-                    className="btn btn-primary" 
-                    onClick={handleBulkSendReminders} 
-                    disabled={isBulkSending}
-                    style={{ backgroundColor: isBulkSending ? 'var(--text-muted)' : 'var(--primary)', display: 'flex', alignItems: 'center' }}
-                >
-                    <AlertTriangle size={14} style={{ marginRight: 6 }} />
-                    {isBulkSending ? 'Sending Reminders...' : 'Send Bulk Reminders'}
-                </button>
-                <button className="btn btn-secondary" onClick={handleExportCSV}>Export CSV</button>
+            {/* Header */}
+            <div className="fees-header">
+                <div className="fees-header-left">
+                    <h1>{UI_STRINGS.FEES.TITLE}</h1>
+                    <p>{UI_STRINGS.FEES.SUBTITLE}</p>
+                </div>
+                <div className="fees-header-actions">
+                    <button
+                        className="btn btn-secondary"
+                        onClick={handleBulkSendReminders}
+                        disabled={isBulkSending}
+                    >
+                        <AlertTriangle size={14} />
+                        {isBulkSending ? 'Sending...' : 'Send Bulk Reminders'}
+                    </button>
+                    <button className="btn btn-secondary" onClick={handleExportCSV}>Export CSV</button>
+                    <button className="btn btn-primary" onClick={() => setShowCreateModal(true)}>+ New Fee Record</button>
+                </div>
             </div>
 
             {/* Stats */}
-            <div className="grid-cards-sm mb-xl">
-                <StatCard title={UI_STRINGS.FEES.STAT_COLLECTED} value={`₹ ${stats.collected.toLocaleString()}`} icon={IndianRupee} color="success" bordered />
-                <StatCard title={UI_STRINGS.FEES.STAT_PENDING} value={`₹ ${stats.pending.toLocaleString()}`} icon={Clock} color="primary" bordered />
-                <StatCard title={UI_STRINGS.FEES.STAT_OVERDUE} value={`₹ ${stats.overdue.toLocaleString()}`} icon={AlertTriangle} color="error" bordered />
+            <div className="fees-stats">
+                <div className="fees-stat-card stat-collected">
+                    <div className="fees-stat-info">
+                        <div className="fees-stat-label">{UI_STRINGS.FEES.STAT_COLLECTED}</div>
+                        <div className="fees-stat-value">₹ {stats.collected.toLocaleString()}</div>
+                    </div>
+                    <div className="fees-stat-icon"><IndianRupee size={22} /></div>
+                </div>
+                <div className="fees-stat-card stat-pending">
+                    <div className="fees-stat-info">
+                        <div className="fees-stat-label">{UI_STRINGS.FEES.STAT_PENDING}</div>
+                        <div className="fees-stat-value">₹ {stats.pending.toLocaleString()}</div>
+                    </div>
+                    <div className="fees-stat-icon"><Clock size={22} /></div>
+                </div>
+                <div className="fees-stat-card stat-overdue">
+                    <div className="fees-stat-info">
+                        <div className="fees-stat-label">{UI_STRINGS.FEES.STAT_OVERDUE}</div>
+                        <div className="fees-stat-value">₹ {stats.overdue.toLocaleString()}</div>
+                    </div>
+                    <div className="fees-stat-icon"><AlertTriangle size={22} /></div>
+                </div>
             </div>
 
-            {/* Main table card */}
-            <div className="card">
-                <div className="flex items-center justify-between mb-md">
+            {/* Main Table Card */}
+            <div className="fees-table-card">
+                <div className="fees-table-toolbar">
                     <SearchInput placeholder={UI_STRINGS.FEES.SEARCH} value={searchTerm} onChange={setSearchTerm} />
-                    <div className="flex gap-2">
-                        <button className={`btn ${viewMode === 'all_fees' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setViewMode('all_fees')} style={{ padding: '6px 12px', fontSize: '0.9rem' }}>All Fees View</button>
-                        <button className={`btn ${viewMode === 'students' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setViewMode('students')} style={{ padding: '6px 12px', fontSize: '0.9rem' }}>Student Overview</button>
+                    <div className="fees-view-tabs">
+                        <button className={`fees-view-tab ${viewMode === 'all_fees' ? 'active' : ''}`} onClick={() => setViewMode('all_fees')}>All Fees View</button>
+                        <button className={`fees-view-tab ${viewMode === 'students' ? 'active' : ''}`} onClick={() => setViewMode('students')}>Student Overview</button>
                     </div>
                 </div>
 
                 {viewMode === 'all_fees' && selectedFees.size > 0 && (
-                    <div className="mb-4 p-4 border border-primary rounded flex justify-between items-center" style={{ backgroundColor: 'rgba(56, 189, 248, 0.1)' }}>
-                        <span>{selectedFees.size} fees selected</span>
+                    <div className="fees-bulk-banner">
+                        <span>{selectedFees.size} fee{selectedFees.size > 1 ? 's' : ''} selected</span>
                         <button className="btn btn-primary" onClick={handleBulkMarkPaid}>Bulk Mark Paid</button>
                     </div>
                 )}
 
-                {viewMode === 'students' ? (
-                    <DataTable columns={summaryColumns} data={filteredSummaries} emptyMessage={UI_STRINGS.FEES.EMPTY} keyExtractor={s => s.userId} pageSize={10} />
-                ) : (
-                    <DataTable columns={allFeesColumns} data={filteredAllFees} emptyMessage="No fee records found." keyExtractor={f => f.id} renderAfterRow={f => renderInstallmentHistory(f.id)} pageSize={10} />
-                )}
+                <div className="fees-table-content">
+                    {viewMode === 'students' ? (
+                        <DataTable columns={summaryColumns} data={filteredSummaries} emptyMessage={UI_STRINGS.FEES.EMPTY} keyExtractor={s => s.userId} pageSize={10} />
+                    ) : (
+                        <DataTable columns={allFeesColumns} data={filteredAllFees} emptyMessage="No fee records found." keyExtractor={f => f.id} renderAfterRow={f => renderInstallmentHistory(f.id)} pageSize={10} />
+                    )}
+                </div>
             </div>
 
             {/* ═══ STUDENT DETAIL MODAL ═══ */}
@@ -611,82 +630,84 @@ export default function FeesPage() {
                 <Modal isOpen={true} onClose={() => { setViewingStudent(null); setExpandedFeeId(null); }} title={UI_STRINGS.FEES.TRANSACTION_HISTORY} maxWidth="900px">
                     <p className="text-muted">{viewingStudent.userName} • {viewingStudent.course}</p>
 
-                    <div className="grid-2col mt-lg mb-lg">
-                        <div style={{ padding: 'var(--space-md)', backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '8px' }}>
-                            <p className="stat-label">{UI_STRINGS.FEES.TOTAL_PAID}</p>
+                    <div className="fees-student-stats">
+                        <div className="fees-student-stat">
+                            <div className="label">{UI_STRINGS.FEES.TOTAL_PAID}</div>
                             <h3 style={{ color: 'var(--success)' }}>₹ {viewingStudent.paid.toLocaleString()}</h3>
                         </div>
-                        <div style={{ padding: 'var(--space-md)', backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '8px' }}>
-                            <p className="stat-label">{UI_STRINGS.FEES.BALANCE_DUE}</p>
+                        <div className="fees-student-stat">
+                            <div className="label">{UI_STRINGS.FEES.BALANCE_DUE}</div>
                             <h3 style={{ color: 'var(--error)' }}>₹ {viewingStudent.pending.toLocaleString()}</h3>
                         </div>
                     </div>
 
-                    <div className="flex gap-2 mb-md mt-sm">
-                        <button className="btn btn-secondary" onClick={() => handleSendReminder(viewingStudent.userId, viewingStudent.records)} style={{ padding: '6px 12px', fontSize: '0.85rem' }}>
-                            <AlertTriangle size={14} style={{ marginRight: 4, display: 'inline' }} /> Send Reminder
+                    <div className="flex gap-2 mb-md">
+                        <button className="btn btn-secondary" onClick={() => handleSendReminder(viewingStudent.userId, viewingStudent.records)}>
+                            <AlertTriangle size={14} /> Send Reminder
                         </button>
                     </div>
 
-                    {viewingStudent.records.map((r: Fee) => (
-                        <div key={r.id} style={{ marginBottom: '12px', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', overflow: 'hidden' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', backgroundColor: 'rgba(255,255,255,0.02)' }}>
-                                <div style={{ flex: 1 }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                                        <span className="font-medium">{r.description}</span>
-                                        <span className={`badge ${getStatusBadgeClass(r.status)}`} style={{ fontSize: '0.7rem' }}>{r.status}</span>
-                                    </div>
-                                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                                        Due: {r.dueDate?.toLocaleDateString()} • ₹{(r.totalPaid || 0).toLocaleString()} / ₹{r.amount.toLocaleString()}
-                                    </div>
-                                    <div style={{ width: '200px', height: '4px', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '2px', marginTop: '6px', overflow: 'hidden' }}>
-                                        <div style={{ width: `${r.amount > 0 ? Math.min(((r.totalPaid || 0) / r.amount) * 100, 100) : 0}%`, height: '100%', backgroundColor: (r.totalPaid || 0) >= r.amount ? 'var(--success)' : (r.totalPaid || 0) > 0 ? '#F59E0B' : 'var(--error)', borderRadius: '2px', transition: 'width 0.3s ease' }} />
-                                    </div>
-                                </div>
-                                <div className="flex gap-2" style={{ alignItems: 'center' }}>
-                                    {r.status !== FEE_STATUS.PAID && (
-                                        <>
-                                            <button className="btn btn-primary" style={{ padding: '4px 8px', fontSize: '0.7rem' }} onClick={() => handleMarkPaid(r)}>Mark Paid</button>
-                                            <button className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '0.7rem', backgroundColor: '#F59E0B', color: '#000' }}
-                                                onClick={() => { setInstallmentFee(r); setShowInstallmentModal(true); }}>+ Installment</button>
-                                        </>
-                                    )}
-                                    <button className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '0.7rem' }} onClick={() => toggleInstallments(r.id)}>
-                                        {expandedFeeId === r.id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                                    </button>
-                                    <button className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '0.7rem' }} onClick={() => openEditModal(r)}>Edit</button>
-                                    <button className="btn btn-error" style={{ padding: '4px 8px', fontSize: '0.7rem', backgroundColor: 'var(--error)' }} onClick={() => handleDeleteFee(r.id)}>Delete</button>
-                                </div>
-                            </div>
-                            {/* Inline installment timeline */}
-                            {expandedFeeId === r.id && (
-                                <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', padding: '12px 16px', backgroundColor: 'rgba(56, 189, 248, 0.03)' }}>
-                                    <h5 style={{ fontSize: '0.8rem', fontWeight: '600', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                        <Clock size={12} /> Installment History
-                                    </h5>
-                                    {loadingInstallments === r.id ? (
-                                        <p className="text-muted" style={{ fontSize: '0.8rem' }}>Loading...</p>
-                                    ) : (!installmentsMap[r.id] || installmentsMap[r.id].length === 0) ? (
-                                        <p className="text-muted" style={{ fontSize: '0.8rem' }}>{UI_STRINGS.FEES.INSTALLMENT_EMPTY}</p>
-                                    ) : (
-                                        <div>
-                                            {installmentsMap[r.id].map((inst, idx) => (
-                                                <div key={inst.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 0', borderBottom: idx < installmentsMap[r.id].length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
-                                                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--success)', flexShrink: 0 }} />
-                                                    <div style={{ flex: 1 }}>
-                                                        <span style={{ fontWeight: '600', color: 'var(--success)' }}>₹{inst.amount.toLocaleString()}</span>
-                                                        <span className="text-muted" style={{ marginLeft: '8px', fontSize: '0.8rem' }}>{inst.paidDate?.toLocaleDateString?.() || 'N/A'}</span>
-                                                    </div>
-                                                    <span className="badge badge-secondary" style={{ fontSize: '0.65rem', padding: '2px 6px' }}>{inst.method}</span>
-                                                    {inst.notes && <span className="text-muted" style={{ fontSize: '0.75rem' }}>{inst.notes}</span>}
-                                                </div>
-                                            ))}
+                    {viewingStudent.records.map((r: Fee) => {
+                        const pct = r.amount > 0 ? Math.min(((r.totalPaid || 0) / r.amount) * 100, 100) : 0;
+                        const fillColor = (r.totalPaid || 0) >= r.amount ? 'var(--success)' : (r.totalPaid || 0) > 0 ? '#F59E0B' : 'var(--error)';
+                        return (
+                            <div key={r.id} className="fees-record-card">
+                                <div className="fees-record-header">
+                                    <div className="fees-record-info">
+                                        <div className="title-row">
+                                            <span className="font-medium">{r.description}</span>
+                                            <span className={`badge ${getStatusBadgeClass(r.status)}`}>{r.status}</span>
                                         </div>
-                                    )}
+                                        <div className="meta">
+                                            Due: {r.dueDate?.toLocaleDateString()} • ₹{(r.totalPaid || 0).toLocaleString()} / ₹{r.amount.toLocaleString()}
+                                        </div>
+                                        <div className="fees-record-progress">
+                                            <div className="fill" style={{ width: `${pct}%`, backgroundColor: fillColor }} />
+                                        </div>
+                                    </div>
+                                    <div className="fees-actions">
+                                        {r.status !== FEE_STATUS.PAID && (
+                                            <>
+                                                <button className="fees-action-btn action-paid" onClick={() => handleMarkPaid(r)}>✓ Paid</button>
+                                                <button className="fees-action-btn action-install" onClick={() => { setInstallmentFee(r); setShowInstallmentModal(true); }}>+ Install</button>
+                                            </>
+                                        )}
+                                        <button className="fees-action-btn action-history" onClick={() => toggleInstallments(r.id)}>
+                                            {expandedFeeId === r.id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                                        </button>
+                                        <button className="fees-action-btn action-edit" onClick={() => openEditModal(r)}>✎</button>
+                                        <button className="fees-action-btn action-delete" onClick={() => handleDeleteFee(r.id)}>✕</button>
+                                    </div>
                                 </div>
-                            )}
-                        </div>
-                    ))}
+                                {expandedFeeId === r.id && (
+                                    <div className="fees-timeline">
+                                        <h5><Clock size={12} /> Installment History</h5>
+                                        {loadingInstallments === r.id ? (
+                                            <p className="text-muted text-sm">Loading...</p>
+                                        ) : (!installmentsMap[r.id] || installmentsMap[r.id].length === 0) ? (
+                                            <p className="text-muted text-sm">{UI_STRINGS.FEES.INSTALLMENT_EMPTY}</p>
+                                        ) : (
+                                            installmentsMap[r.id].map(inst => (
+                                                <div key={inst.id} className="fees-timeline-item">
+                                                    <div className="fees-timeline-dot" />
+                                                    <div className="fees-timeline-content">
+                                                        <div>
+                                                            <span style={{ fontWeight: 600, color: 'var(--success)' }}>₹{inst.amount.toLocaleString()}</span>
+                                                            <span className="text-muted text-sm" style={{ marginLeft: 8 }}>{inst.paidDate?.toLocaleDateString?.() || 'N/A'}</span>
+                                                        </div>
+                                                        <div className="flex gap-2 items-center">
+                                                            <span className="badge badge-secondary">{inst.method}</span>
+                                                            {inst.notes && <span className="text-muted text-xs">{inst.notes}</span>}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
                     <div className="mt-md pt-sm border-t text-xs text-muted">
                         Total {viewingStudent.records.length} records found for this student.
                     </div>
@@ -747,9 +768,9 @@ export default function FeesPage() {
             <Modal isOpen={showInstallmentModal} onClose={() => { setShowInstallmentModal(false); setInstallmentFee(null); }} title={UI_STRINGS.FEES.ADD_INSTALLMENT}>
                 {installmentFee && (
                     <div>
-                        <div style={{ backgroundColor: 'rgba(56, 189, 248, 0.08)', padding: '12px 16px', borderRadius: '8px', marginBottom: '16px' }}>
-                            <p style={{ fontSize: '0.85rem', fontWeight: '600' }}>{installmentFee.description}</p>
-                            <p className="text-muted" style={{ fontSize: '0.8rem' }}>
+                        <div className="fees-installment-info">
+                            <p>{installmentFee.description}</p>
+                            <p className="text-muted text-sm">
                                 Total: ₹{installmentFee.amount.toLocaleString()} • Paid: ₹{(installmentFee.totalPaid || 0).toLocaleString()} • Remaining: ₹{(installmentFee.amount - (installmentFee.totalPaid || 0)).toLocaleString()}
                             </p>
                         </div>
@@ -787,7 +808,7 @@ export default function FeesPage() {
                     <p className="mb-lg">Are you sure you want to delete this fee record?</p>
                     <div className="flex justify-center gap-md">
                         <button className="btn btn-secondary" onClick={() => setShowDeleteModal(false)}>Cancel</button>
-                        <button className="btn btn-primary" style={{ backgroundColor: 'var(--error)' }} onClick={confirmDeleteFee}>Delete</button>
+                        <button className="fees-action-btn action-delete" style={{ padding: '8px 20px', fontSize: '0.9rem' }} onClick={confirmDeleteFee}>Delete</button>
                     </div>
                 </div>
             </Modal>
