@@ -619,6 +619,10 @@ export default function JobsPage() {
           outline: none;
           cursor: pointer;
         }
+        .control-select option {
+          background-color: var(--bg-card);
+          color: var(--text-main);
+        }
 
         /* Job Grid */
         .jobs-luminous-grid {
