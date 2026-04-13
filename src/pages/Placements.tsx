@@ -1,5 +1,5 @@
-import { useState, useEffect, useContext } from 'react';
-import { Building2, Users, Briefcase, Pencil, Trash2, Calendar } from 'lucide-react';
+import { useState, useEffect, useContext, useRef } from 'react';
+import { Building2, Users, Briefcase, Pencil, Trash2, Calendar, Camera } from 'lucide-react';
 import { placementService } from '../services/placementService';
 import { ToastContext } from '../contexts/ToastContext';
 import type { SuccessStory, PlacementStats } from '../types';
@@ -10,9 +10,8 @@ import ErrorAlert from '../components/ErrorAlert';
 import Modal from '../components/Modal';
 import StatCard from '../components/StatCard';
 import Avatar from '../components/Avatar';
-import CloudinaryUpload from '../components/CloudinaryUpload';
 import { FormField, FormRow, FormActions } from '../components/FormField';
-import { getOptimizedUrl } from '../lib/cloudinary';
+import { uploadWithFallback } from '../lib/cloudinary';
 
 export default function PlacementsPage() {
     // 1. Context
@@ -33,6 +32,8 @@ export default function PlacementsPage() {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [editingStoryId, setEditingStoryId] = useState<string | null>(null);
     const [storyToDelete, setStoryToDelete] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [isUploading, setIsUploading] = useState(false);
     
     // 3. Form States
     const [uploadedPhotoUrl, setUploadedPhotoUrl] = useState<string | null>(null);
@@ -148,6 +149,30 @@ export default function PlacementsPage() {
         }
     };
 
+    const handleProfileClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        try {
+            setIsUploading(true);
+            const result = await uploadWithFallback(file, {
+                folder: 'innov8/success-stories/',
+                onProgress: (pct) => console.log(`Upload progress: ${pct}%`)
+            });
+            setUploadedPhotoUrl(result.url);
+            showToast?.("Profile photo uploaded successfully!", "success");
+        } catch (err) {
+            console.error("Upload error:", err);
+            showToast?.("Failed to upload photo. Please try again.", "error");
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
     const handleSaveStory = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
@@ -230,7 +255,7 @@ export default function PlacementsPage() {
                 onAction={handleAddStory}
             >
                 <div className="flex items-center gap-sm">
-                    <Calendar size={18} className="text-muted" />
+                    <Calendar size={18} className="text-primary" />
                     <select 
                         value={selectedYear} 
                         onChange={(e) => setSelectedYear(Number(e.target.value))}
@@ -322,14 +347,63 @@ export default function PlacementsPage() {
                 title={editingStoryId ? UI_STRINGS.COMMON.EDIT : UI_STRINGS.PLACEMENTS.MODAL_TITLE}
             >
                 <form onSubmit={handleSaveStory} className="form-layout">
-                    <div style={{ alignSelf: 'center' }} className="mb-sm">
-                        <Avatar 
-                            src={uploadedPhotoUrl || storyForm.studentImage} 
-                            fallbackIcon={<Users size={40} style={{ color: 'var(--text-secondary)' }} />} 
-                            size="lg" 
-                            upload 
+                    <div 
+                        className="flex flex-col items-center gap-md mb-md" 
+                        style={{ cursor: 'pointer', position: 'relative' }}
+                        onClick={handleProfileClick}
+                    >
+                        <div className={`avatar-container ${isUploading ? 'opacity-50' : ''}`} style={{ position: 'relative', width: '100px', height: '100px' }}>
+                            <Avatar 
+                                src={uploadedPhotoUrl || storyForm.studentImage} 
+                                fallbackIcon={<Users size={40} style={{ color: 'var(--text-secondary)' }} />} 
+                                size="lg" 
+                                upload 
+                            />
+                            {!isUploading && (
+                                <div 
+                                    className="transition-transform hover:scale-110 active:scale-95"
+                                    style={{ 
+                                        position: 'absolute',
+                                        bottom: '0',
+                                        right: '0',
+                                        width: '32px', 
+                                        height: '32px', 
+                                        backgroundColor: 'var(--primary)',
+                                        borderRadius: '50%',
+                                        border: '2px solid white',
+                                        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        transform: 'translate(10%, 10%)',
+                                        zIndex: 10,
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <Camera size={18} className="text-white" />
+                                    </div>
+                                </div>
+                            )}
+                            {isUploading && (
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-full">
+                                    <div className="att-spinner" style={{ width: '24px', height: '24px' }} />
+                                </div>
+                            )}
+                        </div>
+                        <span className="text-xs font-medium text-primary hover:underline">
+                            {isUploading ? 'Uploading...' : 'Profile Photo'}
+                        </span>
+                        
+                        <input 
+                            type="file" 
+                            ref={fileInputRef} 
+                            onChange={handleFileChange} 
+                            accept="image/*" 
+                            style={{ display: 'none' }} 
                         />
                     </div>
+
                     <FormField label={UI_STRINGS.PLACEMENTS.FORM_STUDENT_NAME}>
                         <input type="text" required value={storyForm.studentName} onChange={e => setStoryForm({ ...storyForm, studentName: e.target.value })} />
                     </FormField>
@@ -355,18 +429,6 @@ export default function PlacementsPage() {
                     <FormField label={UI_STRINGS.PLACEMENTS.FORM_TESTIMONIAL}>
                         <textarea rows={3} value={storyForm.testimonial} onChange={e => setStoryForm({ ...storyForm, testimonial: e.target.value })} />
                     </FormField>
-                    <CloudinaryUpload
-                        label={UI_STRINGS.PLACEMENTS.FORM_IMAGE_URL}
-                        folder="innov8/success-stories/"
-                        acceptedTypes={['image/png', 'image/jpeg', 'image/webp']}
-                        maxSizeMB={3}
-                        previewMode="image"
-                        existingUrl={storyForm.studentImage || undefined}
-                        onUploadComplete={(result) => {
-                            setUploadedPhotoUrl(getOptimizedUrl(result.publicId));
-                        }}
-                        onError={(msg) => showToast?.(msg, 'error')}
-                    />
                     <FormActions>
                         <button type="button" className="btn btn-secondary" onClick={() => setShowStoryModal(false)}>{UI_STRINGS.COMMON.CANCEL}</button>
                         <button type="submit" className="btn btn-primary" disabled={saving}>

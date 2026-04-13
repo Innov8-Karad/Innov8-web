@@ -200,7 +200,7 @@ export default function AttendancePage() {
                     { label: 'Total Students', value: studentsInBatch.length, icon: Users, color: '#6366f1', bg: 'rgba(99,102,241,0.08)' },
                     { label: 'Present', value: presentCount, icon: CheckCircle2, color: '#22c55e', bg: 'rgba(34,197,94,0.08)' },
                     { label: 'Absent', value: absentCount, icon: XCircle, color: '#ef4444', bg: 'rgba(239,68,68,0.08)' },
-                    { label: 'Late', value: lateCount, icon: Clock, color: '#eab308', bg: 'rgba(234,179,8,0.08)' },
+                    { label: 'Late', value: lateCount, icon: Clock, color: 'primary', bg: 'rgba(var(--primary-rgb), 0.08)' },
                     { label: 'Attendance %', value: `${attendancePercent}%`, icon: Percent, color: '#06b6d4', bg: 'rgba(6,182,212,0.08)' }
                 ].map((s, i) => (
                     <div key={i} className="att-stat-card" style={{ '--stat-color': s.color, '--stat-bg': s.bg } as React.CSSProperties}>
@@ -257,7 +257,7 @@ export default function AttendancePage() {
                     ) : (
                         studentsInBatch.map((student, idx) => {
                             const rec = attendanceMap[student.id];
-                            const statusColor = rec?.status === 'present' ? '#22c55e' : rec?.status === 'absent' ? '#ef4444' : rec?.status === 'late' ? '#eab308' : 'transparent';
+                            const statusColor = rec?.status === 'present' ? '#22c55e' : rec?.status === 'absent' ? '#ef4444' : rec?.status === 'late' ? 'var(--primary)' : 'transparent';
                             return (
                                 <div key={student.id} className="att-row" style={{ animationDelay: `${idx * 30}ms` }}>
                                     <div className="att-row__index">
@@ -271,7 +271,7 @@ export default function AttendancePage() {
                                         <div className="att-pill-group">
                                             <StatusPill student={student} status="present" label="Present" icon={CheckCircle2} color="green" />
                                             <StatusPill student={student} status="absent" label="Absent" icon={XCircle} color="red" />
-                                            <StatusPill student={student} status="late" label="Late" icon={Clock} color="yellow" />
+                                            <StatusPill student={student} status="late" label="Late" icon={Clock} color="primary" />
                                         </div>
                                     </div>
                                 </div>
