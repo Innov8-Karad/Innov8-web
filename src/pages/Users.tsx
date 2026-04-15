@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
 import type { User, Course } from '../types';
-import { UserCheck, UserX, Edit2, Trash2, Ban } from 'lucide-react';
+import { Edit2, Trash2, Ban } from 'lucide-react';
 import { userService } from '../services/userService';
 import { courseService } from '../services/courseService';
 import { UI_STRINGS } from '../constants';
 import PageHeader from '../components/PageHeader';
 import LoadingState from '../components/LoadingState';
 import ErrorAlert from '../components/ErrorAlert';
-import SearchInput from '../components/SearchInput';
 import Modal from '../components/Modal';
 import DataTable from '../components/DataTable';
 import type { Column } from '../components/DataTable';
@@ -19,7 +18,6 @@ import { useToast } from '../hooks/useToast';
 
 export default function UsersPage() {
     const { students: users, loading: usersLoading, error: usersError } = useUser();
-    const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [showModal, setShowModal] = useState(false);
@@ -114,15 +112,6 @@ export default function UsersPage() {
 
 
 
-    const handleToggleStatus = async (user: User) => {
-        try {
-            const newStatus = user.status === 'inactive' ? 'active' : 'inactive';
-            await userService.updateUser(user.id, { status: newStatus });
-            showToast(`Student ${newStatus === 'active' ? 'activated' : 'deactivated'}`, "success");
-        } catch {
-            showToast("Failed to update status", "error");
-        }
-    };
 
     const handleToggleBlock = async (user: User) => {
         try {
@@ -160,10 +149,6 @@ export default function UsersPage() {
         setShowModal(true);
     };
 
-    const filteredUsers = users.filter(user =>
-        user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchTerm.toLowerCase())
-    );
 
     const columns: Column<User>[] = [
         {
@@ -215,9 +200,6 @@ export default function UsersPage() {
             align: 'center',
             render: (user) => (
                 <div className="flex items-center gap-2 justify-center">
-                    <button className="icon-btn" title={user.status === 'inactive' ? 'Activate Student' : 'Deactivate Student'} onClick={() => handleToggleStatus(user)} style={{ color: user.status === 'inactive' ? 'var(--text-secondary)' : 'var(--success)' }}>
-                        {user.status === 'inactive' ? <UserX size={18} /> : <UserCheck size={18} />}
-                    </button>
                     <button className="icon-btn" title="Edit Student" onClick={() => openEditModal(user)} style={{ color: 'var(--accent-blue)' }}>
                         <Edit2 size={18} />
                     </button>
@@ -249,17 +231,10 @@ export default function UsersPage() {
             />
 
             <div className="card mb-lg">
-                <div className="flex items-center gap-4 mb-md">
-                    <SearchInput
-                        placeholder={UI_STRINGS.USERS.SEARCH}
-                        value={searchTerm}
-                        onChange={setSearchTerm}
-                    />
-                </div>
 
                  <DataTable
                  columns={columns}
-                 data={filteredUsers}
+                 data={users}
                  keyExtractor={(user) => user.id}
                  emptyMessage={UI_STRINGS.USERS.EMPTY}
                  searchPlaceholder="Search users by name, email, or role..."
