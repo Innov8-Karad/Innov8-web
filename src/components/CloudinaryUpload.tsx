@@ -21,7 +21,7 @@ interface CloudinaryUploadProps {
   /** Display label */
   label?: string;
   /** Show image preview or document icon on success */
-  previewMode?: 'image' | 'document';
+  previewMode?: 'image' | 'document' | 'none';
   /** Existing file URL (for edit mode) */
   existingUrl?: string;
   /** Custom className */
@@ -247,7 +247,7 @@ export default function CloudinaryUpload({
                   <CheckCircle size={14} />
                 </div>
               </div>
-            ) : (
+            ) : previewMode === 'document' ? (
               <div className="upload-doc-preview">
                 <FileText size={32} />
                 <span className="upload-doc-name">{fileName || 'Document uploaded'}</span>
@@ -255,7 +255,7 @@ export default function CloudinaryUpload({
                   <CheckCircle size={14} />
                 </div>
               </div>
-            )}
+            ) : null}
             <button
               type="button"
               className="upload-change-btn"

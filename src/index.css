@@ -48,6 +48,7 @@
   --font-headline: 'Manrope', sans-serif;
   --font-body: 'Inter', sans-serif;
   --font-family: var(--font-body);
+  color-scheme: dark;
 }
 
 /* Light Theme Overrides */
@@ -63,6 +64,7 @@
   --glass-bg: rgba(255, 255, 255, 0.8);
   --chart-axis: #4B5563;
   --chart-grid: rgba(0, 0, 0, 0.08);
+  color-scheme: light;
 }
 
 body {
@@ -151,6 +153,7 @@ body {
   border: 1px solid var(--border-subtle);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
+
 
 .btn-secondary:hover {
   background-color: var(--bg-card-accent);
@@ -353,6 +356,25 @@ select:focus,
 textarea:focus {
   outline: 2px solid var(--primary);
   border-color: transparent;
+}
+
+/* Native Picker Icon Visibility Fix */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  /* Approximating --primary (#e95009) filter */
+  filter: invert(42%) sepia(94%) saturate(2256%) hue-rotate(1deg) brightness(97%) contrast(101%);
+  transition: all 0.2s ease;
+}
+
+[data-theme='light'] input[type="date"]::-webkit-calendar-picker-indicator,
+[data-theme='light'] input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: none;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover,
+input[type="time"]::-webkit-calendar-picker-indicator:hover {
+  transform: scale(1.1);
 }
 
 /* NEW CHECKBOX STYLING */
