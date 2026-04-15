@@ -87,13 +87,6 @@ describe('DASHBOARD_METRICS', () => {
     expect(DASHBOARD_METRICS.EXAMS_CONDUCTED).toBeDefined();
     expect(DASHBOARD_METRICS.SUCCESS_PLACEMENTS).toBeDefined();
   });
-
-  it('should have all trend values', () => {
-    expect(DASHBOARD_METRICS.TREND_MONTHLY).toBeDefined();
-    expect(DASHBOARD_METRICS.TREND_GROWTH).toBeDefined();
-    expect(DASHBOARD_METRICS.TREND_EXAMS).toBeDefined();
-    expect(DASHBOARD_METRICS.TREND_PLACEMENTS).toBeDefined();
-  });
 });
 
 describe('UI_STRINGS', () => {

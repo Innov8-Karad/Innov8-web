@@ -85,9 +85,8 @@ export const dashboardService = {
 
     // 4. Placements (Success Rate)
     const unsubsPlacements = onSnapshot(collection(db, COLLECTIONS.PLACEMENTS), (snap) => {
-       if (!snap.empty) {
-         totalPlaced = snap.docs[0].data().totalPlaced || 0;
-       }
+       // totalPlaced is the count of success story records
+       totalPlaced = snap.size;
        notify();
     });
 

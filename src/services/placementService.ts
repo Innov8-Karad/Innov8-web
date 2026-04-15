@@ -1,7 +1,7 @@
-import { 
-  collection, 
-  getDocs, 
-  addDoc, 
+import {
+  collection,
+  getDocs,
+  addDoc,
   updateDoc,
   deleteDoc,
   doc,
@@ -9,7 +9,7 @@ import {
   where,
   onSnapshot,
   serverTimestamp,
-  type DocumentData 
+  type DocumentData
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { uploadWithFallback, getOptimizedUrl } from '../lib/cloudinary';
@@ -18,12 +18,14 @@ import type { SuccessStory, PlacementStats } from '../types';
 
 export const placementService = {
   // 1. Success Stories Subscriptions (Year-wise)
-  subscribeToSuccessStories(year: number, callback: (stories: SuccessStory[]) => void, onError?: (error: Error) => void) {
-    const q = query(
-      collection(db, COLLECTIONS.PLACEMENTS),
-      where('year', '==', year)
-    );
-    
+  subscribeToSuccessStories(year: number | 'all', callback: (stories: SuccessStory[]) => void, onError?: (error: Error) => void) {
+    const q = year === 'all' 
+      ? query(collection(db, COLLECTIONS.PLACEMENTS))
+      : query(
+          collection(db, COLLECTIONS.PLACEMENTS),
+          where('year', '==', year)
+        );
+
     return onSnapshot(q, (snap) => {
       const stories = snap.docs.map(doc => ({
         ...doc.data(),
@@ -38,7 +40,11 @@ export const placementService = {
   },
 
   // 2. Placement Stats Subscriptions (Year-wise)
-  subscribeToPlacementStats(year: number, callback: (stats: PlacementStats | null) => void, onError?: (error: Error) => void) {
+  subscribeToPlacementStats(year: number | 'all', callback: (stats: PlacementStats | null) => void, onError?: (error: Error) => void) {
+    if (year === 'all') {
+      callback(null);
+      return () => {};
+    }
     const q = query(
       collection(db, COLLECTIONS.PLACEMENT_STATS),
       where('year', '==', year)

@@ -21,7 +21,18 @@ export const announcementService = {
       orderBy("createdAt", "desc")
     );
     const snap = await getDocs(q);
-    return snap.docs.map(doc => this.mapDocToAnnouncement(doc));
+    
+    // Auto-expiry Logic: Filter out announcements older than 8 days
+    const EXPIRY_DAYS = 8;
+    const EXPIRY_MS = EXPIRY_DAYS * 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    
+    return snap.docs
+      .map(doc => this.mapDocToAnnouncement(doc))
+      .filter(ann => {
+        const announcementAge = now - ann.createdAt.getTime();
+        return announcementAge <= EXPIRY_MS;
+      });
   },
 
   async createAnnouncement(data: Omit<Announcement, 'id' | 'createdAt' | 'author'>): Promise<Announcement> {

@@ -64,10 +64,6 @@ export const DASHBOARD_METRICS = {
   FEES_COLLECTED: 'Fees Collected',
   EXAMS_CONDUCTED: 'Exams Conducted',
   SUCCESS_PLACEMENTS: 'Success Placements',
-  TREND_MONTHLY: '+12% this month',
-  TREND_GROWTH: '+5.4% growth',
-  TREND_EXAMS: 'Next: Monday',
-  TREND_PLACEMENTS: '85% Success Rate',
 } as const;
 
 export const UI_STRINGS = {

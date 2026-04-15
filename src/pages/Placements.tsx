@@ -19,13 +19,13 @@ export default function PlacementsPage() {
     const showToast = toastContext?.showToast;
 
     // 2. State
-    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+    const [selectedYear, setSelectedYear] = useState<number | 'all'>(new Date().getFullYear());
     const [stats, setStats] = useState<PlacementStats | null>(null);
     const [successStories, setSuccessStories] = useState<SuccessStory[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    
+
     // 2. Modals Control
     const [showStoryModal, setShowStoryModal] = useState(false);
     const [showStatsModal, setShowStatsModal] = useState(false);
@@ -34,7 +34,6 @@ export default function PlacementsPage() {
     const [storyToDelete, setStoryToDelete] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isUploading, setIsUploading] = useState(false);
-    
     // 3. Form States
     const [uploadedPhotoUrl, setUploadedPhotoUrl] = useState<string | null>(null);
     const [storyForm, setStoryForm] = useState({
@@ -107,7 +106,7 @@ export default function PlacementsPage() {
             batch: '',
             testimonial: '',
             collegeName: '',
-            year: selectedYear
+            year: selectedYear === 'all' ? new Date().getFullYear() : selectedYear
         });
         setShowStoryModal(true);
     };
@@ -123,7 +122,7 @@ export default function PlacementsPage() {
             batch: story.batch || '',
             testimonial: story.testimonial || '',
             collegeName: story.collegeName || '',
-            year: story.year || selectedYear
+            year: story.year || (selectedYear === 'all' ? new Date().getFullYear() : selectedYear)
         });
         setShowStoryModal(true);
     };
@@ -196,7 +195,7 @@ export default function PlacementsPage() {
             } else {
                 await placementService.createPlacement(data);
             }
-            
+
             showToast?.(editingStoryId ? "Success story updated successfully!" : "Success story added successfully!", "success");
             setShowStoryModal(false);
             resetStoryForm();
@@ -213,9 +212,14 @@ export default function PlacementsPage() {
         e.preventDefault();
         try {
             setSaving(true);
-            await placementService.updatePlacementStats(selectedYear, statsForm);
-            showToast?.(UI_STRINGS.PLACEMENTS.SAVE_STATS_SUCCESS, "success");
-            setShowStatsModal(false);
+            // Ensure selectedYear is a number before updating stats (stats are per-year)
+            if (typeof selectedYear === 'number') {
+                await placementService.updatePlacementStats(selectedYear, statsForm);
+                showToast?.(UI_STRINGS.PLACEMENTS.SAVE_STATS_SUCCESS, "success");
+                setShowStatsModal(false);
+            } else {
+                showToast?.("Cannot update statistics in 'Global' view mode.", "error");
+            }
         } catch (err) {
             console.error("Error saving stats:", err);
             showToast?.("Failed to save statistics.", "error");
@@ -236,7 +240,7 @@ export default function PlacementsPage() {
             batch: '',
             testimonial: '',
             collegeName: '',
-            year: selectedYear
+            year: selectedYear === 'all' ? new Date().getFullYear() : selectedYear
         });
     };
 
@@ -247,60 +251,74 @@ export default function PlacementsPage() {
     return (
         <div className="pb-xl">
             {error && <ErrorAlert message={error} />}
-            
+
             <PageHeader
                 title={UI_STRINGS.PLACEMENTS.TITLE}
                 subtitle={UI_STRINGS.PLACEMENTS.SUBTITLE}
                 actionLabel={UI_STRINGS.PLACEMENTS.NEW_BTN}
                 onAction={handleAddStory}
             >
-                <div className="flex items-center gap-sm">
-                    <Calendar size={18} className="text-primary" />
-                    <select 
-                        value={selectedYear} 
-                        onChange={(e) => setSelectedYear(Number(e.target.value))}
-                        className="select-input"
-                        style={{ padding: '6px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-card)' }}
+                <div className="flex items-center gap-md">
+                    <button 
+                        onClick={() => setSelectedYear('all')}
+                        className={`btn ${selectedYear === 'all' ? 'btn-primary' : 'btn-secondary'} py-xs px-sm text-sm`}
+                        style={{ whiteSpace: 'nowrap' }}
                     >
-                        {years.map(y => <option key={y} value={y}>{y}</option>)}
-                    </select>
+                        View All
+                    </button>
+                    <div className="flex items-center gap-sm">
+                        <Calendar size={18} className="text-primary" />
+                        <select 
+                            value={selectedYear === 'all' ? '' : selectedYear} 
+                            onChange={(e) => setSelectedYear(Number(e.target.value))}
+                            className="select-input"
+                            style={{ padding: '6px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-card)' }}
+                        >
+                            <option value="" disabled>Year</option>
+                            {years.map(y => <option key={y} value={y}>{y}</option>)}
+                        </select>
+                    </div>
                 </div>
             </PageHeader>
 
             <div className="mb-md flex justify-between items-center">
-                <h2 className="text-lg font-semibold">{selectedYear} Overview</h2>
-                <button 
-                    onClick={() => setShowStatsModal(true)} 
-                    className="btn btn-secondary flex items-center gap-2 text-sm"
-                >
-                    <Pencil size={14} /> {UI_STRINGS.PLACEMENTS.EDIT_STATS}
-                </button>
+                <h2 className="text-lg font-semibold">{selectedYear === 'all' ? 'Global' : selectedYear} Overview</h2>
+                {selectedYear !== 'all' && (
+                    <button
+                        onClick={() => setShowStatsModal(true)}
+                        className="btn btn-secondary flex items-center gap-2 text-sm"
+                    >
+                        <Pencil size={14} /> {UI_STRINGS.PLACEMENTS.EDIT_STATS}
+                    </button>
+                )}
             </div>
 
-            <div className="grid-cards-sm mb-xl">
-                <StatCard 
-                    title={UI_STRINGS.PLACEMENTS.STAT_PARTNER_COMPANIES} 
-                    value={`${stats?.companiesCount || 0}+`} 
-                    icon={Building2} 
-                    color="accent-blue" 
-                />
-                <StatCard 
-                    title={UI_STRINGS.PLACEMENTS.STAT_PLACED_STUDENTS} 
-                    value={`${stats?.studentsPlaced || 0}+`} 
-                    icon={Users} 
-                    color="primary" 
-                />
-                <StatCard 
-                    title={UI_STRINGS.PLACEMENTS.STAT_HIGHEST_PACKAGE} 
-                    value={`${stats?.highestPackage || 0} ${UI_STRINGS.PLACEMENTS.LPA_SUFFIX}`} 
-                    icon={Briefcase} 
-                    color="success" 
-                />
-            </div>
+            {selectedYear !== 'all' && (
+                <div className="grid-cards-sm mb-xl">
+                    <StatCard
+                        title={UI_STRINGS.PLACEMENTS.STAT_PARTNER_COMPANIES}
+                        value={`${stats?.companiesCount || 0}+`}
+                        icon={Building2}
+                        color="accent-blue"
+                    />
+                    <StatCard
+                        title={UI_STRINGS.PLACEMENTS.STAT_PLACED_STUDENTS}
+                        value={`${stats?.studentsPlaced || 0}+`}
+                        icon={Users}
+                        color="primary"
+                    />
+                    <StatCard
+                        title={UI_STRINGS.PLACEMENTS.STAT_HIGHEST_PACKAGE}
+                        value={`${stats?.highestPackage || 0} ${UI_STRINGS.PLACEMENTS.LPA_SUFFIX}`}
+                        icon={Briefcase}
+                        color="success"
+                    />
+                </div>
+            )}
 
             <h2 className="mb-md">{UI_STRINGS.PLACEMENTS.SUCCESS_STORIES_HEADING}</h2>
             {successStories.length === 0 ? (
-                <div className="card text-center py-xl text-muted">No success stories found for {selectedYear}.</div>
+                <div className="card text-center py-xl text-muted">No success stories found {selectedYear === 'all' ? 'globally' : `for ${selectedYear}`}.</div>
             ) : (
                 <div className="grid-cards">
                     {successStories.map(story => (
@@ -341,8 +359,8 @@ export default function PlacementsPage() {
             )}
 
             {/* Modal: Add/Edit Story */}
-            <Modal 
-                isOpen={showStoryModal} 
+            <Modal
+                isOpen={showStoryModal}
                 onClose={() => setShowStoryModal(false)}
                 title={editingStoryId ? UI_STRINGS.COMMON.EDIT : UI_STRINGS.PLACEMENTS.MODAL_TITLE}
             >
@@ -439,8 +457,8 @@ export default function PlacementsPage() {
             </Modal>
 
             {/* Modal: Edit Stats */}
-            <Modal 
-                isOpen={showStatsModal} 
+            <Modal
+                isOpen={showStatsModal}
                 onClose={() => setShowStatsModal(false)}
                 title={`${UI_STRINGS.PLACEMENTS.EDIT_STATS} (${selectedYear})`}
             >
@@ -469,7 +487,7 @@ export default function PlacementsPage() {
                     </FormActions>
                 </form>
             </Modal>
-            
+
             {/* Modal: Delete Confirmation */}
             <Modal
                 isOpen={showDeleteModal}
@@ -479,15 +497,15 @@ export default function PlacementsPage() {
                 <div className="py-md text-center">
                     <p className="mb-lg">{UI_STRINGS.PLACEMENTS.DELETE_STORY_CONFIRM}</p>
                     <div className="flex justify-center gap-md">
-                        <button 
-                            className="btn btn-secondary" 
+                        <button
+                            className="btn btn-secondary"
                             disabled={saving}
                             onClick={() => setShowDeleteModal(false)}
                         >
                             {UI_STRINGS.COMMON.CANCEL}
                         </button>
-                        <button 
-                            className="btn btn-primary" 
+                        <button
+                            className="btn btn-primary"
                             style={{ backgroundColor: 'var(--error)' }}
                             disabled={saving}
                             onClick={handleConfirmDelete}
