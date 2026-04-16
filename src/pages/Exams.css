@@ -69,3 +69,27 @@
     outline: none;
     border-color: var(--primary);
 }
+
+.btn-delete-q {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(var(--error-rgb), 0.1);
+    color: var(--error);
+    border: 1px solid rgba(var(--error-rgb), 0.2);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-delete-q:hover {
+    background: var(--error);
+    color: #fff;
+    transform: scale(1.1);
+    box-shadow: 0 0 10px rgba(var(--error-rgb), 0.3);
+}
