@@ -557,9 +557,18 @@ export default function JobsPage() {
         .stat-icon.amber { background: rgba(245, 158, 11, 0.1); color: #F59E0B; }
         .stat-icon.green { background: rgba(16, 185, 129, 0.1); color: #10B981; }
         
-        .stat-values { z-index: 2; }
-        .stat-label { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.25rem; }
-        .stat-number { font-size: 1.75rem; font-weight: 800; color: var(--text-main); }
+        .stat-values { z-index: 2; position: relative; }
+        .stat-label { 
+          font-size: 0.85rem; 
+          color: var(--text-secondary); 
+          margin-bottom: 0.25rem; 
+          font-weight: 600;
+        }
+        .stat-number { 
+          font-size: 1.75rem; 
+          font-weight: 800; 
+          color: var(--text-main); 
+        }
 
         .stat-glow {
           position: absolute;
@@ -570,6 +579,7 @@ export default function JobsPage() {
           border-radius: 50%;
           filter: blur(40px);
           opacity: 0.15;
+          pointer-events: none;
         }
         .stat-glow.blue { background: #3B82F6; }
         .stat-glow.amber { background: #F59E0B; }
@@ -591,7 +601,12 @@ export default function JobsPage() {
           align-items: center;
           gap: 0.75rem;
           flex: 1;
-          color: #a3aac4;
+          color: var(--text-secondary);
+          transition: all 0.2s;
+        }
+        .search-box-premium:focus-within {
+          border-color: var(--primary);
+          box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
         }
         .search-box-premium input {
           background: transparent;
@@ -600,24 +615,36 @@ export default function JobsPage() {
           color: var(--text-main);
           width: 100%;
           outline: none;
+          font-weight: 500;
         }
 
         .filter-group {
           display: flex;
           align-items: center;
-          gap: 1rem;
+          gap: 0.75rem;
           background: var(--bg-card);
-          padding: 0.5rem 1rem;
+          padding: 0 1rem;
           border-radius: 14px;
           border: 1px solid var(--border-subtle);
+          min-height: 48px;
+        }
+        .control-label {
+          color: var(--text-secondary);
+          font-weight: 600;
+          font-size: 0.9rem;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
         }
         .control-select {
           background: transparent;
           border: none;
           color: var(--text-main);
-          font-weight: 600;
+          font-weight: 700;
           outline: none;
           cursor: pointer;
+          padding: 0.5rem 0;
+          font-size: 0.9rem;
         }
         .control-select option {
           background-color: var(--bg-card);
@@ -689,7 +716,7 @@ export default function JobsPage() {
           align-items: center;
           gap: 0.5rem;
           font-size: 0.9rem;
-          color: #a3aac4;
+          color: var(--text-secondary);
         }
 
         .job-card-footer {
@@ -716,7 +743,7 @@ export default function JobsPage() {
           border-radius: 50%;
           border: 1px solid rgba(163, 170, 196, 0.1);
           background: transparent;
-          color: #a3aac4;
+          color: var(--text-secondary);
           display: flex;
           align-items: center;
           justify-content: center;

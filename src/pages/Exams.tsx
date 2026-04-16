@@ -344,8 +344,8 @@ export default function ExamsPage() {
                                 <div key={qIndex} className="card shadow-sm p-sm bg-light" style={{ position: 'relative' }}>
                                     <button 
                                         type="button" 
-                                        className="btn-icon text-error" 
-                                        style={{ position: 'absolute', top: '8px', right: '8px' }}
+                                        className="btn-delete-q" 
+                                        title="Remove Question"
                                         onClick={() => removeQuestion(qIndex)}
                                     >
                                         <Trash2 size={14} />
@@ -353,7 +353,7 @@ export default function ExamsPage() {
                                     
                                     <span className="text-xs font-bold text-primary mb-1 inline-block">Question {qIndex + 1}</span>
                                     
-                                    <div className="flex flex-col gap-sm">
+                                    <div className="flex flex-col gap-sm" style={{ paddingRight: '24px' }}>
                                         <textarea 
                                             placeholder="Question Text" 
                                             rows={2} 
