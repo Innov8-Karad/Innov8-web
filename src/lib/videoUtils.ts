@@ -88,7 +88,7 @@ export function getEmbedUrl(url: string, platform: VideoPlatform): string {
         case 'youtube': {
             const videoId = extractYouTubeId(url);
             return videoId
-                ? `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1`
+                ? `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1&showinfo=0&iv_load_policy=3`
                 : url;
         }
         case 'vimeo': {
