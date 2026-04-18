@@ -16,7 +16,10 @@ if (!admin.apps.length) {
 const db = admin.firestore();
 
 export const onAnnouncementCreated = onDocumentCreated(
-  "announcements/{announcementId}",
+  {
+    document: "announcements/{announcementId}",
+    region: "asia-south1",
+  },
   async (event) => {
     const snapshot = event.data;
     if (!snapshot) return;

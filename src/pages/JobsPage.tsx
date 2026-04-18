@@ -192,9 +192,10 @@ export default function JobsPage() {
           : [],
         isActive: jobForm.isActive,
         postedDate: new Date(),
-        applyLink: jobForm.applyLink.trim() || undefined,
-        deadline: jobForm.deadline ? new Date(jobForm.deadline) : undefined,
       };
+
+      if (jobForm.applyLink.trim()) data.applyLink = jobForm.applyLink.trim();
+      if (jobForm.deadline) data.deadline = new Date(jobForm.deadline);
 
       if (editingJobId) {
         await jobService.updateJob(editingJobId, data);

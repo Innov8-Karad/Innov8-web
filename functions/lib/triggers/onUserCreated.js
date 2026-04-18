@@ -3,8 +3,8 @@
 // onUserCreated — Firestore Trigger
 // ═══════════════════════════════════════════════════════════════════════════════
 // When an admin creates a student via the web panel (Firestore write only),
-// this function auto-creates a Firebase Auth account and sends a password
-// reset email so the student can set their own credentials and log in.
+// this function auto-creates a Firebase Auth account and sends a branded
+// welcome email so the student can set their own password and log in.
 // ═══════════════════════════════════════════════════════════════════════════════
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -44,11 +44,15 @@ exports.onUserCreated = void 0;
 const firestore_1 = require("firebase-functions/v2/firestore");
 const admin = __importStar(require("firebase-admin"));
 const auth_1 = require("firebase-admin/auth");
+const sendEmail_1 = require("../utils/sendEmail");
 if (!admin.apps.length) {
     admin.initializeApp();
 }
 const db = admin.firestore();
-exports.onUserCreated = (0, firestore_1.onDocumentCreated)("users/{userId}", async (event) => {
+exports.onUserCreated = (0, firestore_1.onDocumentCreated)({
+    document: "users/{userId}",
+    region: "asia-south1",
+}, async (event) => {
     const snapshot = event.data;
     if (!snapshot) {
         console.log("[onUserCreated] No data in snapshot.");
@@ -126,17 +130,20 @@ exports.onUserCreated = (0, firestore_1.onDocumentCreated)("users/{userId}", asy
             // Non-fatal: the auth account exists, admin can fix the doc
         }
     }
-    // Send password reset email so the student can set their own password
+    // Generate password reset link and send branded welcome email
     try {
-        const resetLink = await (0, auth_1.getAuth)().generatePasswordResetLink(email);
-        console.log(`[onUserCreated] Password reset link generated for ${email}: ${resetLink}`);
-        // NOTE: Firebase automatically sends the email when using
-        // sendPasswordResetEmail from the client. The link above can be
-        // used with a custom email service if needed.
-        // For now, the admin should tell students to use "Forgot Password".
+        let resetLink = await (0, auth_1.getAuth)().generatePasswordResetLink(email);
+        resetLink = `${resetLink}&type=onboarding`;
+        console.log(`[onUserCreated] Password reset link generated for ${email}.`);
+        const studentName = userData.name || "Student";
+        const courseName = userData.course || undefined;
+        const batchName = userData.batch || undefined;
+        const emailHtml = (0, sendEmail_1.buildWelcomeEmailHtml)(studentName, resetLink, courseName, batchName);
+        await (0, sendEmail_1.sendEmail)(email, "Welcome to Innov8 — Set Your Password", emailHtml);
+        console.log(`[onUserCreated] Welcome email sent to ${email}.`);
     }
-    catch (resetError) {
-        console.error("[onUserCreated] Failed to generate reset link:", resetError);
+    catch (emailError) {
+        console.error("[onUserCreated] Failed to send welcome email:", emailError);
     }
 });
 /**

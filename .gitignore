@@ -30,3 +30,6 @@ dist-ssr
 
 # Diagnostics
 eslint-report.json
+
+# Firebase
+.firebase/

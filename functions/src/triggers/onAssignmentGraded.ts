@@ -14,7 +14,10 @@ if (!admin.apps.length) {
 }
 
 export const onAssignmentGraded = onDocumentUpdated(
-  "courses/{courseId}/assignments/{assignmentId}/submissions/{submissionId}",
+  {
+    document: "courses/{courseId}/assignments/{assignmentId}/submissions/{submissionId}",
+    region: "asia-south1",
+  },
   async (event) => {
     const before = event.data?.before?.data();
     const after = event.data?.after?.data();
