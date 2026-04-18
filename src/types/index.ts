@@ -236,6 +236,7 @@ export interface SuccessStory {
     batch?: string;
     collegeName?: string;
     stream?: string;
+    field?: string;
     year: number;
     createdAt?: { seconds: number; nanoseconds: number };
     updatedAt?: { seconds: number; nanoseconds: number };

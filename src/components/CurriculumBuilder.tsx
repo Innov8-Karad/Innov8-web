@@ -234,7 +234,7 @@ export default function CurriculumBuilder({ courseId }: CurriculumBuilderProps) 
     if (loading) return <div className="p-4 text-center text-muted">Loading curriculum...</div>;
 
     const getResourceIcon = (type: string) => {
-        switch(type) {
+        switch (type) {
             case 'video': return <Video size={16} />;
             case 'pdf': return <FileText size={16} />;
             default: return <LinkIcon size={16} />;
@@ -259,8 +259,8 @@ export default function CurriculumBuilder({ courseId }: CurriculumBuilderProps) 
         <div className="mt-md">
             <div className="flex justify-between items-center mb-md">
                 <h3 className="text-lg font-semibold">Curriculum Modules</h3>
-                <button 
-                    type="button" 
+                <button
+                    type="button"
                     className="btn btn-secondary btn-sm flex items-center gap-1"
                     onClick={() => {
                         setEditingModule(null);
@@ -281,7 +281,7 @@ export default function CurriculumBuilder({ courseId }: CurriculumBuilderProps) 
                     {modules.map(module => (
                         <div key={module.id} className="card" style={{ padding: '0', overflow: 'hidden', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
                             {/* Module Header — collapsed row */}
-                            <div 
+                            <div
                                 className="flex justify-between items-center cursor-pointer group"
                                 style={{ padding: '14px 16px', transition: 'background 0.2s' }}
                                 onClick={() => toggleModule(module.id)}
@@ -356,8 +356,8 @@ export default function CurriculumBuilder({ courseId }: CurriculumBuilderProps) 
                                                     background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-subtle)',
                                                     transition: 'all 0.2s', cursor: 'default'
                                                 }}
-                                                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.borderColor = 'rgba(var(--primary-rgb), 0.3)'; }}
-                                                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.borderColor = 'var(--border-subtle)'; }}
+                                                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.borderColor = 'rgba(var(--primary-rgb), 0.3)'; }}
+                                                    onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.borderColor = 'var(--border-subtle)'; }}
                                                 >
                                                     <div className="flex items-center" style={{ gap: '10px', minWidth: 0, flex: 1 }}>
                                                         <span style={{
