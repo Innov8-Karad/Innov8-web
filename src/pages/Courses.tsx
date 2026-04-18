@@ -19,6 +19,7 @@ export default function CoursesPage() {
     const [showModal, setShowModal] = useState(false);
     const [editingCourse, setEditingCourse] = useState<Course | null>(null);
     const [deletingCourse, setDeletingCourse] = useState<Course | null>(null);
+    const [activeTab, setActiveTab] = useState<'info' | 'curriculum' | 'assignments'>('info');
     const { showToast } = useToast();
     
     const [newCourse, setNewCourse] = useState({
@@ -180,53 +181,94 @@ export default function CoursesPage() {
                 ))}
             </div>
 
-            <Modal isOpen={showModal} onClose={() => { setShowModal(false); resetForm(); }} title={editingCourse ? "Edit Course" : UI_STRINGS.COURSES.MODAL_TITLE} maxWidth={editingCourse ? "800px" : "500px"}>
-                <div className={editingCourse ? "grid grid-cols-1 lg:grid-cols-2 gap-6" : ""}>
-                    <div>
-                        <h3 className="section-label mb-4">Course Details</h3>
-                        <form onSubmit={handleAddCourse} className="form-layout">
-                    <FormField label={UI_STRINGS.COURSES.FORM_TITLE}>
-                        <input type="text" required placeholder={UI_STRINGS.COURSES.FORM_TITLE_PLACEHOLDER} value={newCourse.title} onChange={e => setNewCourse({ ...newCourse, title: e.target.value })} />
-                    </FormField>
-                    <FormField label={UI_STRINGS.COURSES.FORM_DESCRIPTION}>
-                        <textarea rows={2} required value={newCourse.description} onChange={e => setNewCourse({ ...newCourse, description: e.target.value })} />
-                    </FormField>
-                    <FormRow>
-                        <FormField label={UI_STRINGS.COURSES.FORM_INSTRUCTOR}>
-                            <input type="text" required value={newCourse.instructor} onChange={e => setNewCourse({ ...newCourse, instructor: e.target.value })} />
-                        </FormField>
-                        <FormField label={UI_STRINGS.COURSES.FORM_DURATION}>
-                            <input type="text" required placeholder={UI_STRINGS.COURSES.FORM_DURATION_PLACEHOLDER} value={newCourse.duration} onChange={e => setNewCourse({ ...newCourse, duration: e.target.value })} />
-                        </FormField>
-                    </FormRow>
-                    <FormRow>
-                        <FormField label={UI_STRINGS.COURSES.FORM_PRICE}>
-                            <input type="number" disabled={newCourse.isFree} required={!newCourse.isFree} value={newCourse.price} onChange={e => setNewCourse({ ...newCourse, price: e.target.value })} />
-                        </FormField>
-                        <div className="flex items-center gap-2 mt-lg">
-                            <input type="checkbox" id="isFree" checked={newCourse.isFree} onChange={e => setNewCourse({ ...newCourse, isFree: e.target.checked })} />
-                            <label htmlFor="isFree" style={{ margin: 0 }}>{UI_STRINGS.COURSES.FORM_FREE_COURSE}</label>
-                        </div>
-                    </FormRow>
-                    <FormField label={UI_STRINGS.COURSES.FORM_THUMBNAIL_URL}>
-                        <input type="url" value={newCourse.thumbnail} onChange={e => setNewCourse({ ...newCourse, thumbnail: e.target.value })} />
-                    </FormField>
-                    <FormActions>
-                        <button type="button" className="btn btn-secondary" onClick={() => { setShowModal(false); resetForm(); }}>{UI_STRINGS.COMMON.CANCEL}</button>
-                        <button type="submit" className="btn btn-primary">{UI_STRINGS.COMMON.SAVE}</button>
-                    </FormActions>
-                </form>
-                    </div>
+            <Modal 
+                isOpen={showModal} 
+                onClose={() => { setShowModal(false); resetForm(); }} 
+                title={editingCourse ? "Edit Course" : UI_STRINGS.COURSES.MODAL_TITLE} 
+                maxWidth={editingCourse ? "900px" : "500px"}
+            >
+                <div className="tab-content">
                     {editingCourse && (
-                        <div className="border-t pt-6 mt-6 lg:border-t-0 lg:pt-0 lg:mt-0 lg:border-l lg:border-divider lg:pl-6 col-span-1">
-                            <h3 className="section-label mb-1">Curriculum & Assignments</h3>
-                            <p className="text-sm text-muted mb-4">Manage course contents (auto-saved)</p>
-                            <div className="flex flex-col gap-6">
-                                <CurriculumBuilder courseId={editingCourse.id} />
-                                <AssignmentBuilder courseId={editingCourse.id} />
-                            </div>
+                        <div className="tab-navigation">
+                            <button 
+                                type="button"
+                                className={`tab-btn ${activeTab === 'info' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('info')}
+                            >
+                                <Edit2 size={16} /> Course Info
+                            </button>
+                            <button 
+                                type="button"
+                                className={`tab-btn ${activeTab === 'curriculum' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('curriculum')}
+                            >
+                                <Book size={16} /> Curriculum
+                            </button>
+                            <button 
+                                type="button"
+                                className={`tab-btn ${activeTab === 'assignments' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('assignments')}
+                            >
+                                <Clock size={16} /> Assignments
+                            </button>
                         </div>
                     )}
+
+                    <div className="animate-in">
+                        {(!editingCourse || activeTab === 'info') && (
+                            <div>
+                                <h3 className="section-label mb-4">Course Details</h3>
+                                <form onSubmit={handleAddCourse} className="form-layout">
+                                    <FormField label={UI_STRINGS.COURSES.FORM_TITLE}>
+                                        <input type="text" required placeholder={UI_STRINGS.COURSES.FORM_TITLE_PLACEHOLDER} value={newCourse.title} onChange={e => setNewCourse({ ...newCourse, title: e.target.value })} />
+                                    </FormField>
+                                    <FormField label={UI_STRINGS.COURSES.FORM_DESCRIPTION}>
+                                        <textarea rows={2} required value={newCourse.description} onChange={e => setNewCourse({ ...newCourse, description: e.target.value })} />
+                                    </FormField>
+                                    <FormRow>
+                                        <FormField label={UI_STRINGS.COURSES.FORM_INSTRUCTOR}>
+                                            <input type="text" required value={newCourse.instructor} onChange={e => setNewCourse({ ...newCourse, instructor: e.target.value })} />
+                                        </FormField>
+                                        <FormField label={UI_STRINGS.COURSES.FORM_DURATION}>
+                                            <input type="text" required placeholder={UI_STRINGS.COURSES.FORM_DURATION_PLACEHOLDER} value={newCourse.duration} onChange={e => setNewCourse({ ...newCourse, duration: e.target.value })} />
+                                        </FormField>
+                                    </FormRow>
+                                    <FormRow>
+                                        <FormField label={UI_STRINGS.COURSES.FORM_PRICE}>
+                                            <input type="number" disabled={newCourse.isFree} required={!newCourse.isFree} value={newCourse.price} onChange={e => setNewCourse({ ...newCourse, price: e.target.value })} />
+                                        </FormField>
+                                        <div className="flex items-center gap-2 mt-lg">
+                                            <input type="checkbox" id="isFree" checked={newCourse.isFree} onChange={e => setNewCourse({ ...newCourse, isFree: e.target.checked })} />
+                                            <label htmlFor="isFree" style={{ margin: 0 }}>{UI_STRINGS.COURSES.FORM_FREE_COURSE}</label>
+                                        </div>
+                                    </FormRow>
+                                    <FormField label={UI_STRINGS.COURSES.FORM_THUMBNAIL_URL}>
+                                        <input type="url" value={newCourse.thumbnail} onChange={e => setNewCourse({ ...newCourse, thumbnail: e.target.value })} />
+                                    </FormField>
+                                    <FormActions>
+                                        <button type="button" className="btn btn-secondary" onClick={() => { setShowModal(false); resetForm(); }}>{UI_STRINGS.COMMON.CANCEL}</button>
+                                        <button type="submit" className="btn btn-primary">{UI_STRINGS.COMMON.SAVE}</button>
+                                    </FormActions>
+                                </form>
+                            </div>
+                        )}
+
+                        {editingCourse && activeTab === 'curriculum' && (
+                            <div className="animate-in">
+                                <h3 className="section-label mb-1">Curriculum & Modules</h3>
+                                <p className="text-sm text-muted mb-4">Manage course contents (auto-saved)</p>
+                                <CurriculumBuilder courseId={editingCourse.id} />
+                            </div>
+                        )}
+
+                        {editingCourse && activeTab === 'assignments' && (
+                            <div className="animate-in">
+                                <h3 className="section-label mb-1">Assignments</h3>
+                                <p className="text-sm text-muted mb-4">Manage course assignments (auto-saved)</p>
+                                <AssignmentBuilder courseId={editingCourse.id} />
+                            </div>
+                        )}
+                    </div>
                 </div>
             </Modal>
 

@@ -1819,3 +1819,48 @@ input[type="checkbox"]:disabled {
   font-weight: 700;
   box-shadow: 0 0 15px rgba(var(--primary-rgb), 0.3);
 }
+
+/* ═══════════════════════════════════════════════════
+   TAB NAVIGATION STYLES
+   ═══════════════════════════════════════════════════ */
+
+.tab-navigation {
+  display: flex;
+  gap: var(--space-sm);
+  padding: 4px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-lg);
+  border: 1px solid var(--border-subtle);
+  width: fit-content;
+}
+
+.tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tab-btn:hover {
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.tab-btn.active {
+  background: var(--bg-card-accent);
+  color: var(--primary);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.tab-content {
+  animation: fadeIn 0.4s ease-out;
+}
