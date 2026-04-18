@@ -301,11 +301,12 @@ export const UI_STRINGS = {
     FORM_COMPANY_PLACEHOLDER: 'e.g. Google',
     FORM_PACKAGE: 'Package',
     FORM_PACKAGE_PLACEHOLDER: 'e.g. 12 LPA',
+    FORM_STREAM: 'Stream',
+    FORM_STREAM_PLACEHOLDER: 'e.g. Stream',
     FORM_ROLE: 'Role',
     FORM_ROLE_PLACEHOLDER: 'e.g. Software Engineer',
     FORM_BATCH: 'Batch',
     FORM_BATCH_PLACEHOLDER: 'e.g. 2024',
-    FORM_TESTIMONIAL: 'Testimonial (Optional)',
     FORM_IMAGE_URL: 'Upload Photo (PNG/JPG)',
     // Card display
     ROLE_PREFIX: 'Role:',

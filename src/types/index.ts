@@ -234,8 +234,8 @@ export interface SuccessStory {
     package: string | number;
     role: string;
     batch?: string;
-    testimonial?: string;
     collegeName?: string;
+    stream?: string;
     year: number;
     createdAt?: { seconds: number; nanoseconds: number };
     updatedAt?: { seconds: number; nanoseconds: number };
