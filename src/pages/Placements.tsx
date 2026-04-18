@@ -45,6 +45,7 @@ export default function PlacementsPage() {
         batch: '',
         collegeName: '',
         stream: '',
+        field: '',
         year: selectedYear
     });
 
@@ -106,6 +107,7 @@ export default function PlacementsPage() {
             batch: '',
             collegeName: '',
             stream: '',
+            field: '',
             year: selectedYear === 'all' ? new Date().getFullYear() : selectedYear
         });
         setShowStoryModal(true);
@@ -122,6 +124,7 @@ export default function PlacementsPage() {
             batch: story.batch || '',
             collegeName: story.collegeName || '',
             stream: story.stream || '',
+            field: story.field || '',
             year: story.year || (selectedYear === 'all' ? new Date().getFullYear() : selectedYear)
         });
         setShowStoryModal(true);
@@ -185,6 +188,7 @@ export default function PlacementsPage() {
                 batch: storyForm.batch,
                 collegeName: storyForm.collegeName,
                 stream: storyForm.stream,
+                field: storyForm.field,
                 package: typeof storyForm.package === 'string' ? Number(storyForm.package.replace(/[^0-9.]/g, '')) : storyForm.package,
                 studentPhoto: imageUrl,
                 year: Number(storyForm.year)
@@ -240,6 +244,7 @@ export default function PlacementsPage() {
             batch: '',
             collegeName: '',
             stream: '',
+            field: '',
             year: selectedYear === 'all' ? new Date().getFullYear() : selectedYear
         });
     };
@@ -443,9 +448,41 @@ export default function PlacementsPage() {
                             <input type="text" placeholder="Enter college name" value={storyForm.collegeName} onChange={e => setStoryForm({ ...storyForm, collegeName: e.target.value })} />
                         </FormField>
                     </FormRow>
-                    <FormField label={UI_STRINGS.PLACEMENTS.FORM_STREAM}>
-                        <input type="text" required placeholder={UI_STRINGS.PLACEMENTS.FORM_STREAM_PLACEHOLDER} value={storyForm.stream} onChange={e => setStoryForm({ ...storyForm, stream: e.target.value })} />
-                    </FormField>
+                    <FormRow>
+                        <FormField label={UI_STRINGS.PLACEMENTS.FORM_STREAM}>
+                            <input type="text" required placeholder={UI_STRINGS.PLACEMENTS.FORM_STREAM_PLACEHOLDER} value={storyForm.stream} onChange={e => setStoryForm({ ...storyForm, stream: e.target.value })} />
+                        </FormField>
+                        <FormField label="Field">
+                            <select 
+                                required 
+                                value={storyForm.field} 
+                                onChange={e => setStoryForm({ ...storyForm, field: e.target.value })}
+                                className="select-input"
+                                style={{ 
+                                    padding: '10px 12px', 
+                                    borderRadius: '8px', 
+                                    border: '1px solid var(--border-subtle)', 
+                                    backgroundColor: 'var(--input-bg)', 
+                                    color: 'var(--text-main)', 
+                                    width: '100%',
+                                    colorScheme: 'dark'
+                                }}
+                            >
+                                <option value="" disabled>Select Field</option>
+                                <option value="Engineering">Engineering</option>
+                                <option value="BSc">BSc</option>
+                                <option value="BCom">BCom</option>
+                                <option value="BCS">BCS</option>
+                                <option value="BCA">BCA</option>
+                                <option value="MBA">MBA</option>
+                                <option value="MCA">MCA</option>
+                                <option value="Diploma">Diploma</option>
+                                <option value="Agriculture">Agriculture</option>
+                                <option value="IT">IT</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </FormField>
+                    </FormRow>
                     <FormActions>
                         <button type="button" className="btn btn-secondary" onClick={() => setShowStoryModal(false)}>{UI_STRINGS.COMMON.CANCEL}</button>
                         <button type="submit" className="btn btn-primary" disabled={saving}>
