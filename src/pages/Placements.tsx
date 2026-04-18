@@ -43,8 +43,8 @@ export default function PlacementsPage() {
         role: '',
         studentImage: '',
         batch: '',
-        testimonial: '',
         collegeName: '',
+        stream: '',
         year: selectedYear
     });
 
@@ -104,8 +104,8 @@ export default function PlacementsPage() {
             role: '',
             studentImage: '',
             batch: '',
-            testimonial: '',
             collegeName: '',
+            stream: '',
             year: selectedYear === 'all' ? new Date().getFullYear() : selectedYear
         });
         setShowStoryModal(true);
@@ -120,8 +120,8 @@ export default function PlacementsPage() {
             role: story.role || '',
             studentImage: story.studentPhoto || '',
             batch: story.batch || '',
-            testimonial: story.testimonial || '',
             collegeName: story.collegeName || '',
+            stream: story.stream || '',
             year: story.year || (selectedYear === 'all' ? new Date().getFullYear() : selectedYear)
         });
         setShowStoryModal(true);
@@ -183,8 +183,8 @@ export default function PlacementsPage() {
                 company: storyForm.company,
                 role: storyForm.role,
                 batch: storyForm.batch,
-                testimonial: storyForm.testimonial,
                 collegeName: storyForm.collegeName,
+                stream: storyForm.stream,
                 package: typeof storyForm.package === 'string' ? Number(storyForm.package.replace(/[^0-9.]/g, '')) : storyForm.package,
                 studentPhoto: imageUrl,
                 year: Number(storyForm.year)
@@ -238,8 +238,8 @@ export default function PlacementsPage() {
             role: '',
             studentImage: '',
             batch: '',
-            testimonial: '',
             collegeName: '',
+            stream: '',
             year: selectedYear === 'all' ? new Date().getFullYear() : selectedYear
         });
     };
@@ -334,12 +334,14 @@ export default function PlacementsPage() {
                             </div>
                             <div style={{ flex: 1 }}>
                                 <h3 style={{ margin: 0 }}>{story.studentName}</h3>
-                                <p style={{ color: 'var(--primary)', fontWeight: 600, fontSize: '0.9rem', marginTop: '2px' }}>{story.company}</p>
-                                {story.collegeName && (
-                                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '2px' }}>
-                                        {story.collegeName}
-                                    </p>
-                                )}
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '4px' }}>
+                                    <p style={{ color: 'var(--primary)', fontWeight: 600, fontSize: '0.9rem', margin: 0 }}>{story.company}</p>
+                                    {story.collegeName && (
+                                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: 0 }}>
+                                            {story.collegeName}
+                                        </p>
+                                    )}
+                                </div>
                                 <div className="text-sm text-muted mt-sm">
                                     <div>{UI_STRINGS.PLACEMENTS.ROLE_PREFIX} {story.role}</div>
                                     <div>{UI_STRINGS.PLACEMENTS.PACKAGE_PREFIX} {story.package} LPA</div>
@@ -441,11 +443,8 @@ export default function PlacementsPage() {
                             <input type="text" placeholder="Enter college name" value={storyForm.collegeName} onChange={e => setStoryForm({ ...storyForm, collegeName: e.target.value })} />
                         </FormField>
                     </FormRow>
-                    <FormField label={UI_STRINGS.PLACEMENTS.FORM_YEAR}>
-                        <input type="number" required value={storyForm.year} onChange={e => setStoryForm({ ...storyForm, year: Number(e.target.value) })} />
-                    </FormField>
-                    <FormField label={UI_STRINGS.PLACEMENTS.FORM_TESTIMONIAL}>
-                        <textarea rows={3} value={storyForm.testimonial} onChange={e => setStoryForm({ ...storyForm, testimonial: e.target.value })} />
+                    <FormField label={UI_STRINGS.PLACEMENTS.FORM_STREAM}>
+                        <input type="text" required placeholder={UI_STRINGS.PLACEMENTS.FORM_STREAM_PLACEHOLDER} value={storyForm.stream} onChange={e => setStoryForm({ ...storyForm, stream: e.target.value })} />
                     </FormField>
                     <FormActions>
                         <button type="button" className="btn btn-secondary" onClick={() => setShowStoryModal(false)}>{UI_STRINGS.COMMON.CANCEL}</button>

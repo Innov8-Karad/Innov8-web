@@ -230,8 +230,8 @@ async function seed() {
             averagePackage: 5.2,
             highestPackage: 18,
             successStories: [
-                { id: "ss1", studentName: "Rahul Mehta", company: "Google", package: 18, batch: "2023-A", testimonial: "Innova8's DSA program prepared me perfectly for Google's coding rounds." },
-                { id: "ss2", studentName: "Sneha Patil", company: "Microsoft", package: 15, batch: "2023-A", testimonial: "The mock interviews at Innova8 were incredibly helpful." },
+                { id: "ss1", studentName: "Rahul Mehta", company: "Google", package: 18, batch: "2023-A" },
+                { id: "ss2", studentName: "Sneha Patil", company: "Microsoft", package: 15, batch: "2023-A" },
             ]
         },
         {
@@ -242,7 +242,7 @@ async function seed() {
             averagePackage: 5.8,
             highestPackage: 22,
             successStories: [
-                { id: "ss3", studentName: "Amit Kumar", company: "Amazon", package: 22, batch: "2024-A", testimonial: "The full stack course gave me the edge I needed." },
+                { id: "ss3", studentName: "Amit Kumar", company: "Amazon", package: 22, batch: "2024-A" },
             ]
         }
     ];
