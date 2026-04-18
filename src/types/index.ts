@@ -161,6 +161,9 @@ export interface AssignmentType {
     dueDate: string;
     status: 'Pending' | 'Submitted' | 'Graded';
     score?: string;
+    questionFileUrl?: string;
+    questionFileName?: string;
+    questionFileType?: 'pdf' | 'image' | 'doc' | 'other';
 }
 
 /** Mobile uses this as 'Resource', keeping alias for backward compatibility */
