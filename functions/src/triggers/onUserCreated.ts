@@ -2,13 +2,14 @@
 // onUserCreated — Firestore Trigger
 // ═══════════════════════════════════════════════════════════════════════════════
 // When an admin creates a student via the web panel (Firestore write only),
-// this function auto-creates a Firebase Auth account and sends a password
-// reset email so the student can set their own credentials and log in.
+// this function auto-creates a Firebase Auth account and sends a branded
+// welcome email so the student can set their own password and log in.
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { onDocumentCreated } from "firebase-functions/v2/firestore";
 import * as admin from "firebase-admin";
 import { getAuth } from "firebase-admin/auth";
+import { sendEmail, buildWelcomeEmailHtml } from "../utils/sendEmail";
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -17,7 +18,10 @@ if (!admin.apps.length) {
 const db = admin.firestore();
 
 export const onUserCreated = onDocumentCreated(
-  "users/{userId}",
+  {
+    document: "users/{userId}",
+    region: "asia-south1",
+  },
   async (event) => {
     const snapshot = event.data;
     if (!snapshot) {
@@ -102,16 +106,27 @@ export const onUserCreated = onDocumentCreated(
       }
     }
 
-    // Send password reset email so the student can set their own password
+    // Generate password reset link and send branded welcome email
     try {
-      const resetLink = await getAuth().generatePasswordResetLink(email);
-      console.log(`[onUserCreated] Password reset link generated for ${email}: ${resetLink}`);
-      // NOTE: Firebase automatically sends the email when using
-      // sendPasswordResetEmail from the client. The link above can be
-      // used with a custom email service if needed.
-      // For now, the admin should tell students to use "Forgot Password".
-    } catch (resetError) {
-      console.error("[onUserCreated] Failed to generate reset link:", resetError);
+      let resetLink = await getAuth().generatePasswordResetLink(email);
+      resetLink = `${resetLink}&type=onboarding`;
+      console.log(`[onUserCreated] Password reset link generated for ${email}.`);
+
+      const studentName = userData.name || "Student";
+      const courseName = userData.course || undefined;
+      const batchName = userData.batch || undefined;
+
+      const emailHtml = buildWelcomeEmailHtml(studentName, resetLink, courseName, batchName);
+
+      await sendEmail(
+        email,
+        "Welcome to Innov8 — Set Your Password",
+        emailHtml
+      );
+
+      console.log(`[onUserCreated] Welcome email sent to ${email}.`);
+    } catch (emailError) {
+      console.error("[onUserCreated] Failed to send welcome email:", emailError);
     }
   }
 );
@@ -128,3 +143,4 @@ function generateTempPassword(): string {
   }
   return password;
 }
+

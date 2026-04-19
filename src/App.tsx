@@ -10,6 +10,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import Layout from './components/Layout';
 
 import Login from './pages/Login';
+import ResetPassword from './pages/ResetPassword';
 import Dashboard from './pages/Dashboard';
 import UsersPage from './pages/Users';
 import FeesPage from './pages/Fees';
@@ -48,6 +49,7 @@ function App() {
               <AuthProvider>
                 <Routes>
                   <Route path="/login" element={<Login />} />
+                  <Route path="/reset-password" element={<ResetPassword />} />
 
                   {/* Protected Routes */}
                   <Route path="/" element={<PrivateRoute><Layout><Dashboard /></Layout></PrivateRoute>} />
