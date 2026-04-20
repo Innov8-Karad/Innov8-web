@@ -9,6 +9,7 @@ import LoadingState from '../components/LoadingState';
 import ErrorAlert from '../components/ErrorAlert';
 import Modal from '../components/Modal';
 import { FormField, FormRow, FormActions } from '../components/FormField';
+import CustomSelect from '../components/CustomSelect';
 import { useToast } from '../hooks/useToast';
 
 export default function AnnouncementsPage() {
@@ -247,11 +248,15 @@ export default function AnnouncementsPage() {
                             </FormField>
                             <FormRow>
                                 <FormField label={UI_STRINGS.ANNOUNCEMENTS.FORM_PRIORITY}>
-                                    <select value={formData.priority} onChange={e => setFormData({ ...formData, priority: e.target.value as 'high' | 'medium' | 'low' })}>
-                                        <option value={PRIORITY_LEVELS.LOW}>Low</option>
-                                        <option value={PRIORITY_LEVELS.MEDIUM}>Medium</option>
-                                        <option value={PRIORITY_LEVELS.HIGH}>High</option>
-                                    </select>
+                                    <CustomSelect
+                                        options={[
+                                            { value: PRIORITY_LEVELS.LOW, label: 'Low' },
+                                            { value: PRIORITY_LEVELS.MEDIUM, label: 'Medium' },
+                                            { value: PRIORITY_LEVELS.HIGH, label: 'High' }
+                                        ]}
+                                        value={formData.priority}
+                                        onChange={(val) => setFormData({ ...formData, priority: val as 'high' | 'medium' | 'low' })}
+                                    />
                                 </FormField>
                             </FormRow>
                             <FormField label={UI_STRINGS.ANNOUNCEMENTS.TARGET_LABEL}>

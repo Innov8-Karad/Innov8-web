@@ -29,6 +29,7 @@ import Avatar from '../components/Avatar';
 import PageHeader from '../components/PageHeader';
 import Modal from '../components/Modal';
 import { FormField, FormRow, FormActions } from '../components/FormField';
+import CustomSelect from '../components/CustomSelect';
 import { useToast } from '../hooks/useToast';
 import { useNavigate } from 'react-router-dom';
 
@@ -149,7 +150,7 @@ export default function ProgressPage() {
     }, [progressData, attendanceRecords, searchTerm, selectedBatch]);
 
     const batchesList = useMemo(() => {
-        const unique = Array.from(new Set(progressData.map(p => p.batch)));
+        const unique = Array.from(new Set(progressData.map(p => p.batch).filter((b): b is string => !!b)));
         return ['All', ...unique];
     }, [progressData]);
 
@@ -292,14 +293,14 @@ export default function ProgressPage() {
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
                         </div>
-                        <select 
-                            style={{ width: '120px', flexShrink: 0 }}
-                            className="rounded-lg border border-divider focus:ring-2 focus:ring-primary/20 outline-none"
+                        <CustomSelect
+                            options={batchesList.map(b => ({ value: b, label: b }))}
                             value={selectedBatch}
-                            onChange={(e) => setSelectedBatch(e.target.value)}
-                        >
-                            {batchesList.map(b => <option key={b} value={b}>{b}</option>)}
-                        </select>
+                            onChange={(val) => setSelectedBatch(val)}
+                            placeholder="Batch"
+                            className="text-sm"
+                            style={{ width: '150px' }}
+                        />
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: 'auto', whiteSpace: 'nowrap' }} className="text-sm text-muted">
                             <Users size={18} />
                             <span>Showing {filteredData.length} Students</span>

@@ -12,6 +12,7 @@ import LoadingState from '../components/LoadingState';
 import ErrorAlert from '../components/ErrorAlert';
 import Modal from '../components/Modal';
 import { FormField, FormRow, FormActions } from '../components/FormField';
+import CustomSelect from '../components/CustomSelect';
 
 type ViewMode = 'list' | 'detail';
 
@@ -399,15 +400,17 @@ export default function JobsPage() {
         </div>
         <div className="filter-group">
           <span className="control-label"><Filter size={14} /> Filter:</span>
-          <select 
-            className="control-select"
+          <CustomSelect
+            options={[
+              { value: 'all', label: 'All Types' },
+              { value: 'Full-time', label: 'Full-time' },
+              { value: 'Internship', label: 'Internship' }
+            ]}
             value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value as JobType | 'all')}
-          >
-            <option value="all">All Types</option>
-            <option value="Full-time">Full-time</option>
-            <option value="Internship">Internship</option>
-          </select>
+            onChange={(val) => setTypeFilter(val as JobType | 'all')}
+            className="text-sm"
+            placeholder="All Types"
+          />
         </div>
       </section>
 
