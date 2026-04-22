@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Edit2, Calendar, ClipboardList, FileText, X, UploadCloud } from 'lucide-react';
 import { courseService } from '../services/courseService';
-import type { AssignmentType } from '../types';
+import type { AssignmentType, CourseModule } from '../types';
 import { useToast } from '../hooks/useToast';
 import { uploadWithFallback } from '../lib/cloudinary';
 import Modal from './Modal';
+import ConfirmModal from './ConfirmModal';
 import { FormField, FormActions } from './FormField';
 import SubmissionList from './SubmissionList';
 
@@ -14,13 +15,14 @@ interface AssignmentBuilderProps {
 
 export default function AssignmentBuilder({ courseId }: AssignmentBuilderProps) {
     const [assignments, setAssignments] = useState<AssignmentType[]>([]);
+    const [modules, setModules] = useState<CourseModule[]>([]);
     const [loading, setLoading] = useState(true);
     const { showToast } = useToast();
 
     // Assignment Form State
     const [showModal, setShowModal] = useState(false);
     const [editingAssignment, setEditingAssignment] = useState<AssignmentType | null>(null);
-    const [form, setForm] = useState({ title: '', dueDate: '' });
+    const [form, setForm] = useState({ title: '', dueDate: '', moduleId: '' });
     
     // File Upload State
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -30,10 +32,27 @@ export default function AssignmentBuilder({ courseId }: AssignmentBuilderProps) 
     // Submission State
     const [selectedAssignment, setSelectedAssignment] = useState<AssignmentType | null>(null);
 
+    // Confirmation Modal State
+    const [confirmState, setConfirmState] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        onConfirm: () => void;
+    }>({
+        isOpen: false,
+        title: '',
+        message: '',
+        onConfirm: () => {},
+    });
+
     useEffect(() => {
-        const unsubscribe = courseService.subscribeToAssignments(courseId, (fetchedAssignments) => {
+        const unsubscribeAssignments = courseService.subscribeToAssignments(courseId, (fetchedAssignments) => {
             setAssignments(fetchedAssignments as AssignmentType[]);
             setLoading(false);
+        });
+
+        const unsubscribeModules = courseService.subscribeToModules(courseId, (fetchedModules) => {
+            setModules(fetchedModules);
         });
 
         const timer = setTimeout(() => {
@@ -41,7 +60,8 @@ export default function AssignmentBuilder({ courseId }: AssignmentBuilderProps) 
         }, 5000);
 
         return () => {
-            unsubscribe();
+            unsubscribeAssignments();
+            unsubscribeModules();
             clearTimeout(timer);
         };
     }, [courseId]);
@@ -77,6 +97,7 @@ export default function AssignmentBuilder({ courseId }: AssignmentBuilderProps) 
             const payload: Omit<AssignmentType, 'id'> = {
                 title: form.title,
                 dueDate: form.dueDate,
+                moduleId: form.moduleId || undefined,
                 status: 'Pending',
                 questionFileUrl,
                 questionFileName,
@@ -99,26 +120,35 @@ export default function AssignmentBuilder({ courseId }: AssignmentBuilderProps) 
     const closeModal = () => {
         setShowModal(false);
         setEditingAssignment(null);
-        setForm({ title: '', dueDate: '' });
+        setForm({ title: '', dueDate: '', moduleId: '' });
         setSelectedFile(null);
         setUploadProgress(0);
         setUploading(false);
     };
 
-    const handleDelete = async (id: string) => {
-        if (window.confirm("Delete this assignment?")) {
-            try {
-                await courseService.deleteAssignment(courseId, id);
-                showToast("Assignment deleted", "success");
-            } catch {
-                showToast("Failed to delete assignment", "error");
+    const handleDelete = (id: string) => {
+        setConfirmState({
+            isOpen: true,
+            title: "Delete Assignment",
+            message: "Are you sure you want to delete this assignment? This action cannot be undone.",
+            onConfirm: async () => {
+                try {
+                    await courseService.deleteAssignment(courseId, id);
+                    showToast("Assignment deleted", "success");
+                } catch {
+                    showToast("Failed to delete assignment", "error");
+                }
             }
-        }
+        });
     };
 
     const openEdit = (assignment: AssignmentType) => {
         setEditingAssignment(assignment);
-        setForm({ title: assignment.title || '', dueDate: assignment.dueDate || '' });
+        setForm({ 
+            title: assignment.title || '', 
+            dueDate: assignment.dueDate || '',
+            moduleId: assignment.moduleId || ''
+        });
         setSelectedFile(null);
         setShowModal(true);
     };
@@ -134,7 +164,7 @@ export default function AssignmentBuilder({ courseId }: AssignmentBuilderProps) 
                     className="btn btn-secondary btn-sm flex items-center gap-1"
                     onClick={() => {
                         setEditingAssignment(null);
-                        setForm({ title: '', dueDate: '' });
+                        setForm({ title: '', dueDate: '', moduleId: '' });
                         setSelectedFile(null);
                         setShowModal(true);
                     }}
@@ -171,6 +201,21 @@ export default function AssignmentBuilder({ courseId }: AssignmentBuilderProps) 
                                         <span className="text-muted" style={{ fontSize: '0.75rem' }}>
                                             Due: {assignment.dueDate || 'No date set'}
                                         </span>
+                                        {assignment.moduleId && (
+                                            <div style={{ marginTop: '4px' }}>
+                                                <span style={{ 
+                                                    fontSize: '0.65rem', 
+                                                    padding: '2px 6px', 
+                                                    borderRadius: '4px', 
+                                                    background: 'rgba(245, 158, 11, 0.1)', 
+                                                    color: '#F59E0B',
+                                                    fontWeight: 600,
+                                                    textTransform: 'uppercase'
+                                                }}>
+                                                    Module: {modules.find(m => m.id === assignment.moduleId)?.title || 'Unknown'}
+                                                </span>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                                 <div className="flex items-center" style={{ gap: '4px', flexShrink: 0 }}>
@@ -212,6 +257,21 @@ export default function AssignmentBuilder({ courseId }: AssignmentBuilderProps) 
                     </FormField>
                     <FormField label="Due Date">
                         <input type="text" required value={form.dueDate} placeholder="e.g. 25th May, 2026" onChange={e => setForm({ ...form, dueDate: e.target.value })} disabled={uploading} />
+                    </FormField>
+
+                    <FormField label="Linked Module (Optional)">
+                        <select 
+                            value={form.moduleId} 
+                            onChange={e => setForm({ ...form, moduleId: e.target.value })}
+                            disabled={uploading}
+                        >
+                            <option value="">-- No Module (General Content) --</option>
+                            {modules.map(module => (
+                                <option key={module.id} value={module.id}>
+                                    Module {module.order}: {module.title}
+                                </option>
+                            ))}
+                        </select>
                     </FormField>
 
                     <FormField label="Assignment Document (Optional)">
@@ -278,6 +338,14 @@ export default function AssignmentBuilder({ courseId }: AssignmentBuilderProps) 
                     </FormActions>
                 </form>
             </Modal>
+
+            <ConfirmModal
+                isOpen={confirmState.isOpen}
+                onClose={() => setConfirmState(prev => ({ ...prev, isOpen: false }))}
+                onConfirm={confirmState.onConfirm}
+                title={confirmState.title}
+                message={confirmState.message}
+            />
         </div>
     );
 }
