@@ -157,6 +157,7 @@ export interface NoteType {
 
 export interface AssignmentType {
     id: string;
+    moduleId?: string;
     title: string;
     dueDate: string;
     status: 'Pending' | 'Submitted' | 'Graded';
@@ -169,6 +170,7 @@ export interface AssignmentType {
 /** Mobile uses this as 'Resource', keeping alias for backward compatibility */
 export interface Resource {
     id: string;
+    moduleId?: string;
     title: string;
     type: 'video' | 'pdf' | 'link';
     url: string;

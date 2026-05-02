@@ -257,7 +257,7 @@ export default function CoursesPage() {
                             <div className="animate-in">
                                 <h3 className="section-label mb-1">Curriculum & Modules</h3>
                                 <p className="text-sm text-muted mb-4">Manage course contents (auto-saved)</p>
-                                <CurriculumBuilder courseId={editingCourse.id} />
+                                <CurriculumBuilder courseId={editingCourse.id} courseThumbnail={editingCourse.thumbnail} />
                             </div>
                         )}
 

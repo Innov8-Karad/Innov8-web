@@ -4,6 +4,7 @@ import { courseService } from '../services/courseService';
 import type { CourseModule, CourseResource } from '../types';
 import { useToast } from '../hooks/useToast';
 import Modal from './Modal';
+import ConfirmModal from './ConfirmModal';
 import CloudinaryUpload from './CloudinaryUpload';
 import { FormField, FormActions } from './FormField';
 import { detectPlatform, validateVideoUrl, getEmbedUrl, getThumbnailUrl, getPlatformLabel, getPlatformColor } from '../lib/videoUtils';
@@ -11,6 +12,7 @@ import type { VideoPlatform } from '../lib/videoUtils';
 
 interface CurriculumBuilderProps {
     courseId: string;
+    courseThumbnail?: string;
 }
 
 // ── Resource Form State Type ──────────────────────────────────────────────────
@@ -42,7 +44,7 @@ const INITIAL_RESOURCE_FORM: ResourceFormState = {
     fileFormat: undefined,
 };
 
-export default function CurriculumBuilder({ courseId }: CurriculumBuilderProps) {
+export default function CurriculumBuilder({ courseId, courseThumbnail }: CurriculumBuilderProps) {
     const [modules, setModules] = useState<CourseModule[]>([]);
     const [resources, setResources] = useState<CourseResource[]>([]);
     const [loading, setLoading] = useState(true);
@@ -59,6 +61,19 @@ export default function CurriculumBuilder({ courseId }: CurriculumBuilderProps) 
     const [activeModuleId, setActiveModuleId] = useState<string | null>(null);
     const [editingResource, setEditingResource] = useState<CourseResource | null>(null);
     const [resourceForm, setResourceForm] = useState<ResourceFormState>(INITIAL_RESOURCE_FORM);
+
+    // Confirmation Modal State
+    const [confirmState, setConfirmState] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        onConfirm: () => void;
+    }>({
+        isOpen: false,
+        title: '',
+        message: '',
+        onConfirm: () => {},
+    });
 
     useEffect(() => {
         const unsubscribeModules = courseService.subscribeToModules(courseId, (fetchedModules) => {
@@ -141,15 +156,20 @@ export default function CurriculumBuilder({ courseId }: CurriculumBuilderProps) 
         }
     };
 
-    const handleDeleteModule = async (id: string) => {
-        if (window.confirm("Delete this module and all its resources?")) {
-            try {
-                await courseService.deleteModule(courseId, id);
-                showToast("Module deleted", "success");
-            } catch {
-                showToast("Failed to delete module", "error");
+    const handleDeleteModule = (id: string) => {
+        setConfirmState({
+            isOpen: true,
+            title: "Delete Module",
+            message: "Are you sure you want to delete this module and all its resources? This action cannot be undone.",
+            onConfirm: async () => {
+                try {
+                    await courseService.deleteModule(courseId, id);
+                    showToast("Module deleted", "success");
+                } catch {
+                    showToast("Failed to delete module", "error");
+                }
             }
-        }
+        });
     };
 
     const openAddResource = (moduleId: string) => {
@@ -220,15 +240,20 @@ export default function CurriculumBuilder({ courseId }: CurriculumBuilderProps) 
         }
     };
 
-    const handleDeleteResource = async (resourceId: string) => {
-        if (window.confirm("Delete this resource?")) {
-            try {
-                await courseService.deleteResource(courseId, resourceId);
-                showToast("Resource deleted", "success");
-            } catch {
-                showToast("Failed to delete resource", "error");
+    const handleDeleteResource = (resourceId: string) => {
+        setConfirmState({
+            isOpen: true,
+            title: "Delete Resource",
+            message: "Are you sure you want to delete this resource? This action cannot be undone.",
+            onConfirm: async () => {
+                try {
+                    await courseService.deleteResource(courseId, resourceId);
+                    showToast("Resource deleted", "success");
+                } catch {
+                    showToast("Failed to delete resource", "error");
+                }
             }
-        }
+        });
     };
 
     if (loading) return <div className="p-4 text-center text-muted">Loading curriculum...</div>;
@@ -359,15 +384,27 @@ export default function CurriculumBuilder({ courseId }: CurriculumBuilderProps) 
                                                     onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.borderColor = 'rgba(var(--primary-rgb), 0.3)'; }}
                                                     onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.borderColor = 'var(--border-subtle)'; }}
                                                 >
-                                                    <div className="flex items-center" style={{ gap: '10px', minWidth: 0, flex: 1 }}>
-                                                        <span style={{
-                                                            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                                                            width: '28px', height: '28px', borderRadius: 'var(--radius-sm)', flexShrink: 0,
-                                                            background: resource.type === 'video' ? 'rgba(99,102,241,0.15)' : resource.type === 'pdf' ? 'rgba(239,68,68,0.15)' : 'rgba(16,185,129,0.15)',
-                                                            color: resource.type === 'video' ? '#818CF8' : resource.type === 'pdf' ? '#F87171' : '#34D399'
-                                                        }}>
-                                                            {getResourceIcon(resource.type)}
-                                                        </span>
+                                                    <div className="flex items-center" style={{ gap: '12px', minWidth: 0, flex: 1 }}>
+                                                        {resource.type === 'video' ? (
+                                                            <div style={{ position: 'relative', flexShrink: 0 }}>
+                                                                <img
+                                                                    src={courseThumbnail || resource.thumbnailUrl || 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?q=80&w=1000&auto=format&fit=crop'}
+                                                                    alt=""
+                                                                    className="curriculum-thumb"
+                                                                    onError={(e) => {
+                                                                        const target = e.target as HTMLImageElement;
+                                                                        target.src = 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?q=80&w=1000&auto=format&fit=crop';
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                        ) : (
+                                                            <div className="curriculum-icon-fallback" style={{
+                                                                background: resource.type === 'pdf' ? 'rgba(239,68,68,0.1)' : 'rgba(16,185,129,0.1)',
+                                                                color: resource.type === 'pdf' ? '#F87171' : '#34D399'
+                                                            }}>
+                                                                {getResourceIcon(resource.type)}
+                                                            </div>
+                                                        )}
                                                         <div style={{ minWidth: 0, flex: 1 }}>
                                                             <div style={{ fontSize: '0.85rem', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                                                 {resource.title || resource.type}
@@ -534,30 +571,34 @@ export default function CurriculumBuilder({ courseId }: CurriculumBuilderProps) 
                             </FormField>
 
                             {/* Optional: Thumbnail URL */}
-                            {resourceForm.thumbnailUrl && (
+                            {resourceForm.type === 'video' && (
                                 <FormField label="Thumbnail">
                                     <div className="video-thumbnail-preview">
-                                        <img
-                                            src={resourceForm.thumbnailUrl}
-                                            alt="Video thumbnail"
-                                            className="video-thumb-img"
-                                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                                        />
+                                        {resourceForm.thumbnailUrl && (
+                                            <img
+                                                src={resourceForm.thumbnailUrl}
+                                                alt="Video thumbnail"
+                                                className="video-thumb-img"
+                                                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                            />
+                                        )}
                                         <div className="video-thumb-meta">
                                             <input
                                                 type="url"
                                                 placeholder="Thumbnail URL (auto-detected)"
-                                                value={resourceForm.thumbnailUrl}
+                                                value={resourceForm.thumbnailUrl || ''}
                                                 onChange={e => setResourceForm({ ...resourceForm, thumbnailUrl: e.target.value })}
                                             />
-                                            <button
-                                                type="button"
-                                                className="btn btn-secondary btn-sm"
-                                                onClick={() => setResourceForm({ ...resourceForm, thumbnailUrl: '' })}
-                                                style={{ whiteSpace: 'nowrap' }}
-                                            >
-                                                Clear
-                                            </button>
+                                            {resourceForm.thumbnailUrl && (
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-secondary btn-sm"
+                                                    onClick={() => setResourceForm({ ...resourceForm, thumbnailUrl: '' })}
+                                                    style={{ whiteSpace: 'nowrap' }}
+                                                >
+                                                    Clear
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 </FormField>
@@ -676,6 +717,14 @@ export default function CurriculumBuilder({ courseId }: CurriculumBuilderProps) 
                     </FormActions>
                 </form>
             </Modal>
+            
+            <ConfirmModal
+                isOpen={confirmState.isOpen}
+                onClose={() => setConfirmState(prev => ({ ...prev, isOpen: false }))}
+                onConfirm={confirmState.onConfirm}
+                title={confirmState.title}
+                message={confirmState.message}
+            />
         </div>
     );
 }

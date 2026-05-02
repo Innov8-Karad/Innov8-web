@@ -951,11 +951,32 @@ input[type="checkbox"]:disabled {
   position: absolute;
   top: 16px;
   right: 16px;
+  background: transparent;
   border: none;
-  background: none;
-  color: var(--text-secondary);
   cursor: pointer;
-  transition: color 0.2s;
+  color: var(--text-secondary);
+  transition: color 0.15s;
+}
+
+/* Curriculum Resource Thumbnails */
+.curriculum-thumb {
+  width: 40px;
+  height: 24px;
+  border-radius: 4px;
+  object-fit: cover;
+  background: var(--bg-card-accent);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.curriculum-icon-fallback {
+  width: 40px;
+  height: 24px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(var(--accent-blue-rgb), 0.1);
+  color: var(--accent-blue);
 }
 
 .modal-close:hover {
