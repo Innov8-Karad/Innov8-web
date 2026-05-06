@@ -46,7 +46,10 @@ const sendPush_1 = require("../utils/sendPush");
 if (!admin.apps.length) {
     admin.initializeApp();
 }
-exports.onAssignmentGraded = (0, firestore_1.onDocumentUpdated)("courses/{courseId}/assignments/{assignmentId}/submissions/{submissionId}", async (event) => {
+exports.onAssignmentGraded = (0, firestore_1.onDocumentUpdated)({
+    document: "courses/{courseId}/assignments/{assignmentId}/submissions/{submissionId}",
+    region: "asia-south1",
+}, async (event) => {
     const before = event.data?.before?.data();
     const after = event.data?.after?.data();
     if (!before || !after)

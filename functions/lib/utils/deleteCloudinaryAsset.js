@@ -50,7 +50,7 @@ const admin = __importStar(require("firebase-admin"));
 if (!admin.apps.length) {
     admin.initializeApp();
 }
-exports.deleteCloudinaryAsset = (0, https_1.onCall)({ maxInstances: 10 }, async (request) => {
+exports.deleteCloudinaryAsset = (0, https_1.onCall)({ maxInstances: 10, region: "asia-south1" }, async (request) => {
     // Verify authentication
     if (!request.auth) {
         throw new https_1.HttpsError("unauthenticated", "You must be logged in to delete assets.");

@@ -2,7 +2,7 @@ import { useState, useEffect, useContext, useMemo } from 'react';
 import { 
   Briefcase, MapPin, DollarSign, Search, Pencil, Trash2, 
   ArrowLeft, Users, Building2, Filter, Plus, Calendar, 
-  ChevronRight, Activity, AlertTriangle
+  ChevronRight, AlertTriangle
 } from 'lucide-react';
 import { jobService } from '../services/jobService';
 import { ToastContext } from '../contexts/ToastContext';
@@ -192,9 +192,10 @@ export default function JobsPage() {
           : [],
         isActive: jobForm.isActive,
         postedDate: new Date(),
-        applyLink: jobForm.applyLink.trim() || undefined,
-        deadline: jobForm.deadline ? new Date(jobForm.deadline) : undefined,
       };
+
+      if (jobForm.applyLink.trim()) data.applyLink = jobForm.applyLink.trim();
+      if (jobForm.deadline) data.deadline = new Date(jobForm.deadline);
 
       if (editingJobId) {
         await jobService.updateJob(editingJobId, data);
@@ -367,14 +368,7 @@ export default function JobsPage() {
           </div>
           <div className="stat-glow blue" />
         </div>
-        <div className="stat-card-luminous">
-          <div className="stat-icon amber"><Activity size={24} /></div>
-          <div className="stat-values">
-            <p className="stat-label">Active Listings</p>
-            <p className="stat-number">{stats.active}</p>
-          </div>
-          <div className="stat-glow amber" />
-        </div>
+
         <div className="stat-card-luminous">
           <div className="stat-icon green"><Users size={24} /></div>
           <div className="stat-values">

@@ -47,7 +47,10 @@ if (!admin.apps.length) {
     admin.initializeApp();
 }
 const db = admin.firestore();
-exports.onAnnouncementCreated = (0, firestore_1.onDocumentCreated)("announcements/{announcementId}", async (event) => {
+exports.onAnnouncementCreated = (0, firestore_1.onDocumentCreated)({
+    document: "announcements/{announcementId}",
+    region: "asia-south1",
+}, async (event) => {
     const snapshot = event.data;
     if (!snapshot)
         return;

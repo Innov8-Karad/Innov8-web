@@ -18,7 +18,7 @@ if (!admin.apps.length) {
 }
 
 export const deleteCloudinaryAsset = onCall(
-  { maxInstances: 10 },
+  { maxInstances: 10, region: "asia-south1" },
   async (request: CallableRequest) => {
     // Verify authentication
     if (!request.auth) {

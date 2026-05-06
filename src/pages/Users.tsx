@@ -90,7 +90,7 @@ export default function UsersPage() {
                     status: 'active',
                     isBlocked: false
                 } as unknown as Omit<User, 'id' | 'enrollmentDate' | 'createdAt'>);
-                showToast("Student added successfully", "success");
+                showToast(`Student added! Welcome email will be sent to ${newUser.email}`, "success");
             }
             setShowModal(false);
             resetForm();

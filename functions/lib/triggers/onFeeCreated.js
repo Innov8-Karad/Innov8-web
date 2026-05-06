@@ -46,7 +46,10 @@ const sendPush_1 = require("../utils/sendPush");
 if (!admin.apps.length) {
     admin.initializeApp();
 }
-exports.onFeeCreated = (0, firestore_1.onDocumentCreated)("fees/{feeId}", async (event) => {
+exports.onFeeCreated = (0, firestore_1.onDocumentCreated)({
+    document: "fees/{feeId}",
+    region: "asia-south1",
+}, async (event) => {
     const snapshot = event.data;
     if (!snapshot)
         return;

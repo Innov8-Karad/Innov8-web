@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { 
     Plus, Trash2, Edit2, FileText, Link as LinkIcon, 
     ChevronDown, ChevronUp, Play, ExternalLink, Clock, Upload, 
-    Link2, Search, MoreVertical, SortDesc, Filter, Folder, Copy
+    Link2, Search, SortDesc, Filter, Folder, Copy
 } from 'lucide-react';
 import ImportBatchModal from './ImportBatchModal';
 import { courseService } from '../services/courseService';
@@ -10,6 +10,7 @@ import { batchService } from '../services/batchService';
 import type { CourseModule, CourseResource } from '../types';
 import { useToast } from '../hooks/useToast';
 import Modal from './Modal';
+import ConfirmModal from './ConfirmModal';
 import CloudinaryUpload from './CloudinaryUpload';
 import { FormField, FormActions } from './FormField';
 import { detectPlatform, validateVideoUrl, getEmbedUrl, getThumbnailUrl, getPlatformLabel, getPlatformColor } from '../lib/videoUtils';
@@ -18,6 +19,7 @@ import type { VideoPlatform } from '../lib/videoUtils';
 interface CurriculumBuilderProps {
     targetId: string;
     targetType: 'course' | 'batch';
+    courseThumbnail?: string;
 }
 
 // ── Resource Form State Type ──────────────────────────────────────────────────
@@ -51,7 +53,7 @@ const INITIAL_RESOURCE_FORM: ResourceFormState = {
     isDemo: false,
 };
 
-export default function CurriculumBuilder({ targetId, targetType }: CurriculumBuilderProps) {
+export default function CurriculumBuilder({ targetId, targetType, courseThumbnail }: CurriculumBuilderProps) {
     const service = targetType === 'course' ? courseService : batchService;
     const [modules, setModules] = useState<CourseModule[]>([]);
     const [resources, setResources] = useState<CourseResource[]>([]);
@@ -74,6 +76,19 @@ export default function CurriculumBuilder({ targetId, targetType }: CurriculumBu
     const [searchQuery, setSearchQuery] = useState('');
     const [sortBy, setSortBy] = useState('recent');
     const [showImportModal, setShowImportModal] = useState(false);
+
+    // Confirmation Modal State
+    const [confirmState, setConfirmState] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        onConfirm: () => void;
+    }>({
+        isOpen: false,
+        title: '',
+        message: '',
+        onConfirm: () => {},
+    });
 
     useEffect(() => {
         const unsubscribeModules = service.subscribeToModules(targetId, (fetchedModules) => {
@@ -156,15 +171,20 @@ export default function CurriculumBuilder({ targetId, targetType }: CurriculumBu
         }
     };
 
-    const handleDeleteModule = async (id: string) => {
-        if (window.confirm("Delete this module and all its resources?")) {
-            try {
-                await service.deleteModule(targetId, id);
-                showToast("Module deleted", "success");
-            } catch {
-                showToast("Failed to delete module", "error");
+    const handleDeleteModule = (id: string) => {
+        setConfirmState({
+            isOpen: true,
+            title: "Delete Module",
+            message: "Are you sure you want to delete this module and all its resources? This action cannot be undone.",
+            onConfirm: async () => {
+                try {
+                    await service.deleteModule(targetId, id);
+                    showToast("Module deleted", "success");
+                } catch {
+                    showToast("Failed to delete module", "error");
+                }
             }
-        }
+        });
     };
 
     const openAddResource = (moduleId: string) => {
@@ -237,15 +257,20 @@ export default function CurriculumBuilder({ targetId, targetType }: CurriculumBu
         }
     };
 
-    const handleDeleteResource = async (resourceId: string) => {
-        if (window.confirm("Delete this resource?")) {
-            try {
-                await service.deleteResource(targetId, resourceId);
-                showToast("Resource deleted", "success");
-            } catch {
-                showToast("Failed to delete resource", "error");
+    const handleDeleteResource = (resourceId: string) => {
+        setConfirmState({
+            isOpen: true,
+            title: "Delete Resource",
+            message: "Are you sure you want to delete this resource? This action cannot be undone.",
+            onConfirm: async () => {
+                try {
+                    await service.deleteResource(targetId, resourceId);
+                    showToast("Resource deleted", "success");
+                } catch {
+                    showToast("Failed to delete resource", "error");
+                }
             }
-        }
+        });
     };
 
     const filteredModules = useMemo(() => {
@@ -353,63 +378,112 @@ export default function CurriculumBuilder({ targetId, targetType }: CurriculumBu
                 ) : (
                     <div className="modules-grid">
                         {filteredModules.map(module => (
-                            <div key={module.id} className="module-row-card">
-                                <div className="module-card-body" onClick={() => toggleModule(module.id)}>
-                                    <div className="module-icon-container">
-                                        <Folder size={24} fill="currentColor" opacity={0.6} />
-                                    </div>
-                                    <div className="module-info">
-                                        <h4 className="module-title-text">{module.title}</h4>
-                                        <div className="module-meta">
-                                            <span>Collection • {resources.filter(r => r.moduleId === module.id).length} items</span>
-                                            <span className="meta-dot">|</span>
-                                            <span className="tag-badge">Curated Content</span>
+                            <div key={module.id} className="card" style={{ padding: '0', overflow: 'hidden', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)', marginBottom: '12px' }}>
+                                {/* Module Header — collapsed row from origin/main */}
+                                <div
+                                    className="flex justify-between items-center cursor-pointer group"
+                                    style={{ padding: '14px 16px', transition: 'background 0.2s' }}
+                                    onClick={() => toggleModule(module.id)}
+                                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
+                                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                                >
+                                    <div className="flex items-center" style={{ gap: '12px', minWidth: 0, flex: 1 }}>
+                                        <span style={{
+                                            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                                            width: '28px', height: '28px', borderRadius: 'var(--radius-sm)',
+                                            background: 'rgba(var(--primary-rgb), 0.15)', color: 'var(--primary)',
+                                            fontWeight: 700, fontSize: '0.8rem', flexShrink: 0
+                                        }}>
+                                            {module.order}
+                                        </span>
+                                        <div style={{ minWidth: 0, flex: 1 }}>
+                                            <h4 style={{ fontSize: '0.95rem', fontWeight: 600, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                {module.title}
+                                            </h4>
+                                            <span className="text-muted" style={{ fontSize: '0.75rem' }}>
+                                                {resources.filter(r => r.moduleId === module.id).length} resources
+                                            </span>
                                         </div>
                                     </div>
-                                    <div className="module-controls" onClick={e => e.stopPropagation()}>
-                                        <button className="icon-btn-ghost" title="More Options">
-                                            <MoreVertical size={18} />
-                                            <div className="context-menu">
-                                                <button onClick={() => { setEditingModule(module); setModuleForm({ title: module.title, description: module.description, order: module.order }); setShowModuleModal(true); }}>
-                                                    <Edit2 size={14} /> Edit
-                                                </button>
-                                                <button className="text-error" onClick={() => handleDeleteModule(module.id)}>
-                                                    <Trash2 size={14} /> Delete
-                                                </button>
-                                            </div>
+                                    <div className="flex items-center" style={{ gap: '4px', flexShrink: 0 }} onClick={e => e.stopPropagation()}>
+                                        <button type="button" className="icon-btn" style={{ width: '30px', height: '30px', border: 'none', background: 'transparent' }} onClick={() => { setEditingModule(module); setModuleForm({ title: module.title, description: module.description, order: module.order }); setShowModuleModal(true); }} title="Edit Module">
+                                            <Edit2 size={14} />
                                         </button>
-                                        <button className="expand-btn">
-                                            {expandedModules.has(module.id) ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                                        <button type="button" className="icon-btn" style={{ width: '30px', height: '30px', border: 'none', background: 'transparent', color: 'var(--error)' }} onClick={() => handleDeleteModule(module.id)} title="Delete Module">
+                                            <Trash2 size={14} />
+                                        </button>
+                                        <button type="button" style={{
+                                            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                                            width: '30px', height: '30px', borderRadius: '50%',
+                                            border: '1px solid var(--border-subtle)', background: 'var(--bg-card)',
+                                            color: 'var(--text-secondary)', cursor: 'pointer', transition: 'all 0.2s',
+                                            marginLeft: '2px'
+                                        }} onClick={() => toggleModule(module.id)}>
+                                            {expandedModules.has(module.id) ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                                         </button>
                                     </div>
                                 </div>
 
                                 {expandedModules.has(module.id) && (
-                                    <div className="module-expanded-content">
-                                        {/* Resource list */}
-                                        <div className="resources-list-compact">
+                                    <div style={{ padding: '0 16px 16px 16px' }}>
+                                        {/* Resource list from origin/main */}
+                                        <div className="flex flex-col" style={{ gap: '6px' }}>
                                             {resources.filter(r => r.moduleId === module.id).length === 0 ? (
-                                                <div className="no-resources-msg">No resources in this folder</div>
+                                                <div className="text-muted" style={{ textAlign: 'center', padding: '20px 12px', fontSize: '0.8rem', border: '1px dashed var(--border-subtle)', borderRadius: 'var(--radius-sm)' }}>
+                                                    No resources yet
+                                                </div>
                                             ) : (
                                                 resources.filter(r => r.moduleId === module.id).map(resource => (
-                                                    <div key={resource.id} className="resource-item-modern">
-                                                        {getResourceIcon(resource.type)}
-                                                        <div className="res-details">
-                                                            <div className="res-title">{resource.title}</div>
-                                                            <div className="res-meta">
-                                                                {renderPlatformBadge(resource)}
-                                                                {resource.isDemo && <span className="demo-tag">Demo</span>}
+                                                    <div key={resource.id} className="flex justify-between items-center" style={{
+                                                        padding: '10px 12px', borderRadius: 'var(--radius-sm)',
+                                                        background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-subtle)',
+                                                        transition: 'all 0.2s', cursor: 'default'
+                                                    }}
+                                                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.borderColor = 'rgba(var(--primary-rgb), 0.3)'; }}
+                                                        onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.borderColor = 'var(--border-subtle)'; }}
+                                                    >
+                                                        <div className="flex items-center" style={{ gap: '12px', minWidth: 0, flex: 1 }}>
+                                                            {resource.type === 'video' ? (
+                                                                <div style={{ position: 'relative', flexShrink: 0 }}>
+                                                                    <img
+                                                                        src={courseThumbnail || resource.thumbnailUrl || 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?q=80&w=1000&auto=format&fit=crop'}
+                                                                        alt=""
+                                                                        className="curriculum-thumb"
+                                                                        style={{ width: '60px', height: '40px', borderRadius: '4px', objectFit: 'cover' }}
+                                                                        onError={(e) => {
+                                                                            const target = e.target as HTMLImageElement;
+                                                                            target.src = 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?q=80&w=1000&auto=format&fit=crop';
+                                                                        }}
+                                                                    />
+                                                                </div>
+                                                            ) : (
+                                                                <div className="curriculum-icon-fallback" style={{
+                                                                    background: resource.type === 'pdf' ? 'rgba(239,68,68,0.1)' : 'rgba(16,185,129,0.1)',
+                                                                    color: resource.type === 'pdf' ? '#F87171' : '#34D399',
+                                                                    width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '4px'
+                                                                }}>
+                                                                    {getResourceIcon(resource.type)}
+                                                                </div>
+                                                            )}
+                                                            <div style={{ minWidth: 0, flex: 1 }}>
+                                                                <div style={{ fontSize: '0.85rem', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                                    {resource.title || resource.type}
+                                                                </div>
+                                                                <div className="flex items-center" style={{ gap: '6px', marginTop: '2px' }}>
+                                                                    {renderPlatformBadge(resource)}
+                                                                    {resource.isDemo && <span className="demo-tag">Demo</span>}
+                                                                </div>
                                                             </div>
-                                                        </div>
-                                                        <div className="res-actions">
-                                                            <a href={resource.url} target="_blank" rel="noopener noreferrer" className="res-action-btn"><ExternalLink size={14} /></a>
-                                                            <button onClick={() => openEditResource(module.id, resource)} className="res-action-btn"><Edit2 size={14} /></button>
-                                                            <button onClick={() => handleDeleteResource(resource.id)} className="res-action-btn text-error"><Trash2 size={14} /></button>
+                                                            <div className="res-actions flex gap-2">
+                                                                <a href={resource.url} target="_blank" rel="noopener noreferrer" className="icon-btn" style={{ width: '28px', height: '28px', padding: 0 }}><ExternalLink size={14} /></a>
+                                                                <button onClick={() => openEditResource(module.id, resource)} className="icon-btn" style={{ width: '28px', height: '28px', padding: 0 }}><Edit2 size={14} /></button>
+                                                                <button onClick={() => handleDeleteResource(resource.id)} className="icon-btn text-error" style={{ width: '28px', height: '28px', padding: 0 }}><Trash2 size={14} /></button>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 ))
                                             )}
-                                            <button className="add-resource-inline mt-2" onClick={() => openAddResource(module.id)}>
+                                            <button type="button" className="add-resource-inline mt-2 btn btn-secondary btn-sm flex items-center justify-center gap-1 w-full border-dashed" onClick={() => openAddResource(module.id)}>
                                                 <Plus size={14} /> Add item to this folder
                                             </button>
                                         </div>
@@ -593,30 +667,34 @@ export default function CurriculumBuilder({ targetId, targetType }: CurriculumBu
                             </FormField>
 
                             {/* Optional: Thumbnail URL */}
-                            {resourceForm.thumbnailUrl && (
+                            {resourceForm.type === 'video' && (
                                 <FormField label="Thumbnail">
                                     <div className="video-thumbnail-preview">
-                                        <img
-                                            src={resourceForm.thumbnailUrl}
-                                            alt="Video thumbnail"
-                                            className="video-thumb-img"
-                                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                                        />
+                                        {resourceForm.thumbnailUrl && (
+                                            <img
+                                                src={resourceForm.thumbnailUrl}
+                                                alt="Video thumbnail"
+                                                className="video-thumb-img"
+                                                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                            />
+                                        )}
                                         <div className="video-thumb-meta">
                                             <input
                                                 type="url"
                                                 placeholder="Thumbnail URL (auto-detected)"
-                                                value={resourceForm.thumbnailUrl}
+                                                value={resourceForm.thumbnailUrl || ''}
                                                 onChange={e => setResourceForm({ ...resourceForm, thumbnailUrl: e.target.value })}
                                             />
-                                            <button
-                                                type="button"
-                                                className="btn btn-secondary btn-sm"
-                                                onClick={() => setResourceForm({ ...resourceForm, thumbnailUrl: '' })}
-                                                style={{ whiteSpace: 'nowrap' }}
-                                            >
-                                                Clear
-                                            </button>
+                                            {resourceForm.thumbnailUrl && (
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-secondary btn-sm"
+                                                    onClick={() => setResourceForm({ ...resourceForm, thumbnailUrl: '' })}
+                                                    style={{ whiteSpace: 'nowrap' }}
+                                                >
+                                                    Clear
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 </FormField>
@@ -749,6 +827,14 @@ export default function CurriculumBuilder({ targetId, targetType }: CurriculumBu
                     </FormActions>
                 </form>
             </Modal>
+            
+            <ConfirmModal
+                isOpen={confirmState.isOpen}
+                onClose={() => setConfirmState(prev => ({ ...prev, isOpen: false }))}
+                onConfirm={confirmState.onConfirm}
+                title={confirmState.title}
+                message={confirmState.message}
+            />
         </div>
     );
 }

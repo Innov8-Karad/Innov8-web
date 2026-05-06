@@ -14,7 +14,10 @@ if (!admin.apps.length) {
 }
 
 export const onFeeCreated = onDocumentCreated(
-  "fees/{feeId}",
+  {
+    document: "fees/{feeId}",
+    region: "asia-south1",
+  },
   async (event) => {
     const snapshot = event.data;
     if (!snapshot) return;

@@ -15,6 +15,13 @@ import { db } from '../lib/firebase';
 import { COLLECTIONS } from '../constants';
 import type { Course, CourseModule, CourseResource, AssignmentType, AssignmentSubmission } from '../types';
 
+// Helper to remove undefined/null/empty-string values that Firestore rejects
+const cleanObject = (obj: Record<string, unknown>) => {
+    return Object.fromEntries(
+        Object.entries(obj).filter(([, v]) => v !== undefined && v !== null && v !== '')
+    );
+};
+
 export const courseService = {
   subscribeToCourses(callback: (courses: Course[]) => void) {
     // Removed orderBy('createdAt') to avoid potential index-missing errors during development
@@ -99,7 +106,8 @@ export const courseService = {
 
   async updateModule(courseId: string, moduleId: string, data: Partial<CourseModule>): Promise<void> {
     const docRef = doc(db, COLLECTIONS.COURSES, courseId, 'modules', moduleId);
-    await updateDoc(docRef, { ...data, updatedAt: Timestamp.now() });
+    const cleaned = cleanObject(data);
+    await updateDoc(docRef, { ...cleaned, updatedAt: Timestamp.now() });
   },
 
   async deleteModule(courseId: string, moduleId: string): Promise<void> {
@@ -134,7 +142,8 @@ export const courseService = {
 
   async updateResource(courseId: string, resourceId: string, data: Partial<CourseResource>): Promise<void> {
     const docRef = doc(db, COLLECTIONS.COURSES, courseId, 'resources', resourceId);
-    await updateDoc(docRef, { ...data, updatedAt: Timestamp.now() });
+    const cleaned = cleanObject(data);
+    await updateDoc(docRef, { ...cleaned, updatedAt: Timestamp.now() });
   },
 
   async deleteResource(courseId: string, resourceId: string): Promise<void> {
