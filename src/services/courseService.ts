@@ -9,6 +9,8 @@ import {
   query,
   orderBy,
   Timestamp,
+  arrayUnion,
+  arrayRemove,
   type DocumentData 
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -203,6 +205,24 @@ export const courseService = {
       ...data, 
       status: 'graded', 
       gradedAt: Timestamp.now() 
+    });
+  },
+
+  // ── Admin Course Access Management ──
+
+  async grantCourseAccess(courseId: string, userId: string): Promise<void> {
+    const courseRef = doc(db, COLLECTIONS.COURSES, courseId);
+    await updateDoc(courseRef, {
+      purchasedBy: arrayUnion(userId),
+      updatedAt: Timestamp.now()
+    });
+  },
+
+  async revokeCourseAccess(courseId: string, userId: string): Promise<void> {
+    const courseRef = doc(db, COLLECTIONS.COURSES, courseId);
+    await updateDoc(courseRef, {
+      purchasedBy: arrayRemove(userId),
+      updatedAt: Timestamp.now()
     });
   }
 };
