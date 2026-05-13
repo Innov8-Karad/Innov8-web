@@ -104,6 +104,7 @@ export interface Course {
     description: string;
     price: number;
     isFree: boolean;
+    purchasedBy?: string[];           // Array of user IDs who purchased this course
     duration: string;
     instructor: string;
     thumbnail?: string;
@@ -117,6 +118,17 @@ export interface Course {
     iconBg?: string;
     createdAt?: { seconds: number; nanoseconds: number };
     updatedAt?: { seconds: number; nanoseconds: number };
+}
+
+/** Record of a single course purchase */
+export interface CoursePurchase {
+    id: string;
+    userId: string;
+    courseId: string;
+    purchasedAt: Date | { seconds: number; nanoseconds: number };
+    amount: number;
+    paymentMethod?: string;
+    transactionId?: string;
 }
 
 export interface Batch {

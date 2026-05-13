@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Book, Clock, User, Star, Edit2, Trash2 } from 'lucide-react';
+import { Book, Clock, User, Star, Edit2, Trash2, ShoppingBag } from 'lucide-react';
 import { courseService } from '../services/courseService';
 import type { Course } from '../types';
 import { UI_STRINGS } from '../constants';
@@ -167,6 +167,12 @@ export default function CoursesPage() {
                                     <span className="font-semibold">{course.rating || 'N/A'}</span>
                                     <span className="text-xs text-muted">({course.enrolled || 0})</span>
                                 </div>
+                                {!course.isFree && (
+                                    <div className="flex items-center gap-1 text-sm text-accent-blue font-medium">
+                                        <ShoppingBag size={14} />
+                                        <span>{(course.purchasedBy || []).length} Purchases</span>
+                                    </div>
+                                )}
                                 <div className="flex items-center gap-2">
                                     <button className="icon-btn text-accent-blue" title="Edit Course" onClick={() => openEditModal(course)} style={{ padding: '6px' }}>
                                         <Edit2 size={16} />
