@@ -12,6 +12,7 @@ export const COLLECTIONS = {
   PROGRESS: 'user_progress',
   EXAM_RESULTS: 'examResults',
   JOBS: 'jobs',
+  DEVICES: 'devices',
   NOTIFICATIONS: 'notifications',
   BATCHES: 'batches',
   ENROLLMENT_REQUESTS: 'enrollment_requests',
@@ -537,5 +538,15 @@ export const UI_STRINGS = {
   THEME: {
     SWITCH_DARK: 'Switch to Dark Mode',
     SWITCH_LIGHT: 'Switch to Light Mode',
-  }
+  },
+  DEVICE_APPROVALS: {
+    TITLE: 'Device Approvals',
+    SUBTITLE: 'Approve or reject login requests from new devices',
+    LOADING: 'Loading device requests...',
+    EMPTY: 'No device requests found for this filter.',
+    APPROVE_SUCCESS: 'Device approved successfully.',
+    REJECT_SUCCESS: 'Device rejected successfully.',
+    DELETE_SUCCESS: 'Device record removed.',
+    ERROR_UPDATE: 'Failed to update device status.',
+  },
 } as const;

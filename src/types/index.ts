@@ -26,8 +26,33 @@ export interface User {
     status?: 'active' | 'inactive';
     isBlocked?: boolean;
     fcmTokens?: string[];            // FCM device tokens for push notifications
+    deviceCount?: number;            // Number of registered devices
+    activeDeviceDocId?: string;       // ID of the currently active device document
     createdAt: Date;
     updatedAt?: Date;
+}
+
+// ─── Devices (Login Approval System) ─────────────────────────────────────────
+
+export type DeviceStatus = 'pending' | 'approved' | 'rejected' | 'revoked';
+
+export interface DeviceDocument {
+    userId: string;
+    deviceId: string;
+    deviceMeta: {
+        deviceName: string;
+        osName: string;
+        osVersion: string;
+        modelName: string;
+        appVersion: string;
+    };
+    status: DeviceStatus;
+    isFirstDevice: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+    reviewedBy: string | null;
+    userEmail: string;
+    userName: string;
 }
 
 // ─── Fees ────────────────────────────────────────────────────────────────────

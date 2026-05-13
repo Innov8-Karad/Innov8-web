@@ -1887,6 +1887,58 @@ input[type="checkbox"]:disabled {
 }
 
 /* ═══════════════════════════════════════════════════
+   NAV LINK BADGE (pending count)
+   ═══════════════════════════════════════════════════ */
+
+.nav-link-badge {
+    background: var(--error);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 10px;
+    min-width: 18px;
+    text-align: center;
+    margin-left: auto;
+    line-height: 1.4;
+}
+
+/* ═══════════════════════════════════════════════════
+   DEVICE APPROVAL CARDS
+   ═══════════════════════════════════════════════════ */
+
+.device-card {
+    padding: var(--space-md);
+    border-bottom: 1px solid var(--border-subtle);
+    transition: background-color 0.15s ease;
+}
+
+.device-card:last-child {
+    border-bottom: none;
+}
+
+.device-card:hover {
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
+[data-theme='light'] .device-card:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+/* ═══════════════════════════════════════════════════
+   SPINNER ANIMATION
+   ═══════════════════════════════════════════════════ */
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.spin {
+    animation: spin 1s linear infinite;
+}
+
+/* ═══════════════════════════════════════════════════
    CUSTOM SELECT STYLES
    ═══════════════════════════════════════════════════ */
 
@@ -1997,4 +2049,5 @@ input[type="checkbox"]:disabled {
 .custom-select-dropdown::-webkit-scrollbar-thumb:hover {
   background: var(--text-secondary);
 }
+
 

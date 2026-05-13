@@ -36,7 +36,20 @@ service cloud.firestore {
     //             Cannot change own role
     // ═════════════════════════════════════════════════════════════════════
     match /users/{userId} {
-      allow read, write: if isAuthenticated(); // DIAGNOSTIC: Relaxed to fix approval flow
+      allow read: if isAuthenticated();
+
+      allow create: if isAdmin()
+                    || (isOwner(userId)
+                        && request.resource.data.role == 'student'
+                        && request.resource.data.keys().hasAll(['name', 'email', 'role', 'activeDeviceDocId']));
+
+      allow update: if isAdmin()
+                    || (isOwner(userId)
+                        && request.resource.data.role == resource.data.role
+                        // User can set activeDeviceDocId if it's null (migration), but NEVER change it if already set
+                        && (resource.data.activeDeviceDocId == null || request.resource.data.activeDeviceDocId == resource.data.activeDeviceDocId));
+
+      allow delete: if isAdmin();
     }
 
 
@@ -290,7 +303,7 @@ service cloud.firestore {
 
     // ═════════════════════════════════════════════════════════════════════
     // 14. SUCCESS STORIES (alternate collection name)
-    // ═════════════════════════════════════════════════════════════════════
+    // ─────────────────────────────────────────────────────────────────────
     match /successStories/{storyId} {
       allow read: if isAuthenticated();
       allow create, update, delete: if isAdmin();
@@ -299,7 +312,7 @@ service cloud.firestore {
 
     // ═════════════════════════════════════════════════════════════════════
     // 15. STUDY MATERIALS
-    // ═════════════════════════════════════════════════════════════════════
+    // ─────────────────────────────────────────────────────────────────────
     match /studyMaterials/{materialId} {
       allow read: if isAuthenticated();
       allow create, update, delete: if isAdmin();
@@ -307,7 +320,41 @@ service cloud.firestore {
 
 
     // ═════════════════════════════════════════════════════════════════════
-    // 16. BATCHES
+    // 16. DEVICES (Login Approval System)
+    // ─────────────────────────────────────────────────────────────────────
+    // Mobile:  Reads own device docs (userId == auth.uid)
+    //          Creates own device doc on login attempt
+    // Admin:   Reads ALL device docs, updates status (approve/reject)
+    // ═════════════════════════════════════════════════════════════════════
+    match /devices/{deviceDocId} {
+      // Allow reading if Admin OR if it's the user's own device document
+      // Note: For list queries, the query MUST filter by userId == auth.uid
+      allow read: if isAdmin()
+                  || (isAuthenticated()
+                      && (resource == null || resource.data.userId == request.auth.uid));
+
+      // Allow creating own device document
+      allow create: if isAuthenticated()
+                    && request.resource.data.userId == request.auth.uid
+                    && request.resource.data.status in ['approved', 'pending']
+                    && request.resource.data.keys().hasAll(
+                        ['userId', 'deviceId', 'status', 'deviceMeta', 'createdAt']);
+
+      // Update rules:
+      // 1. Admin can update anything (approve, reject, revoke)
+      // 2. Owner can ONLY transition from "revoked" → "pending" (re-request)
+      //    This prevents users from approving themselves.
+      allow update: if isAdmin()
+                    || (isAuthenticated()
+                        && resource.data.userId == request.auth.uid
+                        && resource.data.status == 'revoked'
+                        && request.resource.data.status == 'pending');
+
+      allow delete: if isAdmin();
+    }
+
+
+    // 17. BATCHES
     // ─────────────────────────────────────────────────────────────────────
     // Web Admin:  Full CRUD
     // Mobile:     Reads all available batches for selection
@@ -320,8 +367,7 @@ service cloud.firestore {
     }
 
 
-    // ═════════════════════════════════════════════════════════════════════
-    // 17. ENROLLMENT REQUESTS
+    // 18. ENROLLMENT REQUESTS
     // ─────────────────────────────────────────────────────────────────────
     // Web Admin:  Reads all, updates status to approve/reject
     // Mobile:     Creates own request, reads own request status
@@ -334,8 +380,8 @@ service cloud.firestore {
       allow read, write: if isAuthenticated(); // DIAGNOSTIC: Relaxed to fix approval flow
     }
 
-    // ═════════════════════════════════════════════════════════════════════
-    // 18. COURSE PURCHASES
+
+    // 19. COURSE PURCHASES
     // ═════════════════════════════════════════════════════════════════════
     match /course_purchases/{purchaseId} {
       allow read: if isAdmin() 

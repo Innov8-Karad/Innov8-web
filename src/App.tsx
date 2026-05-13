@@ -24,6 +24,7 @@ import StudentDetailPage from './pages/StudentDetailPage';
 import ExamResultsPage from './pages/ExamResults';
 import JobsPage from './pages/JobsPage';
 import InterviewsPage from './pages/Interviews';
+import DeviceApprovalsPage from './pages/DeviceApprovals';
 import NotificationsPage from './pages/NotificationsPage';
 import BatchesPage from './pages/Batches';
 
@@ -67,6 +68,7 @@ function App() {
                   <Route path="/exam-results" element={<PrivateRoute><Layout><ExamResultsPage /></Layout></PrivateRoute>} />
                   <Route path="/jobs" element={<PrivateRoute><Layout><JobsPage /></Layout></PrivateRoute>} />
                   <Route path="/interviews" element={<PrivateRoute><Layout><InterviewsPage /></Layout></PrivateRoute>} />
+                  <Route path="/device-approvals" element={<PrivateRoute><Layout><DeviceApprovalsPage /></Layout></PrivateRoute>} />
                   <Route path="/notifications" element={<PrivateRoute><Layout><NotificationsPage /></Layout></PrivateRoute>} />
                   <Route path="/batches" element={<PrivateRoute><Layout><BatchesPage /></Layout></PrivateRoute>} />
 
