@@ -6,6 +6,8 @@ import {
   deleteDoc,
   doc,
   Timestamp,
+  query,
+  where,
   type DocumentData 
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -21,6 +23,21 @@ export const userService = {
       ...doc.data(),
       enrollmentDate: (doc.data() as DocumentData).enrollmentDate?.toDate() || new Date(),
     } as User));
+  },
+
+  async fetchUsersByBatch(batchId: string): Promise<User[]> {
+    const q = query(collection(db, COLLECTIONS.USERS), where('batchId', '==', batchId));
+    const snap = await getDocs(q);
+    return snap.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      enrollmentDate: (doc.data() as DocumentData).enrollmentDate?.toDate() || new Date(),
+    } as User));
+  },
+
+  async updateStudentStatus(id: string, status: 'active' | 'inactive'): Promise<void> {
+    const docRef = doc(db, COLLECTIONS.USERS, id);
+    await updateDoc(docRef, { status, updatedAt: Timestamp.now() });
   },
 
   async createUser(data: Omit<User, 'id' | 'enrollmentDate' | 'createdAt'>): Promise<User> {
@@ -75,5 +92,17 @@ export const userService = {
       onProgress,
     });
     return result.url;
+  },
+
+  async findUserByEmail(email: string): Promise<User | null> {
+    const q = query(collection(db, COLLECTIONS.USERS), where('email', '==', email.toLowerCase().trim()));
+    const snap = await getDocs(q);
+    if (snap.empty) return null;
+    const doc = snap.docs[0];
+    return {
+      id: doc.id,
+      ...doc.data(),
+      enrollmentDate: (doc.data() as DocumentData).enrollmentDate?.toDate() || new Date(),
+    } as User;
   }
 };

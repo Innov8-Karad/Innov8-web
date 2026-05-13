@@ -14,7 +14,9 @@ export interface User {
     name: string;
     phone: string;
     batch: string;
+    batchId?: string;
     course: string;
+    courseId?: string;
     enrollmentDate: Date;
     profilePhoto?: string;
     profilePhotoPublicId?: string;
@@ -127,6 +129,7 @@ export interface Course {
     description: string;
     price: number;
     isFree: boolean;
+    purchasedBy?: string[];           // Array of user IDs who purchased this course
     duration: string;
     instructor: string;
     thumbnail?: string;
@@ -140,6 +143,48 @@ export interface Course {
     iconBg?: string;
     createdAt?: { seconds: number; nanoseconds: number };
     updatedAt?: { seconds: number; nanoseconds: number };
+}
+
+/** Record of a single course purchase */
+export interface CoursePurchase {
+    id: string;
+    userId: string;
+    courseId: string;
+    purchasedAt: Date | { seconds: number; nanoseconds: number };
+    amount: number;
+    paymentMethod?: string;
+    transactionId?: string;
+}
+
+export interface Batch {
+    id: string;
+    name: string;
+    batchCode: string;               // Admin-defined code shared offline with students
+    courseId?: string;
+    courseName?: string;
+    startDate?: Date | string;
+    endDate?: Date | string;
+    active: boolean;
+    studentCount: number;
+    description?: string;
+    createdAt: Date | { seconds: number; nanoseconds: number };
+    updatedAt?: Date | { seconds: number; nanoseconds: number };
+}
+
+export interface EnrollmentRequest {
+    id: string;
+    userId: string;
+    userName: string;
+    userEmail: string;
+    batchId: string;
+    batchName: string;
+    batchCode?: string;              // Batch code used to join
+    courseId?: string;
+    courseName?: string;
+    status: 'pending' | 'approved' | 'rejected';
+    requestedAt: Date | { seconds: number; nanoseconds: number };
+    resolvedAt?: Date | { seconds: number; nanoseconds: number };
+    resolvedBy?: string;
 }
 
 export interface CourseResource {
@@ -156,6 +201,7 @@ export interface CourseResource {
     cloudinaryPublicId?: string;
     size?: string;              // e.g. "2.3 MB"
     fileFormat?: string;        // e.g. "PDF", "DOC", "DOCX"
+    isDemo?: boolean;           // Whether inactive students can view this
 }
 
 export interface CourseModule {
@@ -182,6 +228,7 @@ export interface NoteType {
 
 export interface AssignmentType {
     id: string;
+    moduleId?: string;
     title: string;
     dueDate: string;
     status: 'Pending' | 'Submitted' | 'Graded';
@@ -194,6 +241,7 @@ export interface AssignmentType {
 /** Mobile uses this as 'Resource', keeping alias for backward compatibility */
 export interface Resource {
     id: string;
+    moduleId?: string;
     title: string;
     type: 'video' | 'pdf' | 'link';
     url: string;
@@ -203,6 +251,7 @@ export interface Resource {
     platform?: 'youtube' | 'vimeo' | 'cloudinary' | 'direct';
     duration?: string;
     thumbnailUrl?: string;
+    isDemo?: boolean;           // Whether inactive students can view this
 }
 
 export interface AssignmentSubmission {

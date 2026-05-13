@@ -31,6 +31,7 @@ import type { Exam } from '../types';
 import { UI_STRINGS } from '../constants';
 import Avatar from '../components/Avatar';
 import DataTable, { type Column } from '../components/DataTable';
+import CustomSelect from '../components/CustomSelect';
 
 const COLORS = ['#10B981', '#EF4444']; // Green for Pass, Red for Fail
 
@@ -233,17 +234,14 @@ export default function ExamResultsPage() {
           
           <div className="flex flex-1 items-center gap-md w-full">
             <div style={{ flex: '1 1 auto', maxWidth: '300px' }}>
-              <select 
-                className="select-field" 
+              <CustomSelect
+                options={[
+                  { value: 'all', label: 'All Exams' },
+                  ...exams.map(exam => ({ value: exam.id, label: exam.title }))
+                ]}
                 value={selectedExamId}
-                onChange={(e) => setSelectedExamId(e.target.value)}
-                style={{ width: '100%', padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-main)', color: 'var(--text-main)' }}
-              >
-                <option value="all">All Exams</option>
-                {exams.map(exam => (
-                  <option key={exam.id} value={exam.id}>{exam.title}</option>
-                ))}
-              </select>
+                onChange={(val) => setSelectedExamId(val)}
+              />
             </div>
             <div style={{ flex: '2 1 auto' }}>
               <SearchInput 

@@ -13,6 +13,7 @@ import Modal from '../components/Modal';
 import EmptyState from '../components/EmptyState';
 import { FormField, FormRow, FormActions } from '../components/FormField';
 import { useToast } from '../hooks/useToast';
+import CustomSelect from '../components/CustomSelect';
 
 export default function ExamsPage() {
     const { showToast } = useToast();
@@ -261,11 +262,15 @@ export default function ExamsPage() {
                                     <input type="text" required placeholder={UI_STRINGS.EXAMS.FORM_CATEGORY_PLACEHOLDER} value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })} />
                                 </FormField>
                                 <FormField label={UI_STRINGS.EXAMS.FORM_DIFFICULTY}>
-                                    <select value={formData.difficulty} onChange={e => setFormData({ ...formData, difficulty: e.target.value as 'easy' | 'medium' | 'hard' })}>
-                                        <option value="easy">{UI_STRINGS.EXAMS.DIFFICULTY_EASY}</option>
-                                        <option value="medium">{UI_STRINGS.EXAMS.DIFFICULTY_MEDIUM}</option>
-                                        <option value="hard">{UI_STRINGS.EXAMS.DIFFICULTY_HARD}</option>
-                                    </select>
+                                    <CustomSelect
+                                        options={[
+                                            { value: 'easy', label: UI_STRINGS.EXAMS.DIFFICULTY_EASY },
+                                            { value: 'medium', label: UI_STRINGS.EXAMS.DIFFICULTY_MEDIUM },
+                                            { value: 'hard', label: UI_STRINGS.EXAMS.DIFFICULTY_HARD }
+                                        ]}
+                                        value={formData.difficulty}
+                                        onChange={(val) => setFormData({ ...formData, difficulty: val as 'easy' | 'medium' | 'hard' })}
+                                    />
                                 </FormField>
                             </FormRow>
                             <FormRow>

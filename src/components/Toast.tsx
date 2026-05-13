@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { X, AlertCircle, CheckCircle } from 'lucide-react';
+import { X, AlertCircle, CheckCircle, AlertTriangle } from 'lucide-react';
 
 interface ToastProps {
     message: string;
-    type?: 'error' | 'success';
+    type?: 'error' | 'success' | 'warning';
     duration?: number;
     onClose: () => void;
 }
@@ -20,10 +20,10 @@ const Toast: React.FC<ToastProps> = ({ message, type = 'error', duration = 3000,
         return () => clearTimeout(timer);
     }, [duration, onClose]);
 
-    const bgColor = type === 'error' ? '#FEF2F2' : '#F0FDF4';
-    const borderColor = type === 'error' ? '#FEE2E2' : '#DCFCE7';
-    const textColor = type === 'error' ? '#991B1B' : '#166534';
-    const Icon = type === 'error' ? AlertCircle : CheckCircle;
+    const bgColor = type === 'error' ? '#FEF2F2' : type === 'warning' ? '#FFFBEB' : '#F0FDF4';
+    const borderColor = type === 'error' ? '#FEE2E2' : type === 'warning' ? '#FEF3C7' : '#DCFCE7';
+    const textColor = type === 'error' ? '#991B1B' : type === 'warning' ? '#92400E' : '#166534';
+    const Icon = type === 'error' ? AlertCircle : type === 'warning' ? AlertTriangle : CheckCircle;
 
     return (
         <div style={{

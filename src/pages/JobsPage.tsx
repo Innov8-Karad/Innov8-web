@@ -2,7 +2,7 @@ import { useState, useEffect, useContext, useMemo } from 'react';
 import { 
   Briefcase, MapPin, DollarSign, Search, Pencil, Trash2, 
   ArrowLeft, Users, Building2, Filter, Plus, Calendar, 
-  ChevronRight, Activity, AlertTriangle
+  ChevronRight, AlertTriangle
 } from 'lucide-react';
 import { jobService } from '../services/jobService';
 import { ToastContext } from '../contexts/ToastContext';
@@ -12,6 +12,7 @@ import LoadingState from '../components/LoadingState';
 import ErrorAlert from '../components/ErrorAlert';
 import Modal from '../components/Modal';
 import { FormField, FormRow, FormActions } from '../components/FormField';
+import CustomSelect from '../components/CustomSelect';
 
 type ViewMode = 'list' | 'detail';
 
@@ -368,14 +369,7 @@ export default function JobsPage() {
           </div>
           <div className="stat-glow blue" />
         </div>
-        <div className="stat-card-luminous">
-          <div className="stat-icon amber"><Activity size={24} /></div>
-          <div className="stat-values">
-            <p className="stat-label">Active Listings</p>
-            <p className="stat-number">{stats.active}</p>
-          </div>
-          <div className="stat-glow amber" />
-        </div>
+
         <div className="stat-card-luminous">
           <div className="stat-icon green"><Users size={24} /></div>
           <div className="stat-values">
@@ -399,15 +393,17 @@ export default function JobsPage() {
         </div>
         <div className="filter-group">
           <span className="control-label"><Filter size={14} /> Filter:</span>
-          <select 
-            className="control-select"
+          <CustomSelect
+            options={[
+              { value: 'all', label: 'All Types' },
+              { value: 'Full-time', label: 'Full-time' },
+              { value: 'Internship', label: 'Internship' }
+            ]}
             value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value as JobType | 'all')}
-          >
-            <option value="all">All Types</option>
-            <option value="Full-time">Full-time</option>
-            <option value="Internship">Internship</option>
-          </select>
+            onChange={(val) => setTypeFilter(val as JobType | 'all')}
+            className="text-sm"
+            placeholder="All Types"
+          />
         </div>
       </section>
 

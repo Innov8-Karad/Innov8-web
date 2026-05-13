@@ -6,6 +6,7 @@ import type { Interview } from '../types';
 import { useToast } from '../hooks/useToast';
 import Modal from '../components/Modal';
 import { FormField, FormActions } from '../components/FormField';
+import CustomSelect from '../components/CustomSelect';
 
 type InterviewStatus = 'scheduled' | 'completed' | 'cancelled';
 
@@ -402,16 +403,18 @@ export default function InterviewsPage() {
 
                 <div className="flex items-center gap-2">
                     <Filter size={18} className="text-muted" />
-                    <select
-                        className="filter-select-premium"
+                    <CustomSelect
+                        options={[
+                            { value: 'all', label: 'Global Status' },
+                            { value: 'scheduled', label: 'Scheduled' },
+                            { value: 'completed', label: 'Completed' },
+                            { value: 'cancelled', label: 'Cancelled' }
+                        ]}
                         value={statusFilter}
-                        onChange={(e) => setStatusFilter(e.target.value)}
-                    >
-                        <option value="all">Global Status</option>
-                        <option value="scheduled">Scheduled</option>
-                        <option value="completed">Completed</option>
-                        <option value="cancelled">Cancelled</option>
-                    </select>
+                        onChange={(val) => setStatusFilter(val)}
+                        className="text-sm"
+                        placeholder="Global Status"
+                    />
                 </div>
             </div>
 
@@ -532,15 +535,15 @@ export default function InterviewsPage() {
                                 />
                             </FormField>
                             <FormField label="Status">
-                                <select
+                                <CustomSelect
+                                    options={[
+                                        { value: 'scheduled', label: 'Scheduled' },
+                                        { value: 'completed', label: 'Completed' },
+                                        { value: 'cancelled', label: 'Cancelled' }
+                                    ]}
                                     value={status}
-                                    onChange={(e) => setStatus(e.target.value as InterviewStatus)}
-                                    id="interview-status"
-                                >
-                                    <option value="scheduled">Scheduled</option>
-                                    <option value="completed">Completed</option>
-                                    <option value="cancelled">Cancelled</option>
-                                </select>
+                                    onChange={(val) => setStatus(val as InterviewStatus)}
+                                />
                             </FormField>
                         </div>
 
