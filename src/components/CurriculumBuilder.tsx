@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Plus, Trash2, Edit2, FileText, Video, Link as LinkIcon, ChevronDown, ChevronUp, Play, ExternalLink, Clock, Upload, Link2 } from 'lucide-react';
+import { 
+    Plus, Trash2, Edit2, FileText, Link as LinkIcon, 
+    ChevronDown, ChevronUp, Play, ExternalLink, Clock, Upload, 
+    Link2, Search, SortDesc, Filter, Folder, Copy
+} from 'lucide-react';
+import ImportBatchModal from './ImportBatchModal';
 import { courseService } from '../services/courseService';
+import { batchService } from '../services/batchService';
 import type { CourseModule, CourseResource } from '../types';
 import { useToast } from '../hooks/useToast';
 import Modal from './Modal';
@@ -11,7 +17,8 @@ import { detectPlatform, validateVideoUrl, getEmbedUrl, getThumbnailUrl, getPlat
 import type { VideoPlatform } from '../lib/videoUtils';
 
 interface CurriculumBuilderProps {
-    courseId: string;
+    targetId: string;
+    targetType: 'course' | 'batch';
     courseThumbnail?: string;
 }
 
@@ -29,6 +36,7 @@ interface ResourceFormState {
     cloudinaryPublicId?: string;
     size?: string;
     fileFormat?: string;
+    isDemo: boolean;
 }
 
 const INITIAL_RESOURCE_FORM: ResourceFormState = {
@@ -42,9 +50,11 @@ const INITIAL_RESOURCE_FORM: ResourceFormState = {
     cloudinaryPublicId: undefined,
     size: undefined,
     fileFormat: undefined,
+    isDemo: false,
 };
 
-export default function CurriculumBuilder({ courseId, courseThumbnail }: CurriculumBuilderProps) {
+export default function CurriculumBuilder({ targetId, targetType, courseThumbnail }: CurriculumBuilderProps) {
+    const service = targetType === 'course' ? courseService : batchService;
     const [modules, setModules] = useState<CourseModule[]>([]);
     const [resources, setResources] = useState<CourseResource[]>([]);
     const [loading, setLoading] = useState(true);
@@ -62,6 +72,11 @@ export default function CurriculumBuilder({ courseId, courseThumbnail }: Curricu
     const [editingResource, setEditingResource] = useState<CourseResource | null>(null);
     const [resourceForm, setResourceForm] = useState<ResourceFormState>(INITIAL_RESOURCE_FORM);
 
+    // Search & Filter State
+    const [searchQuery, setSearchQuery] = useState('');
+    const [sortBy, setSortBy] = useState('recent');
+    const [showImportModal, setShowImportModal] = useState(false);
+
     // Confirmation Modal State
     const [confirmState, setConfirmState] = useState<{
         isOpen: boolean;
@@ -76,12 +91,12 @@ export default function CurriculumBuilder({ courseId, courseThumbnail }: Curricu
     });
 
     useEffect(() => {
-        const unsubscribeModules = courseService.subscribeToModules(courseId, (fetchedModules) => {
+        const unsubscribeModules = service.subscribeToModules(targetId, (fetchedModules) => {
             setModules(fetchedModules);
             setLoading(false);
         });
 
-        const unsubscribeResources = courseService.subscribeToResources(courseId, (fetchedResources) => {
+        const unsubscribeResources = service.subscribeToResources(targetId, (fetchedResources) => {
             setResources(fetchedResources);
         });
 
@@ -95,7 +110,7 @@ export default function CurriculumBuilder({ courseId, courseThumbnail }: Curricu
             unsubscribeResources();
             clearTimeout(timer);
         };
-    }, [courseId]);
+    }, [targetId, service]);
 
     // ── Auto-detect platform when video URL changes ──────────────────────────
 
@@ -142,10 +157,10 @@ export default function CurriculumBuilder({ courseId, courseThumbnail }: Curricu
         e.preventDefault();
         try {
             if (editingModule) {
-                await courseService.updateModule(courseId, editingModule.id, moduleForm);
+                await service.updateModule(targetId, editingModule.id, moduleForm);
                 showToast("Module updated", "success");
             } else {
-                await courseService.addModule(courseId, { ...moduleForm, resources: [] });
+                await service.addModule(targetId, { ...moduleForm, resources: [] });
                 showToast("Module added", "success");
             }
             setShowModuleModal(false);
@@ -163,7 +178,7 @@ export default function CurriculumBuilder({ courseId, courseThumbnail }: Curricu
             message: "Are you sure you want to delete this module and all its resources? This action cannot be undone.",
             onConfirm: async () => {
                 try {
-                    await courseService.deleteModule(courseId, id);
+                    await service.deleteModule(targetId, id);
                     showToast("Module deleted", "success");
                 } catch {
                     showToast("Failed to delete module", "error");
@@ -194,6 +209,7 @@ export default function CurriculumBuilder({ courseId, courseThumbnail }: Curricu
             cloudinaryPublicId: resource.cloudinaryPublicId,
             size: resource.size,
             fileFormat: resource.fileFormat,
+            isDemo: resource.isDemo || false,
         });
 
         setShowResourceModal(true);
@@ -223,13 +239,14 @@ export default function CurriculumBuilder({ courseId, courseThumbnail }: Curricu
                     size: resourceForm.size || undefined,
                     fileFormat: resourceForm.fileFormat || undefined,
                 }),
+                isDemo: resourceForm.isDemo,
             };
 
             if (editingResource) {
-                await courseService.updateResource(courseId, editingResource.id, payload);
+                await service.updateResource(targetId, editingResource.id, payload);
                 showToast("Resource updated", "success");
             } else {
-                await courseService.addResource(courseId, activeModuleId, payload);
+                await service.addResource(targetId, activeModuleId, payload);
                 showToast("Resource added", "success");
             }
             setShowResourceModal(false);
@@ -247,7 +264,7 @@ export default function CurriculumBuilder({ courseId, courseThumbnail }: Curricu
             message: "Are you sure you want to delete this resource? This action cannot be undone.",
             onConfirm: async () => {
                 try {
-                    await courseService.deleteResource(courseId, resourceId);
+                    await service.deleteResource(targetId, resourceId);
                     showToast("Resource deleted", "success");
                 } catch {
                     showToast("Failed to delete resource", "error");
@@ -256,13 +273,40 @@ export default function CurriculumBuilder({ courseId, courseThumbnail }: Curricu
         });
     };
 
+    const filteredModules = useMemo(() => {
+        const result = modules.filter(m => 
+            m.title.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+
+        if (sortBy === 'recent') {
+            // Already sorted by order, but if we had timestamps we'd use them
+        }
+
+        return result;
+    }, [modules, searchQuery, sortBy]);
+
     if (loading) return <div className="p-4 text-center text-muted">Loading curriculum...</div>;
 
     const getResourceIcon = (type: string) => {
-        switch (type) {
-            case 'video': return <Video size={16} />;
-            case 'pdf': return <FileText size={16} />;
-            default: return <LinkIcon size={16} />;
+        switch(type) {
+            case 'video': 
+                return (
+                    <div className="res-icon-box" style={{ background: 'rgba(217, 119, 6, 0.1)', color: '#d97706' }}>
+                        <Play size={16} fill="currentColor" />
+                    </div>
+                );
+            case 'pdf': 
+                return (
+                    <div className="res-icon-box" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }}>
+                        <FileText size={16} />
+                    </div>
+                );
+            default: 
+                return (
+                    <div className="res-icon-box" style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
+                        <LinkIcon size={16} />
+                    </div>
+                );
         }
     };
 
@@ -281,165 +325,217 @@ export default function CurriculumBuilder({ courseId, courseThumbnail }: Curricu
     };
 
     return (
-        <div className="mt-md">
-            <div className="flex justify-between items-center mb-md">
-                <h3 className="text-lg font-semibold">Curriculum Modules</h3>
-                <button
-                    type="button"
-                    className="btn btn-secondary btn-sm flex items-center gap-1"
-                    onClick={() => {
-                        setEditingModule(null);
-                        setModuleForm({ title: '', description: '', order: modules.length + 1 });
-                        setShowModuleModal(true);
-                    }}
-                >
-                    <Plus size={16} /> Add Module
-                </button>
-            </div>
+        <div className="curriculum-layout">
+            <div className="curriculum-main-content">
+                <div className="curriculum-header-section">
+                    <div className="flex justify-between items-end mb-6">
+                        <div>
+                            <h2 className="text-2xl font-bold text-main flex items-center gap-3">
+                                {targetType === 'batch' ? 'Videos' : 'Curriculum'} 
+                                <span className="text-muted font-normal">({modules.length})</span>
+                            </h2>
+                            <p className="text-sm text-muted mt-1">Add / view content of your {targetType}</p>
+                        </div>
+                    </div>
 
-            {modules.length === 0 ? (
-                <div className="p-xl text-center text-muted border-dashed rounded-md bg-secondary">
-                    No modules yet. Add a module to build the curriculum.
-                </div>
-            ) : (
-                <div className="flex flex-col" style={{ gap: '12px' }}>
-                    {modules.map(module => (
-                        <div key={module.id} className="card" style={{ padding: '0', overflow: 'hidden', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
-                            {/* Module Header — collapsed row */}
-                            <div
-                                className="flex justify-between items-center cursor-pointer group"
-                                style={{ padding: '14px 16px', transition: 'background 0.2s' }}
-                                onClick={() => toggleModule(module.id)}
-                                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
-                                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                            >
-                                <div className="flex items-center" style={{ gap: '12px', minWidth: 0, flex: 1 }}>
-                                    <span style={{
-                                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                                        width: '28px', height: '28px', borderRadius: 'var(--radius-sm)',
-                                        background: 'rgba(var(--primary-rgb), 0.15)', color: 'var(--primary)',
-                                        fontWeight: 700, fontSize: '0.8rem', flexShrink: 0
-                                    }}>
-                                        {module.order}
-                                    </span>
-                                    <div style={{ minWidth: 0, flex: 1 }}>
-                                        <h4 style={{ fontSize: '0.95rem', fontWeight: 600, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                            {module.title}
-                                        </h4>
-                                        <span className="text-muted" style={{ fontSize: '0.75rem' }}>
-                                            {resources.filter(r => r.moduleId === module.id).length} resources
-                                        </span>
-                                    </div>
-                                </div>
-                                <div className="flex items-center" style={{ gap: '4px', flexShrink: 0 }} onClick={e => e.stopPropagation()}>
-                                    <button type="button" className="icon-btn" style={{ width: '30px', height: '30px', border: 'none', background: 'transparent' }} onClick={() => { setEditingModule(module); setModuleForm({ title: module.title, description: module.description, order: module.order }); setShowModuleModal(true); }} title="Edit Module">
-                                        <Edit2 size={14} />
-                                    </button>
-                                    <button type="button" className="icon-btn" style={{ width: '30px', height: '30px', border: 'none', background: 'transparent', color: 'var(--error)' }} onClick={() => handleDeleteModule(module.id)} title="Delete Module">
-                                        <Trash2 size={14} />
-                                    </button>
-                                    <button type="button" style={{
-                                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                                        width: '30px', height: '30px', borderRadius: '50%',
-                                        border: '1px solid var(--border-subtle)', background: 'var(--bg-card)',
-                                        color: 'var(--text-secondary)', cursor: 'pointer', transition: 'all 0.2s',
-                                        marginLeft: '2px'
-                                    }} onClick={() => toggleModule(module.id)}>
-                                        {expandedModules.has(module.id) ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                                    </button>
-                                </div>
+                    {/* Toolbar */}
+                    <div className="curriculum-toolbar mb-6">
+                        <div className="search-wrapper">
+                            <Search size={18} className="search-icon" />
+                            <input 
+                                type="text" 
+                                placeholder="Search folders..." 
+                                className="toolbar-search"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
+                        </div>
+                        <div className="toolbar-actions">
+                            <div className="dropdown-select">
+                                <SortDesc size={16} />
+                                <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+                                    <option value="recent">Recently Added</option>
+                                    <option value="oldest">Archive (Oldest)</option>
+                                </select>
+                                <ChevronDown size={14} className="select-arrow" />
                             </div>
+                            <div className="dropdown-select">
+                                <Filter size={16} />
+                                <select disabled>
+                                    <option>Filter by Tags</option>
+                                </select>
+                                <ChevronDown size={14} className="select-arrow" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-                            {/* Expanded content */}
-                            {expandedModules.has(module.id) && (
-                                <div style={{ borderTop: '1px solid var(--border-subtle)', padding: '16px', background: 'rgba(0,0,0,0.15)' }}>
-                                    {/* Description */}
-                                    {module.description && (
-                                        <div style={{ marginBottom: '16px', padding: '10px 12px', borderRadius: 'var(--radius-sm)', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-subtle)' }}>
-                                            <p className="text-muted" style={{ fontSize: '0.8rem', margin: 0, lineHeight: 1.5 }}>{module.description}</p>
+                {filteredModules.length === 0 ? (
+                    <div className="empty-curriculum">
+                        <Folder size={48} className="mb-4 opacity-20" />
+                        <p>No content found matching your search</p>
+                    </div>
+                ) : (
+                    <div className="modules-grid">
+                        {filteredModules.map(module => (
+                            <div key={module.id} className="card" style={{ padding: '0', overflow: 'hidden', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)', marginBottom: '12px' }}>
+                                {/* Module Header — collapsed row from origin/main */}
+                                <div
+                                    className="flex justify-between items-center cursor-pointer group"
+                                    style={{ padding: '14px 16px', transition: 'background 0.2s' }}
+                                    onClick={() => toggleModule(module.id)}
+                                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
+                                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                                >
+                                    <div className="flex items-center" style={{ gap: '12px', minWidth: 0, flex: 1 }}>
+                                        <span style={{
+                                            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                                            width: '28px', height: '28px', borderRadius: 'var(--radius-sm)',
+                                            background: 'rgba(var(--primary-rgb), 0.15)', color: 'var(--primary)',
+                                            fontWeight: 700, fontSize: '0.8rem', flexShrink: 0
+                                        }}>
+                                            {module.order}
+                                        </span>
+                                        <div style={{ minWidth: 0, flex: 1 }}>
+                                            <h4 style={{ fontSize: '0.95rem', fontWeight: 600, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                {module.title}
+                                            </h4>
+                                            <span className="text-muted" style={{ fontSize: '0.75rem' }}>
+                                                {resources.filter(r => r.moduleId === module.id).length} resources
+                                            </span>
                                         </div>
-                                    )}
-
-                                    {/* Resources header */}
-                                    <div className="flex justify-between items-center" style={{ marginBottom: '10px' }}>
-                                        <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>Resources</span>
-                                        <button type="button" className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: '0.75rem', borderRadius: 'var(--radius-sm)', height: 'auto' }} onClick={() => openAddResource(module.id)}>
-                                            <Plus size={12} /> Add
+                                    </div>
+                                    <div className="flex items-center" style={{ gap: '4px', flexShrink: 0 }} onClick={e => e.stopPropagation()}>
+                                        <button type="button" className="icon-btn" style={{ width: '30px', height: '30px', border: 'none', background: 'transparent' }} onClick={() => { setEditingModule(module); setModuleForm({ title: module.title, description: module.description, order: module.order }); setShowModuleModal(true); }} title="Edit Module">
+                                            <Edit2 size={14} />
+                                        </button>
+                                        <button type="button" className="icon-btn" style={{ width: '30px', height: '30px', border: 'none', background: 'transparent', color: 'var(--error)' }} onClick={() => handleDeleteModule(module.id)} title="Delete Module">
+                                            <Trash2 size={14} />
+                                        </button>
+                                        <button type="button" style={{
+                                            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                                            width: '30px', height: '30px', borderRadius: '50%',
+                                            border: '1px solid var(--border-subtle)', background: 'var(--bg-card)',
+                                            color: 'var(--text-secondary)', cursor: 'pointer', transition: 'all 0.2s',
+                                            marginLeft: '2px'
+                                        }} onClick={() => toggleModule(module.id)}>
+                                            {expandedModules.has(module.id) ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                                         </button>
                                     </div>
+                                </div>
 
-                                    {/* Resource list */}
-                                    <div className="flex flex-col" style={{ gap: '6px' }}>
-                                        {resources.filter(r => r.moduleId === module.id).length === 0 ? (
-                                            <div className="text-muted" style={{ textAlign: 'center', padding: '20px 12px', fontSize: '0.8rem', border: '1px dashed var(--border-subtle)', borderRadius: 'var(--radius-sm)' }}>
-                                                No resources yet
-                                            </div>
-                                        ) : (
-                                            resources.filter(r => r.moduleId === module.id).map(resource => (
-                                                <div key={resource.id} className="flex justify-between items-center" style={{
-                                                    padding: '10px 12px', borderRadius: 'var(--radius-sm)',
-                                                    background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-subtle)',
-                                                    transition: 'all 0.2s', cursor: 'default'
-                                                }}
-                                                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.borderColor = 'rgba(var(--primary-rgb), 0.3)'; }}
-                                                    onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.borderColor = 'var(--border-subtle)'; }}
-                                                >
-                                                    <div className="flex items-center" style={{ gap: '12px', minWidth: 0, flex: 1 }}>
-                                                        {resource.type === 'video' ? (
-                                                            <div style={{ position: 'relative', flexShrink: 0 }}>
-                                                                <img
-                                                                    src={courseThumbnail || resource.thumbnailUrl || 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?q=80&w=1000&auto=format&fit=crop'}
-                                                                    alt=""
-                                                                    className="curriculum-thumb"
-                                                                    onError={(e) => {
-                                                                        const target = e.target as HTMLImageElement;
-                                                                        target.src = 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?q=80&w=1000&auto=format&fit=crop';
-                                                                    }}
-                                                                />
+                                {expandedModules.has(module.id) && (
+                                    <div style={{ padding: '0 16px 16px 16px' }}>
+                                        {/* Resource list from origin/main */}
+                                        <div className="flex flex-col" style={{ gap: '6px' }}>
+                                            {resources.filter(r => r.moduleId === module.id).length === 0 ? (
+                                                <div className="text-muted" style={{ textAlign: 'center', padding: '20px 12px', fontSize: '0.8rem', border: '1px dashed var(--border-subtle)', borderRadius: 'var(--radius-sm)' }}>
+                                                    No resources yet
+                                                </div>
+                                            ) : (
+                                                resources.filter(r => r.moduleId === module.id).map(resource => (
+                                                    <div key={resource.id} className="flex justify-between items-center" style={{
+                                                        padding: '10px 12px', borderRadius: 'var(--radius-sm)',
+                                                        background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-subtle)',
+                                                        transition: 'all 0.2s', cursor: 'default'
+                                                    }}
+                                                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.borderColor = 'rgba(var(--primary-rgb), 0.3)'; }}
+                                                        onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.borderColor = 'var(--border-subtle)'; }}
+                                                    >
+                                                        <div className="flex items-center" style={{ gap: '12px', minWidth: 0, flex: 1 }}>
+                                                            {resource.type === 'video' ? (
+                                                                <div style={{ position: 'relative', flexShrink: 0 }}>
+                                                                    <img
+                                                                        src={courseThumbnail || resource.thumbnailUrl || 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?q=80&w=1000&auto=format&fit=crop'}
+                                                                        alt=""
+                                                                        className="curriculum-thumb"
+                                                                        style={{ width: '60px', height: '40px', borderRadius: '4px', objectFit: 'cover' }}
+                                                                        onError={(e) => {
+                                                                            const target = e.target as HTMLImageElement;
+                                                                            target.src = 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?q=80&w=1000&auto=format&fit=crop';
+                                                                        }}
+                                                                    />
+                                                                </div>
+                                                            ) : (
+                                                                <div className="curriculum-icon-fallback" style={{
+                                                                    background: resource.type === 'pdf' ? 'rgba(239,68,68,0.1)' : 'rgba(16,185,129,0.1)',
+                                                                    color: resource.type === 'pdf' ? '#F87171' : '#34D399',
+                                                                    width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '4px'
+                                                                }}>
+                                                                    {getResourceIcon(resource.type)}
+                                                                </div>
+                                                            )}
+                                                            <div style={{ minWidth: 0, flex: 1 }}>
+                                                                <div style={{ fontSize: '0.85rem', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                                    {resource.title || resource.type}
+                                                                </div>
+                                                                <div className="flex items-center" style={{ gap: '6px', marginTop: '2px' }}>
+                                                                    {renderPlatformBadge(resource)}
+                                                                    {resource.isDemo && <span className="demo-tag">Demo</span>}
+                                                                </div>
                                                             </div>
-                                                        ) : (
-                                                            <div className="curriculum-icon-fallback" style={{
-                                                                background: resource.type === 'pdf' ? 'rgba(239,68,68,0.1)' : 'rgba(16,185,129,0.1)',
-                                                                color: resource.type === 'pdf' ? '#F87171' : '#34D399'
-                                                            }}>
-                                                                {getResourceIcon(resource.type)}
-                                                            </div>
-                                                        )}
-                                                        <div style={{ minWidth: 0, flex: 1 }}>
-                                                            <div style={{ fontSize: '0.85rem', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                                                {resource.title || resource.type}
-                                                            </div>
-                                                            <div className="flex items-center" style={{ gap: '6px', marginTop: '2px' }}>
-                                                                {renderPlatformBadge(resource)}
-                                                                {resource.type === 'pdf' && resource.size && (
-                                                                    <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>
-                                                                        {resource.size} • {resource.fileFormat}
-                                                                    </span>
-                                                                )}
+                                                            <div className="res-actions flex gap-2">
+                                                                <a href={resource.url} target="_blank" rel="noopener noreferrer" className="icon-btn" style={{ width: '28px', height: '28px', padding: 0 }}><ExternalLink size={14} /></a>
+                                                                <button onClick={() => openEditResource(module.id, resource)} className="icon-btn" style={{ width: '28px', height: '28px', padding: 0 }}><Edit2 size={14} /></button>
+                                                                <button onClick={() => handleDeleteResource(resource.id)} className="icon-btn text-error" style={{ width: '28px', height: '28px', padding: 0 }}><Trash2 size={14} /></button>
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="flex items-center" style={{ gap: '2px', flexShrink: 0, marginLeft: '8px' }}>
-                                                        <a href={resource.url} target="_blank" rel="noopener noreferrer" className="icon-btn" style={{ width: '28px', height: '28px', border: 'none', background: 'transparent' }} title="Open">
-                                                            <ExternalLink size={13} />
-                                                        </a>
-                                                        <button type="button" className="icon-btn" style={{ width: '28px', height: '28px', border: 'none', background: 'transparent' }} onClick={() => openEditResource(module.id, resource)} title="Edit">
-                                                            <Edit2 size={13} />
-                                                        </button>
-                                                        <button type="button" className="icon-btn" style={{ width: '28px', height: '28px', border: 'none', background: 'transparent', color: 'var(--error)' }} onClick={() => handleDeleteResource(resource.id)} title="Delete">
-                                                            <Trash2 size={13} />
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            ))
-                                        )}
+                                                ))
+                                            )}
+                                            <button type="button" className="add-resource-inline mt-2 btn btn-secondary btn-sm flex items-center justify-center gap-1 w-full border-dashed" onClick={() => openAddResource(module.id)}>
+                                                <Plus size={14} /> Add item to this folder
+                                            </button>
+                                        </div>
                                     </div>
-                                </div>
-                            )}
-                        </div>
-                    ))}
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            <div className="curriculum-sidebar">
+                <div className="sidebar-glass-card">
+                    <h3 className="sidebar-card-title">Curriculum Studio</h3>
+                    <div className="sidebar-actions">
+                        <button className="sidebar-action-btn" onClick={() => {
+                            setEditingModule(null);
+                            setModuleForm({ title: '', description: '', order: modules.length + 1 });
+                            setShowModuleModal(true);
+                        }}>
+                            <Folder size={18} className="text-primary" />
+                            <span>Folder</span>
+                        </button>
+                        <button className="sidebar-action-btn" onClick={() => {
+                            if (modules.length === 0) {
+                                showToast("Please create a folder first", "warning");
+                                return;
+                            }
+                            openAddResource(modules[0].id);
+                        }}>
+                            <Play size={18} className="text-primary" />
+                            <span>Video</span>
+                        </button>
+                        {targetType === 'batch' && (
+                            <button className="sidebar-action-btn" onClick={() => setShowImportModal(true)}>
+                                <Copy size={18} className="text-primary" />
+                                <span>Import From Batch</span>
+                            </button>
+                        )}
+                    </div>
                 </div>
-            )}
+            </div>
+
+            {/* Existing Modals */}
+            <ImportBatchModal 
+                isOpen={showImportModal} 
+                onClose={() => setShowImportModal(false)}
+                targetBatchId={targetId}
+                onImportComplete={() => {
+                    // Subscriptions will auto-update
+                }}
+            />
 
             {/* Module Modal */}
             <Modal isOpen={showModuleModal} onClose={() => setShowModuleModal(false)} title={editingModule ? "Edit Module" : "Add Module"} maxWidth="500px">
@@ -657,7 +753,7 @@ export default function CurriculumBuilder({ courseId, courseThumbnail }: Curricu
                             {resourceForm.pdfInputMode === 'upload' && (
                                 <CloudinaryUpload
                                     label="Upload PDF / Document"
-                                    folder={`innov8/course-notes/${courseId}/${activeModuleId}`}
+                                    folder={`innov8/${targetType}-notes/${targetId}/${activeModuleId}`}
                                     acceptedTypes={[
                                         'application/pdf',
                                         'application/msword',
@@ -699,6 +795,20 @@ export default function CurriculumBuilder({ courseId, courseThumbnail }: Curricu
                                     </a>
                                 </div>
                             )}
+
+                            {/* Demo Toggle */}
+                            <div className="flex items-center gap-3 mt-4 p-3 rounded-lg" style={{ backgroundColor: 'rgba(52, 211, 153, 0.05)', border: '1px solid rgba(52, 211, 153, 0.2)' }}>
+                                <input 
+                                    type="checkbox" 
+                                    id="isDemo" 
+                                    checked={resourceForm.isDemo} 
+                                    onChange={e => setResourceForm({...resourceForm, isDemo: e.target.checked})}
+                                    style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                                />
+                                <label htmlFor="isDemo" style={{ cursor: 'pointer', margin: 0, fontSize: '0.9rem', fontWeight: 500, color: '#34D399' }}>
+                                    Available for Inactive Students (Demo Mode)
+                                </label>
+                            </div>
                         </>
                     )}
 

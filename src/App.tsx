@@ -24,6 +24,7 @@ import StudentDetailPage from './pages/StudentDetailPage';
 import ExamResultsPage from './pages/ExamResults';
 import JobsPage from './pages/JobsPage';
 import InterviewsPage from './pages/Interviews';
+import BatchesPage from './pages/Batches';
 
 interface PrivateRouteProps {
   children: React.ReactNode;
@@ -65,6 +66,7 @@ function App() {
                   <Route path="/exam-results" element={<PrivateRoute><Layout><ExamResultsPage /></Layout></PrivateRoute>} />
                   <Route path="/jobs" element={<PrivateRoute><Layout><JobsPage /></Layout></PrivateRoute>} />
                   <Route path="/interviews" element={<PrivateRoute><Layout><InterviewsPage /></Layout></PrivateRoute>} />
+                  <Route path="/batches" element={<PrivateRoute><Layout><BatchesPage /></Layout></PrivateRoute>} />
 
                   {/* Redirects */}
                   <Route path="/profile/:id" element={<Navigate to="/progress" replace />} />

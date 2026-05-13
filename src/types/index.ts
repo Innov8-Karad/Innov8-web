@@ -14,7 +14,9 @@ export interface User {
     name: string;
     phone: string;
     batch: string;
+    batchId?: string;
     course: string;
+    courseId?: string;
     enrollmentDate: Date;
     profilePhoto?: string;
     profilePhotoPublicId?: string;
@@ -117,6 +119,37 @@ export interface Course {
     updatedAt?: { seconds: number; nanoseconds: number };
 }
 
+export interface Batch {
+    id: string;
+    name: string;
+    batchCode: string;               // Admin-defined code shared offline with students
+    courseId?: string;
+    courseName?: string;
+    startDate?: Date | string;
+    endDate?: Date | string;
+    active: boolean;
+    studentCount: number;
+    description?: string;
+    createdAt: Date | { seconds: number; nanoseconds: number };
+    updatedAt?: Date | { seconds: number; nanoseconds: number };
+}
+
+export interface EnrollmentRequest {
+    id: string;
+    userId: string;
+    userName: string;
+    userEmail: string;
+    batchId: string;
+    batchName: string;
+    batchCode?: string;              // Batch code used to join
+    courseId?: string;
+    courseName?: string;
+    status: 'pending' | 'approved' | 'rejected';
+    requestedAt: Date | { seconds: number; nanoseconds: number };
+    resolvedAt?: Date | { seconds: number; nanoseconds: number };
+    resolvedBy?: string;
+}
+
 export interface CourseResource {
     id: string;
     moduleId?: string;
@@ -131,6 +164,7 @@ export interface CourseResource {
     cloudinaryPublicId?: string;
     size?: string;              // e.g. "2.3 MB"
     fileFormat?: string;        // e.g. "PDF", "DOC", "DOCX"
+    isDemo?: boolean;           // Whether inactive students can view this
 }
 
 export interface CourseModule {
@@ -180,6 +214,7 @@ export interface Resource {
     platform?: 'youtube' | 'vimeo' | 'cloudinary' | 'direct';
     duration?: string;
     thumbnailUrl?: string;
+    isDemo?: boolean;           // Whether inactive students can view this
 }
 
 export interface AssignmentSubmission {
