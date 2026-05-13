@@ -12,6 +12,7 @@ import StatCard from '../components/StatCard';
 import Avatar from '../components/Avatar';
 import { FormField, FormRow, FormActions } from '../components/FormField';
 import { uploadWithFallback } from '../lib/cloudinary';
+import CustomSelect from '../components/CustomSelect';
 
 export default function PlacementsPage() {
     // 1. Context
@@ -273,15 +274,16 @@ export default function PlacementsPage() {
                     </button>
                     <div className="flex items-center gap-sm">
                         <Calendar size={18} className="text-primary" />
-                        <select 
-                            value={selectedYear === 'all' ? '' : selectedYear} 
-                            onChange={(e) => setSelectedYear(Number(e.target.value))}
-                            className="select-input"
-                            style={{ padding: '6px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-card)' }}
-                        >
-                            <option value="" disabled>Year</option>
-                            {years.map(y => <option key={y} value={y}>{y}</option>)}
-                        </select>
+                        <CustomSelect
+                            options={[
+                                { value: 'all', label: 'View All' },
+                                ...years.map(y => ({ value: String(y), label: String(y) }))
+                            ]}
+                            value={String(selectedYear)}
+                            onChange={(val) => setSelectedYear(val === 'all' ? 'all' : Number(val))}
+                            placeholder="Year"
+                            className="text-sm"
+                        />
                     </div>
                 </div>
             </PageHeader>
@@ -453,34 +455,24 @@ export default function PlacementsPage() {
                             <input type="text" required placeholder={UI_STRINGS.PLACEMENTS.FORM_STREAM_PLACEHOLDER} value={storyForm.stream} onChange={e => setStoryForm({ ...storyForm, stream: e.target.value })} />
                         </FormField>
                         <FormField label="Field">
-                            <select 
-                                required 
-                                value={storyForm.field} 
-                                onChange={e => setStoryForm({ ...storyForm, field: e.target.value })}
-                                className="select-input"
-                                style={{ 
-                                    padding: '10px 12px', 
-                                    borderRadius: '8px', 
-                                    border: '1px solid var(--border-subtle)', 
-                                    backgroundColor: 'var(--input-bg)', 
-                                    color: 'var(--text-main)', 
-                                    width: '100%',
-                                    colorScheme: 'dark'
-                                }}
-                            >
-                                <option value="" disabled>Select Field</option>
-                                <option value="Engineering">Engineering</option>
-                                <option value="BSc">BSc</option>
-                                <option value="BCom">BCom</option>
-                                <option value="BCS">BCS</option>
-                                <option value="BCA">BCA</option>
-                                <option value="MBA">MBA</option>
-                                <option value="MCA">MCA</option>
-                                <option value="Diploma">Diploma</option>
-                                <option value="Agriculture">Agriculture</option>
-                                <option value="IT">IT</option>
-                                <option value="Other">Other</option>
-                            </select>
+                            <CustomSelect
+                                options={[
+                                    { value: 'Engineering', label: 'Engineering' },
+                                    { value: 'BSc', label: 'BSc' },
+                                    { value: 'BCom', label: 'BCom' },
+                                    { value: 'BCS', label: 'BCS' },
+                                    { value: 'BCA', label: 'BCA' },
+                                    { value: 'MBA', label: 'MBA' },
+                                    { value: 'MCA', label: 'MCA' },
+                                    { value: 'Diploma', label: 'Diploma' },
+                                    { value: 'Agriculture', label: 'Agriculture' },
+                                    { value: 'IT', label: 'IT' },
+                                    { value: 'Other', label: 'Other' }
+                                ]}
+                                value={storyForm.field}
+                                onChange={(val) => setStoryForm({ ...storyForm, field: val })}
+                                placeholder="Select Field"
+                            />
                         </FormField>
                     </FormRow>
                     <FormActions>

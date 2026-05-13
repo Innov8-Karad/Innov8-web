@@ -14,6 +14,7 @@ import DataTable from '../components/DataTable';
 import type { Column } from '../components/DataTable';
 import { useToast } from '../hooks/useToast';
 import { FormField, FormRow, FormActions } from '../components/FormField';
+import CustomSelect from '../components/CustomSelect';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -718,10 +719,12 @@ export default function FeesPage() {
             <Modal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} title={UI_STRINGS.FEES.MODAL_TITLE}>
                 <form onSubmit={handleAddFee} className="form-layout">
                     <FormField label={UI_STRINGS.FEES.FORM_SELECT_STUDENT}>
-                        <select required value={newFee.userId} onChange={e => setNewFee({ ...newFee, userId: e.target.value })}>
-                            <option value="">{UI_STRINGS.FEES.FORM_SELECT_STUDENT_PLACEHOLDER}</option>
-                            {users.map(u => <option key={u.id} value={u.id}>{u.name} ({u.email})</option>)}
-                        </select>
+                        <CustomSelect
+                            options={users.map(u => ({ value: u.id, label: `${u.name} (${u.email})` }))}
+                            value={newFee.userId}
+                            onChange={(val) => setNewFee({ ...newFee, userId: val })}
+                            placeholder={UI_STRINGS.FEES.FORM_SELECT_STUDENT_PLACEHOLDER}
+                        />
                     </FormField>
                     <FormRow>
                         <FormField label={UI_STRINGS.FEES.FORM_AMOUNT}>
@@ -786,9 +789,11 @@ export default function FeesPage() {
                                 </FormField>
                             </FormRow>
                             <FormField label={UI_STRINGS.FEES.INSTALLMENT_METHOD}>
-                                <select value={newInstallment.method} onChange={e => setNewInstallment({ ...newInstallment, method: e.target.value as 'Cash' | 'Bank' | 'Manual' })}>
-                                    {PAYMENT_METHODS.map(m => <option key={m.id} value={m.id}>{m.label}</option>)}
-                                </select>
+                                <CustomSelect
+                                    options={PAYMENT_METHODS.map(m => ({ value: m.id, label: m.label }))}
+                                    value={newInstallment.method}
+                                    onChange={(val) => setNewInstallment({ ...newInstallment, method: val as 'Cash' | 'Bank' | 'Manual' })}
+                                />
                             </FormField>
                             <FormField label={UI_STRINGS.FEES.INSTALLMENT_NOTES}>
                                 <input type="text" placeholder="e.g. 1st installment" value={newInstallment.notes} onChange={e => setNewInstallment({ ...newInstallment, notes: e.target.value })} />
