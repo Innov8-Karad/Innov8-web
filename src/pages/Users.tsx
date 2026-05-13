@@ -15,6 +15,7 @@ import CloudinaryUpload from '../components/CloudinaryUpload';
 import { FormField, FormRow, FormActions } from '../components/FormField';
 import { useUser } from '../hooks/useUser';
 import { useToast } from '../hooks/useToast';
+import CustomSelect from '../components/CustomSelect';
 
 export default function UsersPage() {
     const { students: users, loading: usersLoading, error: usersError } = useUser();
@@ -292,12 +293,12 @@ export default function UsersPage() {
                     </FormRow>
                     <FormRow>
                         <FormField label={UI_STRINGS.USERS.SELECT_COURSE}>
-                            <select required value={newUser.course} onChange={e => setNewUser({ ...newUser, course: e.target.value })}>
-                                <option value="">{UI_STRINGS.USERS.SELECT_COURSE_PLACEHOLDER}</option>
-                                {courses.map(course => (
-                                    <option key={course.id} value={course.title}>{course.title}</option>
-                                ))}
-                            </select>
+                            <CustomSelect
+                                options={courses.map(c => ({ value: c.title, label: c.title }))}
+                                value={newUser.course}
+                                onChange={(val) => setNewUser({ ...newUser, course: val })}
+                                placeholder={UI_STRINGS.USERS.SELECT_COURSE_PLACEHOLDER}
+                            />
                         </FormField>
                         <FormField label="Skills (comma-separated)">
                             <input type="text" placeholder="React, Node.js, UI/UX" value={newUser.skills} onChange={e => setNewUser({ ...newUser, skills: e.target.value })} />

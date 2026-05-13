@@ -12,10 +12,11 @@ import DataTable from '../components/DataTable';
 import type { Column } from '../components/DataTable';
 import {
     Calendar, ClipboardCheck, BarChart2, CheckCircle2, XCircle, Clock,
-    Users, Search, ChevronDown, Save, TrendingUp,
+    Users, Search, Save, TrendingUp,
     ChevronLeft, ChevronRight, Percent, UserCheck
 } from 'lucide-react';
 import { useToast } from '../hooks/useToast';
+import CustomSelect from '../components/CustomSelect';
 
 /* ─────────────────────────────────────────────
    Attendance Page – Premium SaaS Dashboard
@@ -507,21 +508,19 @@ export default function AttendancePage() {
                 <div className="att-control-bar__filters">
                     <div className="att-select-group">
                         <label>Course</label>
-                        <div className="att-select-wrap">
-                            <select value={selectedCourseId} onChange={(e) => setSelectedCourseId(e.target.value)}>
-                                {courses.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
-                            </select>
-                            <ChevronDown size={14} className="att-select-chevron" />
-                        </div>
+                        <CustomSelect
+                            options={courses.map(c => ({ value: c.id, label: c.title }))}
+                            value={selectedCourseId}
+                            onChange={(val) => setSelectedCourseId(val)}
+                        />
                     </div>
                     <div className="att-select-group">
                         <label>Batch</label>
-                        <div className="att-select-wrap">
-                            <select value={selectedBatchId} onChange={(e) => setSelectedBatchId(e.target.value)}>
-                                {batches.map(b => <option key={b} value={b}>{b}</option>)}
-                            </select>
-                            <ChevronDown size={14} className="att-select-chevron" />
-                        </div>
+                        <CustomSelect
+                            options={batches.map(b => ({ value: b || '', label: b || '' }))}
+                            value={selectedBatchId}
+                            onChange={(val) => setSelectedBatchId(val)}
+                        />
                     </div>
                     <div className="att-select-group">
                         <label>Date</label>
