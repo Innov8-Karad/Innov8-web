@@ -16,17 +16,33 @@ import {
     Menu,
     ClipboardList,
     FolderKanban,
-    CalendarDays
+    CalendarDays,
+    Shield,
 } from 'lucide-react';
 import logo from '../assets/logo.png';
 import { ThemeToggle } from './ThemeToggle';
-import { UI_STRINGS } from '../constants';
+import { UI_STRINGS, COLLECTIONS } from '../constants';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
     const { logout, currentUser } = useAuth()!;
     const { showToast } = useToast();
     const navigate = useNavigate();
     const [sidebarOpen, setSidebarOpen] = React.useState(true);
+    const [pendingDeviceCount, setPendingDeviceCount] = React.useState(0);
+
+    // Real-time pending device count for badge
+    React.useEffect(() => {
+        const q = query(
+            collection(db, COLLECTIONS.DEVICES),
+            where('status', '==', 'pending')
+        );
+        const unsub = onSnapshot(q, (snap) => {
+            setPendingDeviceCount(snap.size);
+        });
+        return () => unsub();
+    }, []);
 
     async function handleLogout() {
         try {
@@ -51,6 +67,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         { icon: BookOpen, label: UI_STRINGS.NAV.COURSES, path: '/courses' },
         { icon: Award, label: UI_STRINGS.NAV.PROGRESS, path: '/progress' },
         { icon: Bell, label: UI_STRINGS.NAV.ANNOUNCEMENTS, path: '/announcements' },
+        { icon: Shield, label: UI_STRINGS.DEVICE_APPROVALS.TITLE, path: '/device-approvals', badge: pendingDeviceCount },
     ];
 
     return (
@@ -85,6 +102,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                         >
                             <item.icon size={20} />
                             {sidebarOpen && <span className="nav-link-label">{item.label}</span>}
+                            {sidebarOpen && 'badge' in item && item.badge! > 0 && (
+                                <span className="nav-link-badge">{item.badge}</span>
+                            )}
                         </NavLink>
                     ))}
                 </nav>
@@ -115,3 +135,4 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </div>
     );
 }
+

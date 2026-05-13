@@ -27,6 +27,7 @@ export const userService = {
     const docData: DocumentData = {
       ...data,
       role: 'student',
+      deviceCount: 0,
       enrollmentDate: Timestamp.now(),
       createdAt: Timestamp.now()
     };
