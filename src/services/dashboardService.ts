@@ -58,7 +58,7 @@ export const dashboardService = {
     const notify = () => {
       // Calculate success rate based on total students to avoid Infinity/NaN
       const rate = currentStats.totalStudents > 0 
-        ? (totalPlaced / currentStats.totalStudents) * 100 
+        ? Math.min(100, (totalPlaced / currentStats.totalStudents) * 100) 
         : 0;
       callback({ ...currentStats, placementSuccessRate: Number(rate.toFixed(1)) });
     };

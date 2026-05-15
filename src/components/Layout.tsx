@@ -75,24 +75,26 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     ];
 
     return (
-        <div className="flex" style={{ minHeight: '100vh' }}>
+        <div className="flex" style={{ minHeight: '100vh', position: 'relative' }}>
             {/* Sidebar */}
-            <aside className="sidebar" style={{ width: sidebarOpen ? '260px' : '80px' }}>
+            <aside className={`sidebar ${sidebarOpen ? 'open' : 'collapsed'}`}>
+                {/* Header - Fixed height */}
                 <div className="sidebar-header" style={{ justifyContent: sidebarOpen ? 'space-between' : 'center' }}>
                     {sidebarOpen && (
                         <div className="flex items-center">
-                            <img src={logo} alt="Innov8 Logo" style={{ height: '100px', width: 'auto', maxWidth: '100%' }} />
+                            <img src={logo} alt="Innov8 Logo" style={{ height: '48px', width: 'auto', maxWidth: '100%' }} />
                         </div>
                     )}
                     <div className="flex items-center gap-2">
                         <ThemeToggle />
                         <button onClick={() => setSidebarOpen(!sidebarOpen)} className="menu-btn">
-                            <Menu size={20} />
+                            <Menu size={18} />
                         </button>
                     </div>
                 </div>
 
-                <nav className="sidebar-nav">
+                {/* Navigation - Scrollable area */}
+                <nav className="sidebar-nav custom-scrollbar">
                     {navItems.map((item) => (
                         <NavLink
                             key={item.path}
@@ -100,41 +102,37 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                             className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
                             style={{
                                 justifyContent: sidebarOpen ? 'flex-start' : 'center',
-                                borderRadius: sidebarOpen ? '0 12px 12px 0' : '8px',
-                                margin: sidebarOpen ? '0 12px 4px 0' : '0 8px 4px 8px'
+                                borderRadius: sidebarOpen ? '0 12px 12px 0' : '10px',
+                                margin: sidebarOpen ? '0 12px 6px 0' : '0 8px 6px 8px'
                             }}
                         >
-                            <item.icon size={20} />
+                            <div className="nav-icon-wrapper">
+                                <item.icon size={20} />
+                            </div>
                             {sidebarOpen && <span className="nav-link-label">{item.label}</span>}
                             {sidebarOpen && 'badge' in item && item.badge! > 0 && (
-                                <span className="nav-link-badge">{item.badge}</span>
+                                <span className="nav-link-badge animate-bounce-slow">{item.badge}</span>
                             )}
+                            {/* Tooltip for collapsed state */}
+                            {!sidebarOpen && <div className="nav-tooltip">{item.label}</div>}
                         </NavLink>
                     ))}
                 </nav>
 
+                {/* Footer - Fixed height */}
                 <div className="sidebar-footer">
-                    <div className="flex items-center mb-md" style={{ justifyContent: sidebarOpen ? 'flex-start' : 'center' }}>
-                        <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
-                            {UI_STRINGS.NAV.ADMIN.charAt(0)}
-                        </div>
-                        {sidebarOpen && (
-                            <div style={{ marginLeft: '12px', overflow: 'hidden' }}>
-                                <p style={{ margin: 0, color: 'var(--text-main)', fontSize: '0.9rem' }}>{UI_STRINGS.NAV.ADMIN}</p>
-                                <p style={{ margin: 0, fontSize: '0.8rem' }}>{currentUser?.email}</p>
-                            </div>
-                        )}
-                    </div>
-                    <button onClick={handleLogout} className="logout-btn" style={{ justifyContent: sidebarOpen ? 'flex-start' : 'center' }}>
-                        <LogOut size={20} />
-                        {sidebarOpen && <span style={{ marginLeft: '12px' }}>{UI_STRINGS.NAV.LOGOUT}</span>}
+                    <button onClick={handleLogout} className="logout-btn-premium" style={{ justifyContent: sidebarOpen ? 'flex-start' : 'center' }}>
+                        <LogOut size={18} />
+                        {sidebarOpen && <span>{UI_STRINGS.NAV.LOGOUT}</span>}
                     </button>
                 </div>
             </aside>
 
             {/* Main Content */}
             <main className="main-content" style={{ marginLeft: sidebarOpen ? '260px' : '80px' }}>
-                {children}
+                <div className="content-container">
+                    {children}
+                </div>
             </main>
         </div>
     );
