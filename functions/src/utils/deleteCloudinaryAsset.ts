@@ -11,6 +11,7 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { onCall, HttpsError, type CallableRequest } from "firebase-functions/v2/https";
+import { validateAuth } from "./auth";
 import * as admin from "firebase-admin";
 
 if (!admin.apps.length) {
@@ -20,13 +21,8 @@ if (!admin.apps.length) {
 export const deleteCloudinaryAsset = onCall(
   { maxInstances: 10, region: "asia-south1" },
   async (request: CallableRequest) => {
-    // Verify authentication
-    if (!request.auth) {
-      throw new HttpsError(
-        "unauthenticated",
-        "You must be logged in to delete assets."
-      );
-    }
+    // Requirement: Global Auth Middleware (validate check)
+    await validateAuth(request);
 
     const { publicId, resourceType } = request.data;
 
@@ -38,7 +34,6 @@ export const deleteCloudinaryAsset = onCall(
     }
 
     // Get Cloudinary config from environment
-    // For Firebase Functions v2, use defineSecret or process.env
     const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
     const apiKey = process.env.CLOUDINARY_API_KEY;
     const apiSecret = process.env.CLOUDINARY_API_SECRET;

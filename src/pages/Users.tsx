@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import type { User, Course } from '../types';
-import { Edit2, Trash2, Ban } from 'lucide-react';
+import { Edit2, Trash2, Ban, ShieldCheck, ShieldOff, AlertTriangle, CheckCircle } from 'lucide-react';
 import { userService } from '../services/userService';
 import { courseService } from '../services/courseService';
 import { UI_STRINGS } from '../constants';
@@ -25,10 +25,17 @@ export default function UsersPage() {
     const [viewingUser, setViewingUser] = useState<User | null>(null);
     const [deletingUser, setDeletingUser] = useState<User | null>(null);
     const [courses, setCourses] = useState<Course[]>([]);
-    
+    const [activeTab, setActiveTab] = useState<'active' | 'blocked'>('active');
+
     // Photo upload states
     const [uploadedPhotoUrl, setUploadedPhotoUrl] = useState<string | null>(null);
     const [uploadingPhoto, setUploadingPhoto] = useState(false);
+
+    // Block/Unblock states
+    const [blockingUser, setBlockingUser] = useState<User | null>(null);
+    const [unblockingUser, setUnblockingUser] = useState<User | null>(null);
+    const [blockReason, setBlockReason] = useState('');
+    const [blockLoading, setBlockLoading] = useState(false);
 
     const [newUser, setNewUser] = useState({
         name: '',
@@ -41,6 +48,10 @@ export default function UsersPage() {
     });
     const [editingUser, setEditingUser] = useState<User | null>(null);
     const { showToast } = useToast();
+
+    // Split users into active and blocked
+    const activeUsers = useMemo(() => users.filter(u => !u.isBlocked), [users]);
+    const blockedUsers = useMemo(() => users.filter(u => u.isBlocked), [users]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -61,7 +72,6 @@ export default function UsersPage() {
 
     const handleAddStudent = async (e: React.FormEvent) => {
         e.preventDefault();
-
         const phoneRegex = /^[0-9]{10}$/;
         if (!phoneRegex.test(newUser.phone)) {
             setError("Mobile number must be exactly 10 digits");
@@ -71,11 +81,9 @@ export default function UsersPage() {
         try {
             setUploadingPhoto(true);
             const photoUrl = uploadedPhotoUrl || newUser.profilePhoto;
-
             const parsedSkills = newUser.skills
                 ? newUser.skills.split(',').map(s => s.trim()).filter(Boolean)
                 : [];
-
             if (editingUser) {
                 await userService.updateUser(editingUser.id, {
                     ...newUser,
@@ -111,16 +119,32 @@ export default function UsersPage() {
         setNewUser({ name: '', email: '', phone: '', batch: '', course: '', skills: '', profilePhoto: '' });
     };
 
-
-
-
-    const handleToggleBlock = async (user: User) => {
+    const handleBlockUser = async () => {
+        if (!blockingUser) return;
+        setBlockLoading(true);
         try {
-            const newBlockStatus = !user.isBlocked;
-            await userService.updateUser(user.id, { isBlocked: newBlockStatus });
-            showToast(`Student ${newBlockStatus ? 'blocked' : 'unblocked'}`, "success");
+            await userService.blockUser(blockingUser.id, blockReason);
+            showToast(UI_STRINGS.USERS.BLOCK_SUCCESS, "success");
+            setBlockingUser(null);
+            setBlockReason('');
         } catch {
-            showToast("Failed to update block status", "error");
+            showToast(UI_STRINGS.USERS.BLOCK_ERROR, "error");
+        } finally {
+            setBlockLoading(false);
+        }
+    };
+
+    const handleUnblockUser = async () => {
+        if (!unblockingUser) return;
+        setBlockLoading(true);
+        try {
+            await userService.unblockUser(unblockingUser.id);
+            showToast(UI_STRINGS.USERS.UNBLOCK_SUCCESS, "success");
+            setUnblockingUser(null);
+        } catch {
+            showToast(UI_STRINGS.USERS.BLOCK_ERROR, "error");
+        } finally {
+            setBlockLoading(false);
         }
     };
 
@@ -150,8 +174,8 @@ export default function UsersPage() {
         setShowModal(true);
     };
 
-
-    const columns: Column<User>[] = [
+    // Active students columns
+    const activeColumns: Column<User>[] = [
         {
             key: 'name',
             header: UI_STRINGS.USERS.TH_NAME,
@@ -207,8 +231,84 @@ export default function UsersPage() {
                     <button className="icon-btn" title="Delete Student" onClick={() => setDeletingUser(user)} style={{ color: 'var(--error)' }}>
                         <Trash2 size={18} />
                     </button>
-                    <button className="icon-btn" title={user.isBlocked ? 'Unblock Student' : 'Block Student'} onClick={() => handleToggleBlock(user)} style={{ color: user.isBlocked ? 'var(--error)' : 'var(--text-secondary)' }}>
+                    <button className="icon-btn" title="Block Student" onClick={() => setBlockingUser(user)} style={{ color: 'var(--text-secondary)' }}>
                         <Ban size={18} />
+                    </button>
+                </div>
+            ),
+        },
+    ];
+
+    // Blocked students columns
+    const blockedColumns: Column<User>[] = [
+        {
+            key: 'name',
+            header: UI_STRINGS.USERS.TH_NAME,
+            width: '22%',
+            render: (user) => (
+                <div className="flex items-center">
+                    <Avatar src={user.profilePhoto} fallback={user.name?.charAt(0) || '?'} size="sm" className="mr-3" />
+                    <div style={{ marginLeft: '12px' }}>
+                        <div className="font-medium">{user.name}</div>
+                        <div className="text-xs text-muted">{user.email}</div>
+                    </div>
+                </div>
+            ),
+        },
+        {
+            key: 'phone',
+            header: 'Mobile',
+            width: '12%',
+            render: (user) => <span className="text-sm">{user.phone}</span>,
+        },
+        {
+            key: 'batch',
+            header: UI_STRINGS.USERS.TH_BATCH,
+            width: '10%',
+            render: (user) => user.batch ? (
+                <span style={{ backgroundColor: 'rgba(99, 102, 241, 0.1)', color: 'var(--accent-blue)', padding: '4px 8px', borderRadius: '4px', fontSize: '0.85rem' }}>
+                    {user.batch}
+                </span>
+            ) : <span className="text-xs text-muted">—</span>,
+        },
+        {
+            key: 'course',
+            header: UI_STRINGS.USERS.TH_COURSE,
+            width: '13%',
+            render: (user) => user.course || <span className="text-xs text-muted" style={{ fontStyle: 'italic' }}>N/A</span>,
+        },
+        {
+            key: 'blockedAt',
+            header: UI_STRINGS.USERS.BLOCKED_DATE,
+            width: '13%',
+            render: (user) => {
+                if (!user.blockedAt) return <span className="text-xs text-muted">—</span>;
+                const date = user.blockedAt instanceof Date ? user.blockedAt : new Date(user.blockedAt);
+                return <span className="text-sm" style={{ color: '#f87171' }}>{date.toLocaleDateString()}</span>;
+            },
+        },
+        {
+            key: 'blockedReason',
+            header: UI_STRINGS.USERS.BLOCKED_REASON,
+            width: '15%',
+            render: (user) => user.blockedReason ? (
+                <span className="block-reason-text" title={user.blockedReason}>{user.blockedReason}</span>
+            ) : (
+                <span className="block-reason-text empty">No reason provided</span>
+            ),
+        },
+        {
+            key: 'actions',
+            header: UI_STRINGS.USERS.TH_ACTIONS,
+            width: '15%',
+            align: 'center',
+            render: (user) => (
+                <div className="flex items-center gap-2 justify-center">
+                    <button className="btn-unblock" onClick={() => setUnblockingUser(user)}>
+                        <ShieldCheck size={15} /> Unblock
+                    </button>
+                    <button className="icon-btn" title="Delete Student" onClick={() => setDeletingUser(user)} style={{ color: 'var(--error)' }}>
+                        <Trash2 size={16} />
                     </button>
                 </div>
             ),
@@ -231,26 +331,71 @@ export default function UsersPage() {
                 onAction={() => setShowModal(true)}
             />
 
-            <div className="card mb-lg">
+            {/* Tab Navigation */}
+            <div className="tab-navigation" style={{ marginBottom: '20px' }}>
+                <button
+                    className={`tab-btn ${activeTab === 'active' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('active')}
+                >
+                    <ShieldCheck size={18} />
+                    {UI_STRINGS.USERS.TAB_ACTIVE}
+                    <span className="tab-count-badge">{activeUsers.length}</span>
+                </button>
+                <button
+                    className={`tab-btn ${activeTab === 'blocked' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('blocked')}
+                >
+                    <ShieldOff size={18} />
+                    {UI_STRINGS.USERS.TAB_BLOCKED}
+                    {blockedUsers.length > 0 && (
+                        <span className="tab-count-badge danger">{blockedUsers.length}</span>
+                    )}
+                </button>
+            </div>
 
-                 <DataTable
-                 columns={columns}
-                 data={users}
-                 keyExtractor={(user) => user.id}
-                 emptyMessage={UI_STRINGS.USERS.EMPTY}
-                 searchPlaceholder="Search users by name, email, or role..."
-                 searchable
-                 pageSize={10}
-             />
-</div>
+            {/* Tab Content */}
+            <div className="card mb-lg tab-content">
+                {activeTab === 'active' ? (
+                    <DataTable
+                        columns={activeColumns}
+                        data={activeUsers}
+                        keyExtractor={(user) => user.id}
+                        emptyMessage={UI_STRINGS.USERS.EMPTY}
+                        searchPlaceholder="Search students by name, email, or batch..."
+                        searchable
+                        pageSize={10}
+                    />
+                ) : (
+                    blockedUsers.length > 0 ? (
+                        <DataTable
+                            columns={blockedColumns}
+                            data={blockedUsers}
+                            keyExtractor={(user) => user.id}
+                            emptyMessage={UI_STRINGS.USERS.BLOCKED_EMPTY}
+                            searchPlaceholder="Search blocked students..."
+                            searchable
+                            pageSize={10}
+                            renderAfterRow={() => null}
+                        />
+                    ) : (
+                        <div className="blocked-empty-state">
+                            <div className="blocked-empty-icon">
+                                <CheckCircle size={36} />
+                            </div>
+                            <h3>All Clear!</h3>
+                            <p>{UI_STRINGS.USERS.BLOCKED_EMPTY}</p>
+                        </div>
+                    )
+                )}
+            </div>
 
-            {/* Add Student Modal */}
-            <Modal 
-                isOpen={showModal} 
+            {/* Add/Edit Student Modal */}
+            <Modal
+                isOpen={showModal}
                 onClose={() => {
                     setShowModal(false);
                     resetForm();
-                }} 
+                }}
                 title={editingUser ? "Edit Student" : UI_STRINGS.USERS.MODAL_TITLE}
             >
                 <form onSubmit={handleAddStudent} className="form-layout">
@@ -276,15 +421,15 @@ export default function UsersPage() {
                     </FormRow>
                     <FormRow>
                         <FormField label={UI_STRINGS.USERS.FORM_PHONE}>
-                            <input 
-                                type="tel" 
-                                required 
+                            <input
+                                type="tel"
+                                required
                                 maxLength={10}
-                                value={newUser.phone} 
+                                value={newUser.phone}
                                 onChange={e => {
                                     const val = e.target.value.replace(/\D/g, '');
                                     setNewUser({ ...newUser, phone: val });
-                                }} 
+                                }}
                             />
                         </FormField>
                         <FormField label={UI_STRINGS.USERS.FORM_BATCH}>
@@ -323,7 +468,6 @@ export default function UsersPage() {
                             </div>
                             <p style={{ color: 'var(--primary)', fontWeight: 500 }}>{viewingUser.course} • {UI_STRINGS.USERS.TH_BATCH} {viewingUser.batch}</p>
                         </div>
-
                         <div className="grid-single" style={{ gap: 'var(--space-lg)' }}>
                             <div className="glass-card" style={{ padding: 'var(--space-md)', borderRadius: 'var(--radius-md)' }}>
                                 <h3 className="section-label mb-md" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{UI_STRINGS.USERS.CONTACT_INFO}</h3>
@@ -338,7 +482,6 @@ export default function UsersPage() {
                                     </div>
                                 </div>
                             </div>
-
                             <div className="glass-card" style={{ padding: 'var(--space-md)', borderRadius: 'var(--radius-md)' }}>
                                 <h3 className="section-label mb-md" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{UI_STRINGS.USERS.ACADEMIC_DETAILS}</h3>
                                 <div className="grid-single" style={{ gap: '8px' }}>
@@ -352,7 +495,6 @@ export default function UsersPage() {
                                     </div>
                                 </div>
                             </div>
-
                             {viewingUser.skills && viewingUser.skills.length > 0 && (
                                 <div className="glass-card" style={{ padding: 'var(--space-md)', borderRadius: 'var(--radius-md)' }}>
                                     <h3 className="section-label mb-md" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{UI_STRINGS.USERS.ENROLLED_COURSES}</h3>
@@ -364,7 +506,6 @@ export default function UsersPage() {
                                 </div>
                             )}
                         </div>
-
                         <div className="mt-lg flex justify-center">
                             <button className="btn btn-secondary w-full" onClick={() => setViewingUser(null)}>
                                 {UI_STRINGS.USERS.CLOSE_DETAILS}
@@ -375,12 +516,7 @@ export default function UsersPage() {
             </Modal>
 
             {/* Delete Confirmation Modal */}
-            <Modal
-                isOpen={!!deletingUser}
-                onClose={() => setDeletingUser(null)}
-                title="Confirm Deletion"
-                maxWidth="400px"
-            >
+            <Modal isOpen={!!deletingUser} onClose={() => setDeletingUser(null)} title="Confirm Deletion" maxWidth="400px">
                 <div className="p-4" style={{ paddingTop: '16px', paddingBottom: '16px' }}>
                     <p style={{ marginBottom: '24px', color: 'var(--text-secondary)' }}>
                         Are you sure you want to delete <strong>{deletingUser?.name}</strong>? This action cannot be undone.
@@ -391,6 +527,92 @@ export default function UsersPage() {
                         </button>
                         <button className="btn btn-primary" style={{ backgroundColor: 'var(--error)', borderColor: 'var(--error)' }} onClick={confirmDelete}>
                             Delete
+                        </button>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* Block Confirmation Modal */}
+            <Modal
+                isOpen={!!blockingUser}
+                onClose={() => { setBlockingUser(null); setBlockReason(''); }}
+                title={UI_STRINGS.USERS.BLOCK_CONFIRM_TITLE}
+                maxWidth="480px"
+            >
+                <div style={{ padding: '16px' }}>
+                    <div className="block-warning-banner">
+                        <AlertTriangle size={20} />
+                        <div>
+                            <strong>{blockingUser?.name}</strong> will be immediately logged out from all devices and won't be able to access the platform until unblocked.
+                        </div>
+                    </div>
+
+                    <div style={{ marginBottom: '20px' }}>
+                        <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                            {UI_STRINGS.USERS.BLOCK_REASON_LABEL}
+                        </label>
+                        <textarea
+                            rows={3}
+                            placeholder={UI_STRINGS.USERS.BLOCK_REASON_PLACEHOLDER}
+                            value={blockReason}
+                            onChange={e => setBlockReason(e.target.value)}
+                            style={{ width: '100%', resize: 'vertical' }}
+                        />
+                    </div>
+
+                    <div className="flex justify-end gap-3">
+                        <button
+                            className="btn btn-secondary"
+                            onClick={() => { setBlockingUser(null); setBlockReason(''); }}
+                            disabled={blockLoading}
+                        >
+                            {UI_STRINGS.COMMON.CANCEL}
+                        </button>
+                        <button
+                            className="btn"
+                            style={{ backgroundColor: '#ef4444', color: '#fff', border: 'none', display: 'flex', alignItems: 'center', gap: '8px' }}
+                            onClick={handleBlockUser}
+                            disabled={blockLoading}
+                        >
+                            <Ban size={16} />
+                            {blockLoading ? 'Blocking...' : 'Block Student'}
+                        </button>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* Unblock Confirmation Modal */}
+            <Modal
+                isOpen={!!unblockingUser}
+                onClose={() => setUnblockingUser(null)}
+                title={UI_STRINGS.USERS.UNBLOCK_CONFIRM_TITLE}
+                maxWidth="420px"
+            >
+                <div style={{ padding: '16px' }}>
+                    <div style={{
+                        display: 'flex', alignItems: 'flex-start', gap: '12px',
+                        padding: '14px 16px', background: 'rgba(16, 185, 129, 0.08)',
+                        border: '1px solid rgba(16, 185, 129, 0.15)', borderRadius: '12px',
+                        marginBottom: '20px', color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: 1.6
+                    }}>
+                        <ShieldCheck size={20} style={{ flexShrink: 0, marginTop: '2px', color: '#10b981' }} />
+                        <div>
+                            <strong>{unblockingUser?.name}</strong> will regain full access to the platform and can log in again.
+                        </div>
+                    </div>
+
+                    <div className="flex justify-end gap-3">
+                        <button className="btn btn-secondary" onClick={() => setUnblockingUser(null)} disabled={blockLoading}>
+                            {UI_STRINGS.COMMON.CANCEL}
+                        </button>
+                        <button
+                            className="btn"
+                            style={{ backgroundColor: '#10b981', color: '#fff', border: 'none', display: 'flex', alignItems: 'center', gap: '8px' }}
+                            onClick={handleUnblockUser}
+                            disabled={blockLoading}
+                        >
+                            <ShieldCheck size={16} />
+                            {blockLoading ? 'Unblocking...' : 'Unblock Student'}
                         </button>
                     </div>
                 </div>

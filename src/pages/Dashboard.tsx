@@ -174,8 +174,8 @@ gap: 'var(--space-lg)'
 Growth Trends
 </h3>
 
-<div style={{ flex: 1, minHeight: 0 }}>
-<ResponsiveContainer width="100%" height="100%" minHeight={300} debounce={100}>
+<div style={{ flex: 1, minHeight: 300, position: 'relative' }}>
+<ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={300} debounce={100}>
 <AreaChart data={trends}>
 <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
 <XAxis dataKey="month" stroke="var(--chart-axis)" fontSize={12} tickLine={false} axisLine={false} />
@@ -200,8 +200,8 @@ Growth Trends
 Revenue Trend
 </h3>
 
-<div style={{ flex: 1, minHeight: 0 }}>
-<ResponsiveContainer width="100%" height="100%" minHeight={300} debounce={100}>
+<div style={{ flex: 1, minHeight: 300, position: 'relative' }}>
+<ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={300} debounce={100}>
 <BarChart data={trends}>
 <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
 <XAxis dataKey="month" stroke="var(--chart-axis)" fontSize={12} tickLine={false} axisLine={false} />

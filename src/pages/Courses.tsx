@@ -133,12 +133,27 @@ export default function CoursesPage() {
                     <div key={course.id} className="card stat-card-hover" style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', cursor: 'pointer' }} onClick={() => openEditModal(course)}>
                         <div style={{ height: '160px', backgroundColor: 'var(--bg-card-accent)', position: 'relative' }}>
                             {course.thumbnail ? (
-                                <img src={course.thumbnail} alt={course.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                            ) : (
-                                <div className="flex items-center justify-center text-muted" style={{ height: '100%' }}>
-                                    <Book size={48} />
-                                </div>
-                            )}
+                                <img 
+                                    src={course.thumbnail} 
+                                    alt={course.title} 
+                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                                    onError={(e) => {
+                                        (e.target as HTMLImageElement).onerror = null;
+                                        (e.target as HTMLImageElement).style.display = 'none';
+                                        // Show the fallback div instead
+                                        const parent = (e.target as HTMLImageElement).parentElement;
+                                        if (parent) {
+                                            const fallback = parent.querySelector('.image-fallback');
+                                            if (fallback) (fallback as HTMLElement).style.display = 'flex';
+                                        }
+                                    }}
+                                />
+                            ) : null}
+                            
+                            {/* Hidden fallback that shows on error */}
+                            <div className="image-fallback flex items-center justify-center text-muted" style={{ height: '100%', display: course.thumbnail ? 'none' : 'flex' }}>
+                                <Book size={48} />
+                            </div>
                             <div style={{ position: 'absolute', top: '12px', right: '12px' }}>
                                 <span style={{ backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem', color: 'white' }}>
                                     {course.isFree ? UI_STRINGS.COURSES.BADGE_FREE : `₹ ${course.price.toLocaleString()}`}

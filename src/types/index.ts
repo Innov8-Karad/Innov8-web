@@ -25,6 +25,10 @@ export interface User {
     role?: 'student' | 'admin';
     status?: 'active' | 'inactive';
     isBlocked?: boolean;
+    blockedAt?: Date;
+    blockedReason?: string;
+    isEligibleForExam?: boolean;
+    tokenVersion?: number;
     fcmTokens?: string[];            // FCM device tokens for push notifications
     deviceCount?: number;            // Number of registered devices
     activeDeviceDocId?: string;       // ID of the currently active device document
