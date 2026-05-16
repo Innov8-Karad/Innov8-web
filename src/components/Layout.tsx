@@ -28,7 +28,7 @@ import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-    const { logout, currentUser } = useAuth()!;
+    const { logout } = useAuth()!;
     const { showToast } = useToast();
     const navigate = useNavigate();
     const [sidebarOpen, setSidebarOpen] = React.useState(true);
