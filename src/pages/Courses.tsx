@@ -130,7 +130,7 @@ export default function CoursesPage() {
 
             <div className="grid-cards">
                 {courses.map((course: Course) => (
-                    <div key={course.id} className="card stat-card-hover" style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                    <div key={course.id} className="card stat-card-hover" style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', cursor: 'pointer' }} onClick={() => openEditModal(course)}>
                         <div style={{ height: '160px', backgroundColor: 'var(--bg-card-accent)', position: 'relative' }}>
                             {course.thumbnail ? (
                                 <img 
@@ -189,10 +189,10 @@ export default function CoursesPage() {
                                     </div>
                                 )}
                                 <div className="flex items-center gap-2">
-                                    <button className="icon-btn text-accent-blue" title="Edit Course" onClick={() => openEditModal(course)} style={{ padding: '6px' }}>
+                                    <button className="icon-btn text-accent-blue" title="Edit Course" onClick={(e) => { e.stopPropagation(); openEditModal(course); }} style={{ padding: '6px' }}>
                                         <Edit2 size={16} />
                                     </button>
-                                    <button className="icon-btn text-error" title="Delete Course" onClick={() => setDeletingCourse(course)} style={{ padding: '6px' }}>
+                                    <button className="icon-btn text-error" title="Delete Course" onClick={(e) => { e.stopPropagation(); setDeletingCourse(course); }} style={{ padding: '6px' }}>
                                         <Trash2 size={16} />
                                     </button>
                                 </div>
