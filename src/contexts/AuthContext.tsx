@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut, sendPasswordResetEmail, type User } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot, type FirestoreError } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 
 interface AuthContextType {
@@ -132,26 +132,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }
         }, AUTH_TIMEOUT_MS);
 
+        let userUnsubscribe: (() => void) | undefined;
+
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
             authResolved.current = true;
             clearTimeout(timeoutId);
             setTimedOut(false);
 
+            if (userUnsubscribe) {
+                userUnsubscribe();
+                userUnsubscribe = undefined;
+            }
+
             if (user) {
-                // Verify admin role on auth state change (e.g., page refresh)
-                try {
-                    const userDoc = await getDoc(doc(db, 'users', user.uid));
-                    if (userDoc.exists() && userDoc.data().role === 'admin') {
-                        setCurrentUser(user);
+                // Set up real-time listener for user document to catch "Blocked" status instantly
+                userUnsubscribe = onSnapshot(doc(db, 'users', user.uid), async (snapshot) => {
+                    if (snapshot.exists()) {
+                        const userData = snapshot.data();
+                        
+                        // Requirement: Immediate Auto Logout
+                        if (userData.isBlocked === true) {
+                            console.warn('[AuthContext] Account blocked by admin. Forcing logout.');
+                            await signOut(auth);
+                            setCurrentUser(null);
+                            // We don't have a toast here but the UI will redirect to /login via PrivateRoute
+                            return;
+                        }
+
+                        if (userData.role === 'admin') {
+                            setCurrentUser(user);
+                        } else {
+                            // Not admin — force sign out
+                            await signOut(auth);
+                            setCurrentUser(null);
+                        }
                     } else {
-                        // Not admin — force sign out
+                        // Document doesn't exist — maybe deleted?
                         await signOut(auth);
                         setCurrentUser(null);
                     }
-                } catch {
-                    // If Firestore check fails, still allow (graceful degradation)
-                    setCurrentUser(user);
-                }
+                }, async (error) => {
+                    console.error('[AuthContext] User listener error:', error);
+                    // If permission-denied, it means the user is blocked or session invalidated
+                    if (error.message?.includes('permission-denied') || (error as FirestoreError).code === 'permission-denied') {
+                        await signOut(auth);
+                        setCurrentUser(null);
+                    } else {
+                        // Fallback to initial check if it's another error
+                        setCurrentUser(user);
+                    }
+                });
             } else {
                 setCurrentUser(null);
             }
@@ -161,6 +191,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return () => {
             clearTimeout(timeoutId);
             unsubscribe();
+            if (userUnsubscribe) userUnsubscribe();
         };
     }, []);
 

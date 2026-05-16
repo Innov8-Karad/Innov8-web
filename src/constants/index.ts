@@ -168,6 +168,21 @@ export const UI_STRINGS = {
     CURRENT_STATUS_LABEL: 'Current Status:',
     STATUS_ACTIVE: 'Active',
     NOT_PROVIDED: 'Not provided',
+    // Block/Unblock
+    TAB_ACTIVE: 'Active Students',
+    TAB_BLOCKED: 'Blocked Students',
+    BLOCK_CONFIRM_TITLE: 'Block Student',
+    BLOCK_CONFIRM_MSG: 'Are you sure you want to block this student? They will be immediately logged out and unable to access the platform.',
+    BLOCK_REASON_LABEL: 'Block Reason (Optional)',
+    BLOCK_REASON_PLACEHOLDER: 'e.g. Violation of terms, Non-payment, etc.',
+    BLOCK_SUCCESS: 'Student blocked successfully',
+    UNBLOCK_CONFIRM_TITLE: 'Unblock Student',
+    UNBLOCK_CONFIRM_MSG: 'Are you sure you want to unblock this student? They will regain full access to the platform.',
+    UNBLOCK_SUCCESS: 'Student unblocked successfully',
+    BLOCKED_EMPTY: 'No blocked students found.',
+    BLOCKED_DATE: 'Blocked Date',
+    BLOCKED_REASON: 'Reason',
+    BLOCK_ERROR: 'Failed to update block status',
   },
   // Exams page
   EXAMS: {

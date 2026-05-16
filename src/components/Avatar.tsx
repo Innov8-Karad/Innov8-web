@@ -8,16 +8,22 @@ interface AvatarProps {
     className?: string;
 }
 
+import { useState } from 'react';
 import { getOptimizedProfileUrl } from '../lib/cloudinary';
 
 export default function Avatar({ src, alt, fallback, fallbackIcon, size = 'sm', upload, className = '' }: AvatarProps) {
+    const [imageError, setImageError] = useState(false);
     const sizeClass = `avatar-${size}`;
 
     return (
         <div className={`avatar ${sizeClass} ${upload ? 'avatar-upload' : ''} ${className}`}
              style={{ backgroundColor: 'var(--bg-card-accent)' }}>
-            {src ? (
-                <img src={getOptimizedProfileUrl(src)} alt={alt || 'Avatar'} />
+            {src && !imageError ? (
+                <img 
+                    src={getOptimizedProfileUrl(src)} 
+                    alt={alt || 'Avatar'} 
+                    onError={() => setImageError(true)}
+                />
             ) : fallbackIcon ? (
                 fallbackIcon
             ) : (

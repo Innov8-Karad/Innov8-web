@@ -173,7 +173,8 @@ export default function ProgressPage() {
                         <h3 className="text-lg font-semibold">Average Score by Batch</h3>
                     </div>
                     <div style={{ width: '100%', height: 350, display: 'flex', flexDirection: 'column' }}>
-                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={300} debounce={100}>
+                        <div style={{ height: '300px', minHeight: '300px', position: 'relative' }}>
+                          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={300} debounce={100}>
                             <BarChart 
                                 data={batchStats}
                                 margin={{
@@ -209,7 +210,8 @@ export default function ProgressPage() {
                                 </Bar>
                             </BarChart>
                         </ResponsiveContainer>
-                        {batchStats.length === 0 && (
+                      </div>
+                      {batchStats.length === 0 && (
                             <div className="flex items-center justify-center h-full text-muted italic">
                                 No Progress Data Available
                             </div>
@@ -223,43 +225,45 @@ export default function ProgressPage() {
                         <h3 className="text-lg font-semibold">Avg Attendance & Completion (%)</h3>
                     </div>
                     <div style={{ width: '100%', height: 350, display: 'flex', flexDirection: 'column' }}>
-                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={300} debounce={100}>
-                            <BarChart 
-                                data={batchStats} 
-                                layout="vertical"
-                                margin={{
-                                    top: 20,
-                                    right: 30,
-                                    left: 40,
-                                    bottom: 20
-                                }}
-                            >
-                                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--chart-grid)" />
-                                <XAxis type="number" hide />
-                                <YAxis 
-                                    dataKey="name" 
-                                    type="category" 
-                                    axisLine={false} 
-                                    tickLine={false} 
-                                    width={80}
-                                    stroke="var(--chart-axis)"
-                                    fontSize={12}
-                                />
-                                <Tooltip 
-                                    contentStyle={{ 
-                                        backgroundColor: 'var(--bg-card)',
-                                        borderRadius: '12px', 
-                                        border: '1px solid var(--border-subtle)', 
-                                        boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
-                                        padding: '12px',
-                                        color: 'var(--text-main)'
+                        <div style={{ height: '300px', minHeight: '300px', position: 'relative' }}>
+                            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={300} debounce={100}>
+                                <BarChart 
+                                    data={batchStats} 
+                                    layout="vertical"
+                                    margin={{
+                                        top: 20,
+                                        right: 30,
+                                        left: 40,
+                                        bottom: 20
                                     }}
-                                />
-                                <Legend wrapperStyle={{ paddingTop: '20px' }} />
-                                <Bar dataKey="avgAttendance" name="Attendance" fill="var(--primary)" radius={[0, 4, 4, 0]} barSize={20} />
-                                <Bar dataKey="avgCompletion" name="Completion Rate" fill="#10B981" radius={[0, 4, 4, 0]} barSize={20} />
-                            </BarChart>
-                        </ResponsiveContainer>
+                                >
+                                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--chart-grid)" />
+                                    <XAxis type="number" hide />
+                                    <YAxis 
+                                        dataKey="name" 
+                                        type="category" 
+                                        axisLine={false} 
+                                        tickLine={false} 
+                                        width={80}
+                                        stroke="var(--chart-axis)"
+                                        fontSize={12}
+                                    />
+                                    <Tooltip 
+                                        contentStyle={{ 
+                                            backgroundColor: 'var(--bg-card)',
+                                            borderRadius: '12px', 
+                                            border: '1px solid var(--border-subtle)', 
+                                            boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+                                            padding: '12px',
+                                            color: 'var(--text-main)'
+                                        }}
+                                    />
+                                    <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                                    <Bar dataKey="avgAttendance" name="Attendance" fill="var(--primary)" radius={[0, 4, 4, 0]} barSize={20} />
+                                    <Bar dataKey="avgCompletion" name="Completion Rate" fill="#10B981" radius={[0, 4, 4, 0]} barSize={20} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
                         {batchStats.length === 0 && (
                             <div className="flex items-center justify-center h-full text-muted italic">
                                 No Progress Data Available

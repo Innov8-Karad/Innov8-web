@@ -8,6 +8,7 @@ import {
   Timestamp,
   query,
   where,
+  increment,
   type DocumentData 
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -76,6 +77,28 @@ export const userService = {
   async deleteUser(id: string): Promise<void> {
     const docRef = doc(db, COLLECTIONS.USERS, id);
     await deleteDoc(docRef);
+  },
+
+  async blockUser(id: string, reason?: string): Promise<void> {
+    const docRef = doc(db, COLLECTIONS.USERS, id);
+    await updateDoc(docRef, {
+      isBlocked: true,
+      blockedAt: Timestamp.now(),
+      blockedReason: reason || '',
+      tokenVersion: increment(1),
+      updatedAt: Timestamp.now()
+    });
+  },
+
+  async unblockUser(id: string): Promise<void> {
+    const docRef = doc(db, COLLECTIONS.USERS, id);
+    await updateDoc(docRef, {
+      isBlocked: false,
+      blockedAt: null,
+      blockedReason: null,
+      tokenVersion: increment(1), // Forces all existing tokens to stay invalid
+      updatedAt: Timestamp.now()
+    });
   },
 
   /**

@@ -277,7 +277,8 @@ export default function ExamResultsPage() {
           <div className="card p-lg">
             <h3 className="section-title mb-md">{UI_STRINGS.EXAM_RESULTS.CHART_SCORE_DISTRIBUTION}</h3>
             <div style={{ width: '100%', height: 300, display: 'flex', flexDirection: 'column' }}>
-              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={300} debounce={100}>
+              <div style={{ height: '300px', minHeight: '300px', position: 'relative' }}>
+                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={300} debounce={100}>
                 <BarChart data={scoreDistribution} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
                   <XAxis dataKey="range" stroke="var(--chart-axis)" fontSize={12} tickLine={false} axisLine={false} />
@@ -291,8 +292,9 @@ export default function ExamResultsPage() {
               </ResponsiveContainer>
             </div>
           </div>
+        </div>
 
-          <div className="card p-lg">
+        <div className="card p-lg">
             <h3 className="section-title mb-md">{UI_STRINGS.EXAM_RESULTS.CHART_PASS_FAIL}</h3>
             <div style={{ width: '100%', height: 300, display: 'flex', flexDirection: 'column' }}>
               <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={100}>

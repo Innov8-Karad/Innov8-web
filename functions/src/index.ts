@@ -3,6 +3,7 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export { onUserCreated } from "./triggers/onUserCreated";
+export { onUserUpdated } from "./triggers/onUserUpdated";
 export { onAnnouncementCreated } from "./triggers/onAnnouncementCreated";
 export { onAssignmentGraded } from "./triggers/onAssignmentGraded";
 export { onFeeCreated } from "./triggers/onFeeCreated";

@@ -7,6 +7,7 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { validateAuth } from "../utils/auth";
 import * as admin from "firebase-admin";
 import { getUserTokens, getBatchTokens, sendPush } from "../utils/sendPush";
 
@@ -27,21 +28,17 @@ interface SendNotificationData {
 export const onSendNotification = onCall(
   { region: "asia-south1" },
   async (request) => {
-    // ── Auth Check ──
-    if (!request.auth) {
-      throw new HttpsError("unauthenticated", "You must be logged in.");
-    }
+    // ── Auth Check & Admin Check ──
+    const userData = await validateAuth(request);
 
-    const callerUid = request.auth.uid;
-
-    // Verify the caller is an admin
-    const callerDoc = await db.collection("users").doc(callerUid).get();
-    if (!callerDoc.exists || callerDoc.data()?.role !== "admin") {
+    if (userData.role !== "admin") {
       throw new HttpsError(
         "permission-denied",
         "Only admins can send notifications."
       );
     }
+
+    const callerUid = request.auth!.uid;
 
     // ── Validate Input ──
     const data = request.data as SendNotificationData;
