@@ -17,7 +17,7 @@ service cloud.firestore {
 
     function isAdmin() {
       return isAuthenticated()
-          && get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin';
+          && (request.auth.token.role == 'admin' || get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin');
     }
 
     function isOwner(userId) {
@@ -25,18 +25,9 @@ service cloud.firestore {
     }
 
     function isNotBlocked() {
-      // 1. Check custom claims for instant rejection (no DB cost)
-      if (request.auth.token.get('isBlocked', false) == true) {
-        return false;
-      }
-
-      // 2. Fetch fresh user data from DB
-      let userDoc = get(/databases/(default)/documents/users/$(request.auth.uid)).data;
-      
-      // 3. Strict Check: Blocked flag OR Token Version Mismatch
-      // If DB version is higher than token version, the token is stale/revoked
-      return userDoc.get('isBlocked', false) != true
-          && request.auth.token.get('tokenVersion', 0) >= userDoc.get('tokenVersion', 0);
+      return request.auth.token.get('isBlocked', false) != true
+          && get(/databases/(default)/documents/users/$(request.auth.uid)).data.get('isBlocked', false) != true
+          && request.auth.token.get('tokenVersion', 0) >= get(/databases/(default)/documents/users/$(request.auth.uid)).data.get('tokenVersion', 0);
     }
 
     // Authenticated AND not blocked (for student-facing reads)
@@ -55,7 +46,9 @@ service cloud.firestore {
     //             Cannot change own role
     // ═════════════════════════════════════════════════════════════════════
     match /users/{userId} {
-      allow read: if isAdmin() || (isOwner(userId) && isNotBlocked());
+      allow read: if isAdmin() 
+                    || isOwner(userId)
+                    || (isAuthenticated() && resource != null && resource.data.email.lower() == request.auth.token.email.lower());
 
       allow create: if isAdmin()
                     || (isOwner(userId)
@@ -68,14 +61,14 @@ service cloud.firestore {
                         && request.resource.data.diff(resource.data).affectedKeys()
                             .hasOnly(['name', 'phone', 'profilePhoto', 'skills', 'fcmTokens', 'activeDeviceDocId', 'updatedAt'])
                         // Basic safeguards
-                        && request.resource.data.role == resource.data.role
-                        && request.resource.data.email == resource.data.email
+                        && request.resource.data.get('role', '') == resource.data.get('role', '')
+                        && request.resource.data.get('email', '') == resource.data.get('email', '')
                         // Cannot unblock themselves
                         && request.resource.data.get('isBlocked', false) == resource.data.get('isBlocked', false)
                         // Cannot change token version
                         && request.resource.data.get('tokenVersion', 0) == resource.data.get('tokenVersion', 0)
                         // Device locking: can set but not change
-                        && (resource.data.activeDeviceDocId == null || request.resource.data.activeDeviceDocId == resource.data.activeDeviceDocId));
+                        && (resource.data.get('activeDeviceDocId', null) == null || request.resource.data.get('activeDeviceDocId', null) == resource.data.get('activeDeviceDocId', null)));
 
       allow delete: if isAdmin();
     }
@@ -90,9 +83,10 @@ service cloud.firestore {
     // ═════════════════════════════════════════════════════════════════════
     match /fees/{feeId} {
       allow read: if isAdmin()
-                  || (isActiveUser()
+                  || (isAuthenticated()
                       && (resource.data.studentId == request.auth.uid
-                          || resource.data.userId == request.auth.uid));
+                          || resource.data.userId == request.auth.uid
+                          || resource.data.email == request.auth.token.email));
 
       allow create, update, delete: if isAdmin();
 
@@ -112,7 +106,7 @@ service cloud.firestore {
     // Mobile:     Reads all courses and subcollections
     // ═════════════════════════════════════════════════════════════════════
     match /courses/{courseId} {
-      allow read: if isAdmin() || isActiveUser();
+      allow read: if isAuthenticated();
       allow create, delete: if isAdmin();
       allow update: if isAdmin()
                     || (isAuthenticated()
@@ -159,7 +153,7 @@ service cloud.firestore {
     // Mobile:     Reads all exams, reads single exam by ID
     // ═════════════════════════════════════════════════════════════════════
     match /exams/{examId} {
-      allow read: if isAdmin() || isActiveUser();
+      allow read: if isAuthenticated();
       allow create, update, delete: if isAdmin();
     }
 
@@ -173,7 +167,7 @@ service cloud.firestore {
     // ═════════════════════════════════════════════════════════════════════
     match /examResults/{resultId} {
       allow read: if isAdmin()
-                  || (isActiveUser()
+                  || (isAuthenticated()
                       && resource.data.userId == request.auth.uid);
 
       allow create: if isActiveUser()
@@ -190,7 +184,7 @@ service cloud.firestore {
     // Mobile:     Reads all (client-side filtering by batch/audience)
     // ═════════════════════════════════════════════════════════════════════
     match /announcements/{announcementId} {
-      allow read: if isAdmin() || isActiveUser();
+      allow read: if isAuthenticated();
       allow create, update, delete: if isAdmin();
     }
 
@@ -205,9 +199,10 @@ service cloud.firestore {
     // ═════════════════════════════════════════════════════════════════════
     match /attendance/{attendanceId} {
       allow read: if isAdmin()
-                  || (isActiveUser()
+                  || (isAuthenticated()
                       && (resource.data.studentId == request.auth.uid
-                          || resource.data.studentEmail == request.auth.token.email));
+                          || resource.data.studentEmail == request.auth.token.email
+                          || resource.data.studentEmail.lower() == request.auth.token.email.lower()));
 
       allow create, update, delete: if isAdmin();
     }
@@ -220,7 +215,7 @@ service cloud.firestore {
     // Mobile:     Reads all (useSuccessStories, usePlacements)
     // ═════════════════════════════════════════════════════════════════════
     match /placements/{placementId} {
-      allow read: if isAdmin() || isActiveUser();
+      allow read: if isAuthenticated();
       allow create, update, delete: if isAdmin();
     }
 
@@ -232,7 +227,7 @@ service cloud.firestore {
     // Mobile:     Reads all
     // ═════════════════════════════════════════════════════════════════════
     match /placementStats/{statId} {
-      allow read: if isAdmin() || isActiveUser();
+      allow read: if isAuthenticated();
       allow create, update, delete: if isAdmin();
     }
 
@@ -245,7 +240,7 @@ service cloud.firestore {
     //             creates own application
     // ═════════════════════════════════════════════════════════════════════
     match /jobs/{jobId} {
-      allow read: if isAdmin() || isActiveUser();
+      allow read: if isAuthenticated();
       allow create, update, delete: if isAdmin();
 
       match /applications/{applicationId} {
@@ -278,7 +273,7 @@ service cloud.firestore {
     // ═════════════════════════════════════════════════════════════════════
     match /user_progress/{docId} {
       allow read: if isAdmin()
-                  || (isActiveUser()
+                  || (isAuthenticated()
                       && (docId == request.auth.uid 
                           || docId.matches("^" + request.auth.uid + "(_.*)?$")
                           || resource.data.userId == request.auth.uid));
@@ -421,6 +416,12 @@ service cloud.firestore {
       allow create: if isAuthenticated() 
                     && request.resource.data.userId == request.auth.uid;
       allow update, delete: if isAdmin();
+    }
+
+    // 20. USER BLOCK STATUS (Publicly readable for real-time unblock detection)
+    match /user_block_status/{userId} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
   }
