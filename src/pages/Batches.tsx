@@ -122,6 +122,15 @@ export default function BatchesPage() {
     const handleSaveBatch = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
+            const isDuplicate = batches.some(b => 
+                b.name.trim().toLowerCase() === newBatch.name.trim().toLowerCase() && 
+                (!editingBatch || b.id !== editingBatch.id)
+            );
+            if (isDuplicate) {
+                showToast("A batch with this name already exists", "error");
+                return;
+            }
+
             const course = courses.find(c => c.id === newBatch.courseId);
             const batchData = {
                 ...newBatch,

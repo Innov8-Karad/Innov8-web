@@ -24,6 +24,7 @@ import {
 import type { DeviceDocumentWithId } from '../services/deviceService';
 import DeviceApprovalCard from '../components/DeviceApprovalCard';
 import type { DeviceStatus } from '../types';
+import Modal from '../components/Modal';
 
 type FilterTab = DeviceStatus | 'all';
 
@@ -34,6 +35,8 @@ export default function DeviceApprovalsPage() {
     const [devices, setDevices] = useState<DeviceDocumentWithId[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<FilterTab>('pending');
+    const [deleteDeviceId, setDeleteDeviceId] = useState<string | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     // Real-time subscription
     useEffect(() => {
@@ -78,15 +81,24 @@ export default function DeviceApprovalsPage() {
         }
     }, [currentUser, showToast]);
 
-    const handleDelete = useCallback(async (deviceId: string) => {
+    const handleDelete = useCallback((deviceId: string) => {
+        setDeleteDeviceId(deviceId);
+    }, []);
+
+    const confirmDelete = async () => {
+        if (!deleteDeviceId) return;
+        setIsDeleting(true);
         try {
-            await deleteDevice(deviceId);
+            await deleteDevice(deleteDeviceId);
             showToast(UI_STRINGS.DEVICE_APPROVALS.DELETE_SUCCESS, 'success');
         } catch (err) {
             console.error('Delete error:', err);
             showToast(UI_STRINGS.DEVICE_APPROVALS.ERROR_UPDATE, 'error');
+        } finally {
+            setIsDeleting(false);
+            setDeleteDeviceId(null);
         }
-    }, [showToast]);
+    };
 
     const filterTabs: { key: FilterTab; label: string; count: number; icon: React.ElementType }[] = [
         { key: 'pending', label: 'Pending', count: pendingCount, icon: Clock },
@@ -232,6 +244,29 @@ export default function DeviceApprovalsPage() {
                     ))
                 )}
             </div>
+
+            {/* Delete Confirmation Modal */}
+            <Modal
+                isOpen={deleteDeviceId !== null}
+                onClose={() => setDeleteDeviceId(null)}
+                title="Confirm Device Removal"
+                maxWidth="420px"
+            >
+                <div style={{ marginTop: 'var(--space-md)' }}>
+                    <p style={{ lineHeight: 1.6, color: 'var(--text-secondary)' }}>
+                        Are you sure you want to delete this device record? The user will need to re-register.
+                    </p>
+                    <div className="flex justify-end gap-2" style={{ marginTop: 'var(--space-lg)' }}>
+                        <button className="btn btn-secondary" onClick={() => setDeleteDeviceId(null)} disabled={isDeleting}>
+                            Cancel
+                        </button>
+                        <button className="btn btn-danger flex items-center gap-xs" onClick={confirmDelete} disabled={isDeleting}>
+                            {isDeleting && <Loader2 size={14} className="spin" />}
+                            <span>Remove</span>
+                        </button>
+                    </div>
+                </div>
+            </Modal>
         </div>
     );
 }

@@ -2120,6 +2120,37 @@ input[type="checkbox"]:disabled {
   pointer-events: none;
 }
 
+.custom-select-search-container {
+  position: sticky;
+  top: 0;
+  background-color: var(--bg-card);
+  padding: 8px var(--space-md);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 10;
+}
+
+.custom-select-search-icon {
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.custom-select-search-input {
+  background: transparent;
+  border: none;
+  color: var(--text-main);
+  font-size: 0.9rem;
+  width: 100%;
+  padding: 4px 0;
+  outline: none;
+}
+
+.custom-select-search-input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
 /* Custom Scrollbar for Dropdown */
 .custom-select-dropdown::-webkit-scrollbar {
   width: 6px;

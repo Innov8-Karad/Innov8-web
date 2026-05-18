@@ -19,7 +19,7 @@ interface DeviceApprovalCardProps {
     device: DeviceDocumentWithId;
     onApprove: (id: string) => Promise<void>;
     onReject: (id: string) => Promise<void>;
-    onDelete: (id: string) => Promise<void>;
+    onDelete: (id: string) => void | Promise<void>;
 }
 
 export default function DeviceApprovalCard({
@@ -30,7 +30,6 @@ export default function DeviceApprovalCard({
 }: DeviceApprovalCardProps) {
     const [approving, setApproving] = useState(false);
     const [rejecting, setRejecting] = useState(false);
-    const [deleting, setDeleting] = useState(false);
 
     const handleApprove = async () => {
         setApproving(true);
@@ -50,14 +49,8 @@ export default function DeviceApprovalCard({
         }
     };
 
-    const handleDelete = async () => {
-        if (!window.confirm('Are you sure you want to delete this device record? The user will need to re-register.')) return;
-        setDeleting(true);
-        try {
-            await onDelete(device.id);
-        } finally {
-            setDeleting(false);
-        }
+    const handleDelete = () => {
+        onDelete(device.id);
     };
 
     // Format timestamp
@@ -190,7 +183,6 @@ export default function DeviceApprovalCard({
                     <button
                         className="btn btn-secondary"
                         onClick={handleDelete}
-                        disabled={deleting}
                         style={{
                             padding: '6px 14px',
                             fontSize: '0.85rem',
@@ -198,7 +190,7 @@ export default function DeviceApprovalCard({
                             borderColor: 'rgba(239, 68, 68, 0.3)',
                         }}
                     >
-                        {deleting ? <Loader2 size={14} className="spin" /> : <Trash2 size={14} />}
+                        <Trash2 size={14} />
                         <span style={{ marginLeft: '4px' }}>Remove</span>
                     </button>
                 )}
