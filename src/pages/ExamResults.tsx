@@ -40,6 +40,7 @@ export default function ExamResultsPage() {
   const [exams, setExams] = useState<Exam[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
   
   // Filters
   const [selectedExamId, setSelectedExamId] = useState<string>('all');
@@ -47,6 +48,7 @@ export default function ExamResultsPage() {
   const [passThreshold, setPassThreshold] = useState<number>(35);
 
   useEffect(() => {
+    setIsMounted(true);
     fetchData();
   }, []);
 
@@ -278,18 +280,20 @@ export default function ExamResultsPage() {
             <h3 className="section-title mb-md">{UI_STRINGS.EXAM_RESULTS.CHART_SCORE_DISTRIBUTION}</h3>
             <div style={{ width: '100%', height: 300, display: 'flex', flexDirection: 'column' }}>
               <div style={{ height: '300px', minHeight: '300px', position: 'relative' }}>
-                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={300} debounce={100}>
-                <BarChart data={scoreDistribution} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
-                  <XAxis dataKey="range" stroke="var(--chart-axis)" fontSize={12} tickLine={false} axisLine={false} />
-                  <YAxis stroke="var(--chart-axis)" fontSize={12} tickLine={false} axisLine={false} />
-                  <Tooltip 
-                    contentStyle={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: '8px', color: 'var(--text-main)' }}
-                    itemStyle={{ color: 'var(--primary)' }}
-                  />
-                  <Bar dataKey="count" fill="var(--primary)" radius={[4, 4, 0, 0]} barSize={40} />
-                </BarChart>
-              </ResponsiveContainer>
+                {isMounted && (
+                  <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={300} debounce={100}>
+                  <BarChart data={scoreDistribution} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
+                    <XAxis dataKey="range" stroke="var(--chart-axis)" fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis stroke="var(--chart-axis)" fontSize={12} tickLine={false} axisLine={false} />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: '8px', color: 'var(--text-main)' }}
+                      itemStyle={{ color: 'var(--primary)' }}
+                    />
+                    <Bar dataKey="count" fill="var(--primary)" radius={[4, 4, 0, 0]} barSize={40} />
+                  </BarChart>
+                </ResponsiveContainer>
+                )}
             </div>
           </div>
         </div>
@@ -297,29 +301,31 @@ export default function ExamResultsPage() {
         <div className="card p-lg">
             <h3 className="section-title mb-md">{UI_STRINGS.EXAM_RESULTS.CHART_PASS_FAIL}</h3>
             <div style={{ width: '100%', height: 300, display: 'flex', flexDirection: 'column' }}>
-              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={100}>
-                <PieChart>
-                  <Pie
-                    data={passFailData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={80}
-                    outerRadius={110}
-                    paddingAngle={5}
-                    dataKey="value"
-                    stroke="none"
-                  >
-                    {passFailData.map((_entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    contentStyle={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '8px', color: 'var(--text-main)' }}
-                    itemStyle={{ color: 'var(--text-main)' }}
-                  />
-                  <Legend verticalAlign="bottom" height={36} iconType="circle" />
-                </PieChart>
-              </ResponsiveContainer>
+              {isMounted && (
+                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={300} debounce={100}>
+                  <PieChart>
+                    <Pie
+                      data={passFailData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={80}
+                      outerRadius={110}
+                      paddingAngle={5}
+                      dataKey="value"
+                      stroke="none"
+                    >
+                      {passFailData.map((_entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '8px', color: 'var(--text-main)' }}
+                      itemStyle={{ color: 'var(--text-main)' }}
+                    />
+                    <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                  </PieChart>
+                </ResponsiveContainer>
+              )}
             </div>
           </div>
         </div>

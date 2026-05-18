@@ -43,8 +43,10 @@ placementSuccessRate: 0
 const [trends, setTrends] = useState<MonthlyTrend[]>([]);
 const [activities, setActivities] = useState<ActivityItem[]>([]);
 const [loading, setLoading] = useState(true);
+const [isMounted, setIsMounted] = useState(false);
 
 useEffect(() => {
+setTimeout(() => setIsMounted(true), 0);
 
 const unsubStats = dashboardService.subscribeToStats((newStats) => {
 setStats(newStats);
@@ -175,6 +177,7 @@ Growth Trends
 </h3>
 
 <div style={{ flex: 1, minHeight: 300, position: 'relative' }}>
+{isMounted && (
 <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={300} debounce={100}>
 <AreaChart data={trends}>
 <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
@@ -186,6 +189,7 @@ Growth Trends
 <Area type="monotone" dataKey="exams" stroke="var(--accent-blue)" fill="rgba(var(--accent-blue-rgb), 0.1)" />
 </AreaChart>
 </ResponsiveContainer>
+)}
 </div>
 
 </div>
@@ -201,6 +205,7 @@ Revenue Trend
 </h3>
 
 <div style={{ flex: 1, minHeight: 300, position: 'relative' }}>
+{isMounted && (
 <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={300} debounce={100}>
 <BarChart data={trends}>
 <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
@@ -210,6 +215,7 @@ Revenue Trend
 <Bar dataKey="fees" fill="var(--success)" radius={[4, 4, 0, 0]} barSize={40} />
 </BarChart>
 </ResponsiveContainer>
+)}
 </div>
 
 </div>

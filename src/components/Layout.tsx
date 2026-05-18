@@ -17,9 +17,9 @@ import {
     Menu,
     ClipboardList,
     FolderKanban,
-    CalendarDays,
     Shield,
-    Layers
+    Layers,
+    TrendingUp
 } from 'lucide-react';
 import logo from '../assets/logo.png';
 import { ThemeToggle } from './ThemeToggle';
@@ -65,7 +65,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         { icon: ClipboardList, label: UI_STRINGS.EXAM_RESULTS.TITLE, path: '/exam-results' },
         { icon: Briefcase, label: UI_STRINGS.NAV.PLACEMENTS, path: '/placements' },
         { icon: FolderKanban, label: UI_STRINGS.NAV.JOBS, path: '/jobs' },
-        { icon: CalendarDays, label: 'Interviews', path: '/interviews' },
+        { icon: TrendingUp, label: 'Placement Tally', path: '/placement-tally' },
         { icon: Layers, label: UI_STRINGS.NAV.BATCHES, path: '/batches' },
         { icon: BookOpen, label: UI_STRINGS.NAV.COURSES, path: '/courses' },
         { icon: Award, label: UI_STRINGS.NAV.PROGRESS, path: '/progress' },
