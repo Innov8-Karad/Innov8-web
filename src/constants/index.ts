@@ -16,6 +16,7 @@ export const COLLECTIONS = {
   NOTIFICATIONS: 'notifications',
   BATCHES: 'batches',
   ENROLLMENT_REQUESTS: 'enrollment_requests',
+  PLACEMENT_TALLY: 'placementTally',
 } as const;
 
 export const FEE_STATUS = {

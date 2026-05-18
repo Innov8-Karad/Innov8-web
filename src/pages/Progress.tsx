@@ -42,6 +42,7 @@ export default function ProgressPage() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedBatch, setSelectedBatch] = useState('All');
+    const [isMounted, setIsMounted] = useState(false);
     
     const [showEditModal, setShowEditModal] = useState(false);
     const [editingProgress, setEditingProgress] = useState<StudentProgress | null>(null);
@@ -76,6 +77,7 @@ export default function ProgressPage() {
     }, [showToast]);
 
     useEffect(() => {
+        setIsMounted(true);
         fetchData();
     }, [fetchData]);
 
@@ -174,7 +176,8 @@ export default function ProgressPage() {
                     </div>
                     <div style={{ width: '100%', height: 350, display: 'flex', flexDirection: 'column' }}>
                         <div style={{ height: '300px', minHeight: '300px', position: 'relative' }}>
-                          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={300} debounce={100}>
+                          {isMounted && (
+                            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={300} debounce={100}>
                             <BarChart 
                                 data={batchStats}
                                 margin={{
@@ -210,6 +213,7 @@ export default function ProgressPage() {
                                 </Bar>
                             </BarChart>
                         </ResponsiveContainer>
+                          )}
                       </div>
                       {batchStats.length === 0 && (
                             <div className="flex items-center justify-center h-full text-muted italic">
@@ -226,7 +230,8 @@ export default function ProgressPage() {
                     </div>
                     <div style={{ width: '100%', height: 350, display: 'flex', flexDirection: 'column' }}>
                         <div style={{ height: '300px', minHeight: '300px', position: 'relative' }}>
-                            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={300} debounce={100}>
+                            {isMounted && (
+                              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={300} debounce={100}>
                                 <BarChart 
                                     data={batchStats} 
                                     layout="vertical"
@@ -263,6 +268,7 @@ export default function ProgressPage() {
                                     <Bar dataKey="avgCompletion" name="Completion Rate" fill="#10B981" radius={[0, 4, 4, 0]} barSize={20} />
                                 </BarChart>
                             </ResponsiveContainer>
+                            )}
                         </div>
                         {batchStats.length === 0 && (
                             <div className="flex items-center justify-center h-full text-muted italic">
