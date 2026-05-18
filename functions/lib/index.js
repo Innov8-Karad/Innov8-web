@@ -3,9 +3,11 @@
 // Innov8 Cloud Functions — Entry Point
 // ═══════════════════════════════════════════════════════════════════════════════
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteCloudinaryAsset = exports.onSendNotification = exports.onDeviceApproved = exports.onDeviceCreated = exports.onFeeCreated = exports.onAssignmentGraded = exports.onAnnouncementCreated = exports.onUserCreated = void 0;
+exports.deleteCloudinaryAsset = exports.onSendNotification = exports.onDeviceApproved = exports.onDeviceCreated = exports.onFeeCreated = exports.onAssignmentGraded = exports.onAnnouncementCreated = exports.onUserUpdated = exports.onUserCreated = void 0;
 var onUserCreated_1 = require("./triggers/onUserCreated");
 Object.defineProperty(exports, "onUserCreated", { enumerable: true, get: function () { return onUserCreated_1.onUserCreated; } });
+var onUserUpdated_1 = require("./triggers/onUserUpdated");
+Object.defineProperty(exports, "onUserUpdated", { enumerable: true, get: function () { return onUserUpdated_1.onUserUpdated; } });
 var onAnnouncementCreated_1 = require("./triggers/onAnnouncementCreated");
 Object.defineProperty(exports, "onAnnouncementCreated", { enumerable: true, get: function () { return onAnnouncementCreated_1.onAnnouncementCreated; } });
 var onAssignmentGraded_1 = require("./triggers/onAssignmentGraded");

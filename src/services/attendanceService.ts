@@ -15,8 +15,8 @@ import { COLLECTIONS } from '../constants';
 import type { AttendanceRecord, AttendanceStatus } from '../types';
 
 export const attendanceService = {
-  // Uses client-side filtering for courseId and date because we only have [studentId, date] composite index
-  async fetchByBatchAndDate(courseId: string, batchId: string, date: Date): Promise<AttendanceRecord[]> {
+  // Uses client-side filtering for date because we only have [studentId, date] composite index
+  async fetchByBatchAndDate(batchId: string, date: Date): Promise<AttendanceRecord[]> {
     const startOfDay = new Date(date);
     startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date(date);
@@ -38,7 +38,6 @@ export const attendanceService = {
         markedAt: (doc.data() as DocumentData).markedAt?.toDate(),
       } as AttendanceRecord))
       .filter(record => 
-        record.courseId === courseId && 
         record.date >= startOfDay && 
         record.date <= endOfDay
       )
@@ -61,8 +60,8 @@ export const attendanceService = {
     } as AttendanceRecord));
   },
 
-  // Client-side filter for courseId to avoid needing [batchId, courseId] index
-  async fetchByBatch(courseId: string, batchId: string): Promise<AttendanceRecord[]> {
+  // Pure batch-wise fetching without courseId
+  async fetchByBatch(batchId: string): Promise<AttendanceRecord[]> {
     const q = query(
       collection(db, COLLECTIONS.ATTENDANCE),
       where('batchId', '==', batchId)
@@ -75,7 +74,6 @@ export const attendanceService = {
         date: (doc.data() as DocumentData).date?.toDate(),
         markedAt: (doc.data() as DocumentData).markedAt?.toDate(),
       } as AttendanceRecord))
-      .filter(record => record.courseId === courseId)
       .sort((a, b) => b.date.getTime() - a.date.getTime());
   },
 
@@ -125,12 +123,11 @@ export const attendanceService = {
     await batch.commit();
   },
 
-  async fetchBatchDailyStats(courseId: string, batchId: string, month: number, year: number) {
+  async fetchBatchDailyStats(batchId: string, month: number, year: number) {
     const startDate = new Date(year, month, 1);
     const endDate = new Date(year, month + 1, 0, 23, 59, 59, 999);
 
-    // Fetch all records for this batch/course to compute stats
-    // Note: In production with huge data, we might want a 'dailyAttendanceSummary' collection
+    // Fetch all records for this batch to compute stats
     const q = query(
       collection(db, COLLECTIONS.ATTENDANCE),
       where('batchId', '==', batchId)
@@ -143,7 +140,6 @@ export const attendanceService = {
         date: (doc.data() as DocumentData).date?.toDate(),
       }))
       .filter(r => 
-        r.courseId === courseId && 
         r.date >= startDate && 
         r.date <= endDate
       );

@@ -874,6 +874,35 @@ input[type="checkbox"]:disabled {
 .sidebar-nav {
   flex: 1;
   padding: var(--space-md) 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Custom premium scrollbar for sidebar nav */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  transition: background 0.3s;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+[data-theme='light'] .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme='light'] .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.2);
 }
 
 .nav-link {
@@ -918,6 +947,65 @@ input[type="checkbox"]:disabled {
 
 .logout-btn:hover {
   opacity: 0.8;
+}
+
+/* Premium Logout Button */
+.logout-btn-premium {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(239, 68, 68, 0.05);
+  border: 1px solid rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  cursor: pointer;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-weight: 500;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.logout-btn-premium:hover {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(220, 38, 38, 0.25) 100%);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #ff8787;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px -4px rgba(239, 68, 68, 0.3), 0 4px 6px -2px rgba(239, 68, 68, 0.15);
+}
+
+.logout-btn-premium:active {
+  transform: translateY(0);
+}
+
+.logout-btn-premium svg {
+  transition: transform 0.3s ease;
+  color: #ef4444;
+}
+
+.logout-btn-premium:hover svg {
+  transform: translateX(3px) scale(1.05);
+  color: #f87171;
+}
+
+[data-theme='light'] .logout-btn-premium {
+  background: rgba(239, 68, 68, 0.04);
+  border-color: rgba(239, 68, 68, 0.12);
+  color: #dc2626;
+}
+
+[data-theme='light'] .logout-btn-premium:hover {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(220, 38, 38, 0.12) 100%);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #b91c1c;
+}
+
+.sidebar.collapsed .logout-btn-premium {
+  padding: 12px;
+  border-radius: 12px;
+  justify-content: center;
 }
 
 /* ═══════════════════════════════════════════════════

@@ -1,8 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
-import type { User, Course } from '../types';
+import type { User } from '../types';
 import { Edit2, Trash2, Ban, ShieldCheck, ShieldOff, AlertTriangle, CheckCircle } from 'lucide-react';
 import { userService } from '../services/userService';
-import { courseService } from '../services/courseService';
 import { UI_STRINGS } from '../constants';
 import PageHeader from '../components/PageHeader';
 import LoadingState from '../components/LoadingState';
@@ -15,16 +14,15 @@ import CloudinaryUpload from '../components/CloudinaryUpload';
 import { FormField, FormRow, FormActions } from '../components/FormField';
 import { useUser } from '../hooks/useUser';
 import { useToast } from '../hooks/useToast';
-import CustomSelect from '../components/CustomSelect';
 
 export default function UsersPage() {
     const { students: users, loading: usersLoading, error: usersError } = useUser();
-    const [loading, setLoading] = useState(true);
+    const [localUsers, setLocalUsers] = useState<User[]>([]);
+    const loading = false;
     const [error, setError] = useState<string | null>(null);
     const [showModal, setShowModal] = useState(false);
     const [viewingUser, setViewingUser] = useState<User | null>(null);
     const [deletingUser, setDeletingUser] = useState<User | null>(null);
-    const [courses, setCourses] = useState<Course[]>([]);
     const [activeTab, setActiveTab] = useState<'active' | 'blocked'>('active');
 
     // Photo upload states
@@ -49,26 +47,16 @@ export default function UsersPage() {
     const [editingUser, setEditingUser] = useState<User | null>(null);
     const { showToast } = useToast();
 
-    // Split users into active and blocked
-    const activeUsers = useMemo(() => users.filter(u => !u.isBlocked), [users]);
-    const blockedUsers = useMemo(() => users.filter(u => u.isBlocked), [users]);
-
+    // Keep localUsers synchronized with Firebase Context
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                setLoading(true);
-                setError(null);
-                const courseData = await courseService.fetchCourses();
-                setCourses(courseData);
-            } catch (err) {
-                console.error("Error fetching courses: ", err);
-                setError(UI_STRINGS.USERS.ERROR_LOAD);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchData();
-    }, []);
+        setLocalUsers(users);
+    }, [users]);
+
+    // Split users into active and blocked using localUsers for instant updates
+    const activeUsers = useMemo(() => localUsers.filter(u => !u.isBlocked), [localUsers]);
+    const blockedUsers = useMemo(() => localUsers.filter(u => u.isBlocked), [localUsers]);
+
+
 
     const handleAddStudent = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -84,9 +72,19 @@ export default function UsersPage() {
             const parsedSkills = newUser.skills
                 ? newUser.skills.split(',').map(s => s.trim()).filter(Boolean)
                 : [];
+                
+            let studentCourse = newUser.course;
+            if (!studentCourse && newUser.batch) {
+                const sibling = localUsers.find(u => u.batch === newUser.batch && u.course);
+                if (sibling) {
+                    studentCourse = sibling.course;
+                }
+            }
+
             if (editingUser) {
                 await userService.updateUser(editingUser.id, {
                     ...newUser,
+                    course: studentCourse,
                     skills: parsedSkills,
                     profilePhoto: photoUrl
                 });
@@ -94,6 +92,7 @@ export default function UsersPage() {
             } else {
                 await userService.createUser({
                     ...newUser,
+                    course: studentCourse,
                     profilePhoto: photoUrl,
                     skills: parsedSkills,
                     status: 'active',
@@ -122,6 +121,15 @@ export default function UsersPage() {
     const handleBlockUser = async () => {
         if (!blockingUser) return;
         setBlockLoading(true);
+        const previousUsers = [...localUsers];
+        
+        // Optimistically update state
+        setLocalUsers(prev => prev.map(u => 
+            u.id === blockingUser.id 
+                ? { ...u, isBlocked: true, blockedReason: blockReason, blockedAt: new Date() } 
+                : u
+        ));
+
         try {
             await userService.blockUser(blockingUser.id, blockReason);
             showToast(UI_STRINGS.USERS.BLOCK_SUCCESS, "success");
@@ -129,6 +137,8 @@ export default function UsersPage() {
             setBlockReason('');
         } catch {
             showToast(UI_STRINGS.USERS.BLOCK_ERROR, "error");
+            // Rollback optimistic state update on failure
+            setLocalUsers(previousUsers);
         } finally {
             setBlockLoading(false);
         }
@@ -137,12 +147,23 @@ export default function UsersPage() {
     const handleUnblockUser = async () => {
         if (!unblockingUser) return;
         setBlockLoading(true);
+        const previousUsers = [...localUsers];
+
+        // Optimistically update state
+        setLocalUsers(prev => prev.map(u => 
+            u.id === unblockingUser.id 
+                ? { ...u, isBlocked: false, blockedReason: undefined, blockedAt: undefined } 
+                : u
+        ));
+
         try {
             await userService.unblockUser(unblockingUser.id);
             showToast(UI_STRINGS.USERS.UNBLOCK_SUCCESS, "success");
             setUnblockingUser(null);
         } catch {
             showToast(UI_STRINGS.USERS.BLOCK_ERROR, "error");
+            // Rollback optimistic state update on failure
+            setLocalUsers(previousUsers);
         } finally {
             setBlockLoading(false);
         }
@@ -179,7 +200,7 @@ export default function UsersPage() {
         {
             key: 'name',
             header: UI_STRINGS.USERS.TH_NAME,
-            width: '25%',
+            width: '30%',
             render: (user) => (
                 <div className="flex items-center">
                     <Avatar src={user.profilePhoto} fallback={user.name?.charAt(0) || '?'} size="sm" className="mr-3" />
@@ -193,24 +214,18 @@ export default function UsersPage() {
         {
             key: 'phone',
             header: 'Mobile Number',
-            width: '15%',
+            width: '20%',
             render: (user) => <span className="text-sm">{user.phone}</span>,
         },
         {
             key: 'batch',
             header: UI_STRINGS.USERS.TH_BATCH,
-            width: '10%',
+            width: '15%',
             render: (user) => user.batch ? (
                 <span style={{ backgroundColor: 'rgba(99, 102, 241, 0.1)', color: 'var(--accent-blue)', padding: '4px 8px', borderRadius: '4px', fontSize: '0.85rem' }}>
                     {user.batch}
                 </span>
             ) : null,
-        },
-        {
-            key: 'course',
-            header: UI_STRINGS.USERS.TH_COURSE,
-            width: '15%',
-            render: (user) => user.course || <span className="text-xs text-muted" style={{ fontStyle: 'italic' }}>Not Assigned</span>,
         },
         {
             key: 'joined',
@@ -244,7 +259,7 @@ export default function UsersPage() {
         {
             key: 'name',
             header: UI_STRINGS.USERS.TH_NAME,
-            width: '22%',
+            width: '25%',
             render: (user) => (
                 <div className="flex items-center">
                     <Avatar src={user.profilePhoto} fallback={user.name?.charAt(0) || '?'} size="sm" className="mr-3" />
@@ -258,13 +273,13 @@ export default function UsersPage() {
         {
             key: 'phone',
             header: 'Mobile',
-            width: '12%',
+            width: '15%',
             render: (user) => <span className="text-sm">{user.phone}</span>,
         },
         {
             key: 'batch',
             header: UI_STRINGS.USERS.TH_BATCH,
-            width: '10%',
+            width: '12%',
             render: (user) => user.batch ? (
                 <span style={{ backgroundColor: 'rgba(99, 102, 241, 0.1)', color: 'var(--accent-blue)', padding: '4px 8px', borderRadius: '4px', fontSize: '0.85rem' }}>
                     {user.batch}
@@ -272,15 +287,9 @@ export default function UsersPage() {
             ) : <span className="text-xs text-muted">—</span>,
         },
         {
-            key: 'course',
-            header: UI_STRINGS.USERS.TH_COURSE,
-            width: '13%',
-            render: (user) => user.course || <span className="text-xs text-muted" style={{ fontStyle: 'italic' }}>N/A</span>,
-        },
-        {
             key: 'blockedAt',
             header: UI_STRINGS.USERS.BLOCKED_DATE,
-            width: '13%',
+            width: '15%',
             render: (user) => {
                 if (!user.blockedAt) return <span className="text-xs text-muted">—</span>;
                 const date = user.blockedAt instanceof Date ? user.blockedAt : new Date(user.blockedAt);
@@ -290,7 +299,7 @@ export default function UsersPage() {
         {
             key: 'blockedReason',
             header: UI_STRINGS.USERS.BLOCKED_REASON,
-            width: '15%',
+            width: '18%',
             render: (user) => user.blockedReason ? (
                 <span className="block-reason-text" title={user.blockedReason}>{user.blockedReason}</span>
             ) : (
@@ -437,14 +446,6 @@ export default function UsersPage() {
                         </FormField>
                     </FormRow>
                     <FormRow>
-                        <FormField label={UI_STRINGS.USERS.SELECT_COURSE}>
-                            <CustomSelect
-                                options={courses.map(c => ({ value: c.title, label: c.title }))}
-                                value={newUser.course}
-                                onChange={(val) => setNewUser({ ...newUser, course: val })}
-                                placeholder={UI_STRINGS.USERS.SELECT_COURSE_PLACEHOLDER}
-                            />
-                        </FormField>
                         <FormField label="Skills (comma-separated)">
                             <input type="text" placeholder="React, Node.js, UI/UX" value={newUser.skills} onChange={e => setNewUser({ ...newUser, skills: e.target.value })} />
                         </FormField>
@@ -466,7 +467,7 @@ export default function UsersPage() {
                             <div style={{ margin: '0 auto 16px' }}>
                                 <Avatar src={viewingUser.profilePhoto} fallback={viewingUser.name?.charAt(0) || '?'} size="md" className="" />
                             </div>
-                            <p style={{ color: 'var(--primary)', fontWeight: 500 }}>{viewingUser.course} • {UI_STRINGS.USERS.TH_BATCH} {viewingUser.batch}</p>
+                            <p style={{ color: 'var(--primary)', fontWeight: 500 }}>{UI_STRINGS.USERS.TH_BATCH} {viewingUser.batch}</p>
                         </div>
                         <div className="grid-single" style={{ gap: 'var(--space-lg)' }}>
                             <div className="glass-card" style={{ padding: 'var(--space-md)', borderRadius: 'var(--radius-md)' }}>

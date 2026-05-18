@@ -2,9 +2,8 @@ import { useState, useEffect } from 'react';
 import './Attendance.css';
 import { useAuth } from '../contexts/AuthContext';
 import { UI_STRINGS } from '../constants';
-import type { User, Course, AttendanceRecord, AttendanceStatus } from '../types';
+import type { User, AttendanceRecord, AttendanceStatus } from '../types';
 import { userService } from '../services/userService';
-import { courseService } from '../services/courseService';
 import { attendanceService } from '../services/attendanceService';
 import LoadingState from '../components/LoadingState';
 import ErrorAlert from '../components/ErrorAlert';
@@ -25,11 +24,9 @@ export default function AttendancePage() {
     const { currentUser } = useAuth()!;
     const { showToast } = useToast();
     const [activeTab, setActiveTab] = useState<'mark' | 'calendar' | 'reports'>('mark');
-    const [courses, setCourses] = useState<Course[]>([]);
     const [users, setUsers] = useState<User[]>([]);
 
     // Selectors
-    const [selectedCourseId, setSelectedCourseId] = useState<string>('');
     const [selectedBatchId, setSelectedBatchId] = useState<string>('');
     const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
 
@@ -48,13 +45,13 @@ export default function AttendancePage() {
     const loadInitialData = async () => {
         try {
             setLoading(true);
-            const [fetchedCourses, fetchedUsers] = await Promise.all([
-                courseService.fetchCourses(),
-                userService.fetchUsers()
-            ]);
-            setCourses(fetchedCourses);
+            const fetchedUsers = await userService.fetchUsers();
             setUsers(fetchedUsers);
-            if (fetchedCourses.length > 0) setSelectedCourseId(fetchedCourses[0].id);
+            
+            const uniqueBatches = Array.from(new Set(fetchedUsers.map(u => u.batch))).filter(Boolean);
+            if (uniqueBatches.length > 0) {
+                setSelectedBatchId(uniqueBatches[0]);
+            }
         } catch (err) {
             console.error(err);
             setError(UI_STRINGS.ATTENDANCE.ERROR_LOAD);
@@ -63,26 +60,27 @@ export default function AttendancePage() {
         }
     };
 
-    const selectedCourseTitle = courses.find(c => c.id === selectedCourseId)?.title;
-    const batches = Array.from(new Set(users.filter(u => u.course === selectedCourseTitle).map(u => u.batch))).filter(Boolean);
+    const batches = Array.from(new Set(users.map(u => u.batch))).filter(Boolean);
 
     useEffect(() => {
-        if (!selectedBatchId && batches.length > 0) setSelectedBatchId(batches[0]);
-    }, [selectedCourseId, batches, selectedBatchId]);
+        if (!selectedBatchId && batches.length > 0) {
+            setSelectedBatchId(batches[0]);
+        }
+    }, [batches, selectedBatchId]);
 
     useEffect(() => {
-        if (selectedCourseId && selectedBatchId && selectedDate) {
+        if (selectedBatchId && selectedDate) {
             if (activeTab === 'mark') loadDailyAttendance();
             else if (activeTab === 'calendar') loadCalendarStats();
             else if (activeTab === 'reports') loadBatchAttendance();
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedCourseId, selectedBatchId, selectedDate, activeTab]);
+    }, [selectedBatchId, selectedDate, activeTab]);
 
     const loadDailyAttendance = async () => {
         setLoading(true); setError(null); setSuccessMessage(null);
         try {
-            const records = await attendanceService.fetchByBatchAndDate(selectedCourseId, selectedBatchId, new Date(selectedDate));
+            const records = await attendanceService.fetchByBatchAndDate(selectedBatchId, new Date(selectedDate));
             const map: Record<string, AttendanceRecord> = {};
             records.forEach(r => { map[r.studentId] = r; });
             setAttendanceMap(map);
@@ -94,7 +92,7 @@ export default function AttendancePage() {
         setLoading(true);
         try {
             const date = new Date(selectedDate);
-            const stats = await attendanceService.fetchBatchDailyStats(selectedCourseId, selectedBatchId, date.getMonth(), date.getFullYear());
+            const stats = await attendanceService.fetchBatchDailyStats(selectedBatchId, date.getMonth(), date.getFullYear());
             setDailyStats(stats);
         } catch (err) { console.error(err); setError(UI_STRINGS.ATTENDANCE.ERROR_LOAD); }
         finally { setLoading(false); }
@@ -103,7 +101,7 @@ export default function AttendancePage() {
     const loadBatchAttendance = async () => {
         setLoading(true);
         try {
-            const records = await attendanceService.fetchByBatch(selectedCourseId, selectedBatchId);
+            const records = await attendanceService.fetchByBatch(selectedBatchId);
             setMonthlyRecords(records);
         } catch (err) { console.error(err); setError(UI_STRINGS.ATTENDANCE.ERROR_LOAD); }
         finally { setLoading(false); }
@@ -111,15 +109,13 @@ export default function AttendancePage() {
 
     /* ── Marking Logic ────────────────────────── */
     const handleMarkAll = (status: AttendanceStatus) => {
-        const course = courses.find(c => c.id === selectedCourseId);
-        if (!course) return;
         const newMap = { ...attendanceMap };
         studentsInBatch.forEach(student => {
             if (!newMap[student.id]) {
                 newMap[student.id] = {
                     id: '', studentId: student.id, studentName: student.name,
                     studentEmail: student.email.toLowerCase(),
-                    courseId: course.id, courseName: course.title, batchId: selectedBatchId,
+                    courseId: '', courseName: '', batchId: selectedBatchId,
                     date: new Date(selectedDate), status, markedBy: currentUser!.uid, markedAt: new Date()
                 };
             } else {
@@ -130,8 +126,6 @@ export default function AttendancePage() {
     };
 
     const handleStudentMark = (student: User, status: AttendanceStatus) => {
-        const course = courses.find(c => c.id === selectedCourseId);
-        if (!course) return;
         const newMap = { ...attendanceMap };
         if (newMap[student.id]) {
             newMap[student.id] = { ...newMap[student.id], status, markedBy: currentUser!.uid, studentEmail: student.email.toLowerCase() };
@@ -139,7 +133,7 @@ export default function AttendancePage() {
             newMap[student.id] = {
                 id: '', studentId: student.id, studentName: student.name,
                 studentEmail: student.email.toLowerCase(),
-                courseId: course.id, courseName: course.title, batchId: selectedBatchId,
+                courseId: '', courseName: '', batchId: selectedBatchId,
                 date: new Date(selectedDate), status, markedBy: currentUser!.uid, markedAt: new Date()
             };
         }
@@ -159,7 +153,7 @@ export default function AttendancePage() {
     };
 
     /* ── Derived ──────────────────────────────── */
-    const studentsInBatch = users.filter(u => u.batch === selectedBatchId && u.course === selectedCourseTitle);
+    const studentsInBatch = users.filter(u => u.batch === selectedBatchId && !u.isBlocked);
     const totalChecked = Object.keys(attendanceMap).length;
     const presentCount = Object.values(attendanceMap).filter(r => r.status === 'present').length;
     const absentCount = Object.values(attendanceMap).filter(r => r.status === 'absent').length;
@@ -171,7 +165,10 @@ export default function AttendancePage() {
     const SkeletonRow = () => (
         <div className="att-row" style={{ opacity: 0.5 }}>
             <div className="att-row__index"><div className="skeleton-box" style={{ width: 20, height: 20 }} /></div>
-            <div className="att-row__info"><div className="skeleton-box" style={{ width: 140, height: 16, marginBottom: 6 }} /><div className="skeleton-box" style={{ width: 200, height: 12 }} /></div>
+            <div className="att-row__info"><div className="skeleton-box" style={{ width: 140, height: 16 }} /></div>
+            <div className="att-row__email"><div className="skeleton-box" style={{ width: 160, height: 12 }} /></div>
+            <div className="att-row__phone"><div className="skeleton-box" style={{ width: 100, height: 12 }} /></div>
+            <div className="att-row__batch"><div className="skeleton-box" style={{ width: 80, height: 16 }} /></div>
             <div className="att-row__actions"><div className="skeleton-box" style={{ width: 240, height: 36 }} /></div>
         </div>
     );
@@ -242,6 +239,8 @@ export default function AttendancePage() {
                     <div className="att-table-head__col att-table-head__col--idx">#</div>
                     <div className="att-table-head__col att-table-head__col--name">Student Name</div>
                     <div className="att-table-head__col att-table-head__col--email">Email / ID</div>
+                    <div className="att-table-head__col att-table-head__col--phone">Mobile</div>
+                    <div className="att-table-head__col att-table-head__col--batch">Batch</div>
                     <div className="att-table-head__col att-table-head__col--status">Status</div>
                 </div>
 
@@ -253,7 +252,7 @@ export default function AttendancePage() {
                         <div className="att-empty">
                             <Users size={56} />
                             <h3>No Students Found</h3>
-                            <p>Select a different course or batch to view students.</p>
+                            <p>Select a different batch to view students.</p>
                         </div>
                     ) : (
                         studentsInBatch.map((student, idx) => {
@@ -268,6 +267,12 @@ export default function AttendancePage() {
                                         <span className="att-row__name">{student.name}</span>
                                     </div>
                                     <div className="att-row__email">{student.email}</div>
+                                    <div className="att-row__phone" style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>{student.phone || 'N/A'}</div>
+                                    <div className="att-row__batch">
+                                        <span style={{ backgroundColor: 'rgba(99, 102, 241, 0.1)', color: 'var(--accent-blue)', padding: '4px 8px', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600 }}>
+                                            {student.batch}
+                                        </span>
+                                    </div>
                                     <div className="att-row__actions">
                                         <div className="att-pill-group">
                                             <StatusPill student={student} status="present" label="Present" icon={CheckCircle2} color="green" />
@@ -486,7 +491,7 @@ export default function AttendancePage() {
        RENDER
        ══════════════════════════════════════════ */
     if (!currentUser) return null;
-    if (loading && !courses.length) return <LoadingState message={UI_STRINGS.ATTENDANCE.LOADING} />;
+    if (loading && !users.length) return <LoadingState message={UI_STRINGS.ATTENDANCE.LOADING} />;
 
     return (
         <div className="att-page fade-in">
@@ -506,14 +511,6 @@ export default function AttendancePage() {
             {/* ── Sticky Control Bar ── */}
             <div className="att-control-bar">
                 <div className="att-control-bar__filters">
-                    <div className="att-select-group">
-                        <label>Course</label>
-                        <CustomSelect
-                            options={courses.map(c => ({ value: c.id, label: c.title }))}
-                            value={selectedCourseId}
-                            onChange={(val) => setSelectedCourseId(val)}
-                        />
-                    </div>
                     <div className="att-select-group">
                         <label>Batch</label>
                         <CustomSelect
