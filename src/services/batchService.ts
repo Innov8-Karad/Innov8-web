@@ -16,7 +16,7 @@ import {
 } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { COLLECTIONS } from '../constants';
-import type { Batch, EnrollmentRequest, CourseModule, CourseResource } from '../types';
+import type { Batch, EnrollmentRequest, CourseModule, CourseResource, AssignmentType, AssignmentSubmission } from '../types';
 
 export const batchService = {
   // ── Batch Management ──
@@ -387,5 +387,54 @@ export const batchService = {
     }
 
     await batch.commit();
+  },
+
+  // ── Assignments ──
+  subscribeToAssignments(batchId: string, callback: (assignments: AssignmentType[]) => void) {
+    const q = query(collection(db, COLLECTIONS.BATCHES, batchId, 'assignments'));
+    return onSnapshot(q, (snapshot) => {
+      const assignments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AssignmentType));
+      callback(assignments);
+    }, (error) => {
+      console.error("Error subscribing to batch assignments:", error);
+      callback([]);
+    });
+  },
+
+  async addAssignment(batchId: string, assignment: Omit<AssignmentType, 'id'>): Promise<void> {
+    await addDoc(collection(db, COLLECTIONS.BATCHES, batchId, 'assignments'), {
+      ...assignment,
+      createdAt: Timestamp.now()
+    });
+  },
+
+  async updateAssignment(batchId: string, assignmentId: string, data: Partial<AssignmentType>): Promise<void> {
+    const docRef = doc(db, COLLECTIONS.BATCHES, batchId, 'assignments', assignmentId);
+    await updateDoc(docRef, { ...data, updatedAt: Timestamp.now() });
+  },
+
+  async deleteAssignment(batchId: string, assignmentId: string): Promise<void> {
+    const docRef = doc(db, COLLECTIONS.BATCHES, batchId, 'assignments', assignmentId);
+    await deleteDoc(docRef);
+  },
+
+  // ── Assignment Submissions ──
+  subscribeToSubmissions(batchId: string, assignmentId: string, callback: (submissions: AssignmentSubmission[]) => void) {
+    const q = query(
+      collection(db, COLLECTIONS.BATCHES, batchId, 'assignments', assignmentId, 'submissions'),
+      orderBy('submittedAt', 'desc')
+    );
+    return onSnapshot(q, (snapshot) => {
+      const submissions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AssignmentSubmission));
+      callback(submissions);
+    }, (error) => {
+      console.error("Error subscribing to batch submissions:", error);
+      callback([]);
+    });
+  },
+
+  async updateSubmissionGrade(batchId: string, assignmentId: string, submissionId: string, data: Partial<AssignmentSubmission>): Promise<void> {
+    const docRef = doc(db, COLLECTIONS.BATCHES, batchId, 'assignments', assignmentId, 'submissions', submissionId);
+    await updateDoc(docRef, { ...data, gradedAt: Timestamp.now() });
   }
 };
