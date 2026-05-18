@@ -110,6 +110,9 @@ export const UI_STRINGS = {
     CONFIRM_DELETE_DESC: 'Are you sure you want to delete this announcement? This action cannot be undone.',
     PREVIEW_TITLE: 'Mobile Preview',
     LIVE_PREVIEW: 'Live Preview',
+    FORM_POPUP: 'Popup Banner',
+    FORM_POPUP_DESC: 'Show as popup on student\'s home screen',
+    FORM_POPUP_HINT: 'When checked, this announcement will slide up as a banner when students open the app.',
   },
   // Courses page
   COURSES: {

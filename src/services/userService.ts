@@ -1,10 +1,12 @@
 import { 
   collection, 
   getDocs, 
+  getDoc,
   addDoc,
   updateDoc,
   deleteDoc,
   doc,
+  setDoc,
   Timestamp,
   query,
   where,
@@ -81,6 +83,9 @@ export const userService = {
 
   async blockUser(id: string, reason?: string): Promise<void> {
     const docRef = doc(db, COLLECTIONS.USERS, id);
+    const userSnap = await getDoc(docRef);
+    const email = userSnap.data()?.email;
+
     await updateDoc(docRef, {
       isBlocked: true,
       blockedAt: Timestamp.now(),
@@ -88,10 +93,21 @@ export const userService = {
       tokenVersion: increment(1),
       updatedAt: Timestamp.now()
     });
+    
+    // Update public block status for real-time mobile sync (using email as ID)
+    if (email) {
+      await setDoc(doc(db, 'user_block_status', email.toLowerCase().trim()), {
+        isBlocked: true,
+        updatedAt: Timestamp.now()
+      });
+    }
   },
 
   async unblockUser(id: string): Promise<void> {
     const docRef = doc(db, COLLECTIONS.USERS, id);
+    const userSnap = await getDoc(docRef);
+    const email = userSnap.data()?.email;
+
     await updateDoc(docRef, {
       isBlocked: false,
       blockedAt: null,
@@ -99,6 +115,14 @@ export const userService = {
       tokenVersion: increment(1), // Forces all existing tokens to stay invalid
       updatedAt: Timestamp.now()
     });
+    
+    // Update public block status for real-time mobile sync (using email as ID)
+    if (email) {
+      await setDoc(doc(db, 'user_block_status', email.toLowerCase().trim()), {
+        isBlocked: false,
+        updatedAt: Timestamp.now()
+      });
+    }
   },
 
   /**
