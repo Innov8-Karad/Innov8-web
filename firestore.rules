@@ -24,11 +24,19 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
+    function isUserDocOwner(userId) {
+      return isOwner(userId)
+          || (isAuthenticated()
+              && resource != null
+              && resource.data.get('email', null) != null
+              && request.auth.token.get('email', null) != null
+              && resource.data.email.lower() == request.auth.token.email.lower());
+    }
+
     function isNotBlocked() {
-      let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
       return request.auth.token.get('isBlocked', false) != true
-          && userDoc.get('isBlocked', false) != true
-          && request.auth.token.get('tokenVersion', 0) >= userDoc.get('tokenVersion', 0);
+          && (!exists(/databases/$(database)/documents/users/$(request.auth.uid))
+              || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('isBlocked', false) != true);
     }
 
     // Authenticated AND not blocked (for student-facing reads)
@@ -49,7 +57,7 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if isAdmin() 
                     || isOwner(userId)
-                    || (isAuthenticated() && resource != null && resource.data.email.lower() == request.auth.token.email.lower());
+                    || (isAuthenticated() && resource != null && (resource.data.email == request.auth.token.email || resource.data.email.lower() == request.auth.token.email.lower()));
 
       allow create: if isAdmin()
                     || (isOwner(userId)
@@ -57,7 +65,7 @@ service cloud.firestore {
                         && request.resource.data.keys().hasAll(['name', 'email', 'role', 'activeDeviceDocId']));
 
       allow update: if isAdmin()
-                    || (isOwner(userId)
+                    || (isUserDocOwner(userId)
                         // Students can only update specific profile fields
                         && request.resource.data.diff(resource.data).affectedKeys()
                             .hasOnly(['name', 'phone', 'profilePhoto', 'skills', 'fcmTokens', 'activeDeviceDocId', 'updatedAt'])
@@ -384,10 +392,10 @@ service cloud.firestore {
     // Mobile:     Reads all available batches for selection
     // ═════════════════════════════════════════════════════════════════════
     match /batches/{batchId} {
-      allow read: if isAdmin() || isActiveUser();
+      allow read: if isAdmin() || isAuthenticated();
       allow write: if isAdmin();
       match /{allChildren=**} {
-        allow read: if isAdmin() || isActiveUser();
+        allow read: if isAdmin() || isAuthenticated();
         allow write: if isAdmin();
       }
     }
@@ -400,7 +408,7 @@ service cloud.firestore {
     // ═════════════════════════════════════════════════════════════════════
     match /enrollment_requests/{requestId} {
       allow read: if isAdmin() || (isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid));
-      allow write: if isAdmin() || (isActiveUser() && (request.resource == null || request.resource.data.userId == request.auth.uid));
+      allow write: if isAdmin() || (isAuthenticated() && (request.resource == null || request.resource.data.userId == request.auth.uid));
     }
 
     match /notifications/{notifId} {

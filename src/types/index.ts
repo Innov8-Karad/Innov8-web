@@ -427,8 +427,8 @@ export interface AttendanceRecord {
     studentId: string;
     studentName: string;
     studentEmail: string;
-    courseId: string;
-    courseName: string;
+    courseId?: string;
+    courseName?: string;
     batchId: string;
     date: Date;
     status: AttendanceStatus;

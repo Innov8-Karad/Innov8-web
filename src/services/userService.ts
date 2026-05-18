@@ -81,7 +81,7 @@ export const userService = {
     await deleteDoc(docRef);
   },
 
-  async blockUser(id: string, reason?: string): Promise<void> {
+  async blockUser(id: string, reason?: string): Promise<User> {
     const docRef = doc(db, COLLECTIONS.USERS, id);
     const userSnap = await getDoc(docRef);
     const email = userSnap.data()?.email;
@@ -101,9 +101,18 @@ export const userService = {
         updatedAt: Timestamp.now()
       });
     }
+
+    const updatedSnap = await getDoc(docRef);
+    const data = updatedSnap.data() as DocumentData;
+    return {
+      id: updatedSnap.id,
+      ...data,
+      enrollmentDate: data.enrollmentDate?.toDate() || new Date(),
+      createdAt: data.createdAt?.toDate() || new Date(),
+    } as User;
   },
 
-  async unblockUser(id: string): Promise<void> {
+  async unblockUser(id: string): Promise<User> {
     const docRef = doc(db, COLLECTIONS.USERS, id);
     const userSnap = await getDoc(docRef);
     const email = userSnap.data()?.email;
@@ -123,6 +132,15 @@ export const userService = {
         updatedAt: Timestamp.now()
       });
     }
+
+    const updatedSnap = await getDoc(docRef);
+    const data = updatedSnap.data() as DocumentData;
+    return {
+      id: updatedSnap.id,
+      ...data,
+      enrollmentDate: data.enrollmentDate?.toDate() || new Date(),
+      createdAt: data.createdAt?.toDate() || new Date(),
+    } as User;
   },
 
   /**

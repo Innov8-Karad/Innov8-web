@@ -146,6 +146,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
             if (user) {
                 // Set up real-time listener for user document to catch "Blocked" status instantly
+                let isFirstSnapshot = true;
                 userUnsubscribe = onSnapshot(doc(db, 'users', user.uid), async (snapshot) => {
                     if (snapshot.exists()) {
                         const userData = snapshot.data();
@@ -155,11 +156,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                             console.warn('[AuthContext] Account blocked by admin. Forcing logout.');
                             await signOut(auth);
                             setCurrentUser(null);
-                            // We don't have a toast here but the UI will redirect to /login via PrivateRoute
-                            return;
-                        }
-
-                        if (userData.role === 'admin') {
+                        } else if (userData.role === 'admin') {
                             setCurrentUser(user);
                         } else {
                             // Not admin — force sign out
@@ -171,6 +168,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                         await signOut(auth);
                         setCurrentUser(null);
                     }
+                    
+                    if (isFirstSnapshot) {
+                        isFirstSnapshot = false;
+                        setLoading(false);
+                    }
                 }, async (error) => {
                     console.error('[AuthContext] User listener error:', error);
                     // If permission-denied, it means the user is blocked or session invalidated
@@ -181,11 +183,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                         // Fallback to initial check if it's another error
                         setCurrentUser(user);
                     }
+                    
+                    if (isFirstSnapshot) {
+                        isFirstSnapshot = false;
+                        setLoading(false);
+                    }
                 });
             } else {
                 setCurrentUser(null);
+                setLoading(false);
             }
-            setLoading(false);
         });
 
         return () => {

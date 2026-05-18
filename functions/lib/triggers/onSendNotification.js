@@ -42,6 +42,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.onSendNotification = void 0;
 const https_1 = require("firebase-functions/v2/https");
+const auth_1 = require("../utils/auth");
 const admin = __importStar(require("firebase-admin"));
 const sendPush_1 = require("../utils/sendPush");
 if (!admin.apps.length) {
@@ -49,16 +50,12 @@ if (!admin.apps.length) {
 }
 const db = admin.firestore();
 exports.onSendNotification = (0, https_1.onCall)({ region: "asia-south1" }, async (request) => {
-    // ── Auth Check ──
-    if (!request.auth) {
-        throw new https_1.HttpsError("unauthenticated", "You must be logged in.");
-    }
-    const callerUid = request.auth.uid;
-    // Verify the caller is an admin
-    const callerDoc = await db.collection("users").doc(callerUid).get();
-    if (!callerDoc.exists || callerDoc.data()?.role !== "admin") {
+    // ── Auth Check & Admin Check ──
+    const userData = await (0, auth_1.validateAuth)(request);
+    if (userData.role !== "admin") {
         throw new https_1.HttpsError("permission-denied", "Only admins can send notifications.");
     }
+    const callerUid = request.auth.uid;
     // ── Validate Input ──
     const data = request.data;
     if (!data.title || !data.body) {

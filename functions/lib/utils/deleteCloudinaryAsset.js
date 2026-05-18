@@ -46,21 +46,19 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteCloudinaryAsset = void 0;
 const https_1 = require("firebase-functions/v2/https");
+const auth_1 = require("./auth");
 const admin = __importStar(require("firebase-admin"));
 if (!admin.apps.length) {
     admin.initializeApp();
 }
 exports.deleteCloudinaryAsset = (0, https_1.onCall)({ maxInstances: 10, region: "asia-south1" }, async (request) => {
-    // Verify authentication
-    if (!request.auth) {
-        throw new https_1.HttpsError("unauthenticated", "You must be logged in to delete assets.");
-    }
+    // Requirement: Global Auth Middleware (validate check)
+    await (0, auth_1.validateAuth)(request);
     const { publicId, resourceType } = request.data;
     if (!publicId || typeof publicId !== "string") {
         throw new https_1.HttpsError("invalid-argument", "A valid publicId string is required.");
     }
     // Get Cloudinary config from environment
-    // For Firebase Functions v2, use defineSecret or process.env
     const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
     const apiKey = process.env.CLOUDINARY_API_KEY;
     const apiSecret = process.env.CLOUDINARY_API_SECRET;
