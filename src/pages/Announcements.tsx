@@ -1,15 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Bell, Megaphone, Trash2, Calendar, Edit2, X } from 'lucide-react';
+import { Megaphone, Trash2, Calendar, Edit2, X, Smartphone } from 'lucide-react';
 import { announcementService } from '../services/announcementService';
 import { userService } from '../services/userService';
-import { PRIORITY_LEVELS, PRIORITY_COLORS, UI_STRINGS, DEFAULT_VALUES } from '../constants';
+import { PRIORITY_LEVELS, UI_STRINGS, DEFAULT_VALUES } from '../constants';
 import type { Announcement, User } from '../types';
 import PageHeader from '../components/PageHeader';
 import LoadingState from '../components/LoadingState';
 import ErrorAlert from '../components/ErrorAlert';
 import Modal from '../components/Modal';
-import { FormField, FormRow, FormActions } from '../components/FormField';
-import CustomSelect from '../components/CustomSelect';
+import { FormField, FormActions } from '../components/FormField';
 import { useToast } from '../hooks/useToast';
 
 export default function AnnouncementsPage() {
@@ -32,7 +31,8 @@ export default function AnnouncementsPage() {
         priority: PRIORITY_LEVELS.MEDIUM as 'high' | 'medium' | 'low',
         targetAudience: 'all' as 'all' | 'batch' | 'students',
         targetBatches: [] as string[],
-        targetStudentIds: [] as string[]
+        targetStudentIds: [] as string[],
+        showAsPopup: false
     };
     const [formData, setFormData] = useState(initialFormState);
 
@@ -75,7 +75,8 @@ export default function AnnouncementsPage() {
             priority: ann.priority,
             targetAudience: ann.targetAudience || 'all',
             targetBatches: ann.targetBatches || [],
-            targetStudentIds: ann.targetStudentIds || []
+            targetStudentIds: ann.targetStudentIds || [],
+            showAsPopup: ann.showAsPopup || false
         });
         setShowModal(true);
     };
@@ -160,9 +161,7 @@ export default function AnnouncementsPage() {
         });
     };
 
-    const getPriorityColor = (p: string) => {
-        return PRIORITY_COLORS[p as keyof typeof PRIORITY_COLORS] || PRIORITY_COLORS.DEFAULT;
-    };
+
 
     if (loading) return <LoadingState message={UI_STRINGS.ANNOUNCEMENTS.LOADING} />;
 
@@ -185,12 +184,12 @@ export default function AnnouncementsPage() {
                                 width: '40px',
                                 height: '40px',
                                 borderRadius: '50%',
-                                backgroundColor: `${getPriorityColor(ann.priority)}20`,
-                                color: getPriorityColor(ann.priority),
+                                backgroundColor: 'var(--primary-light)',
+                                color: 'var(--primary)',
                                 flexShrink: 0
                             }}
                         >
-                            {ann.priority === PRIORITY_LEVELS.HIGH ? <Bell size={20} /> : <Megaphone size={20} />}
+                            <Megaphone size={20} />
                         </div>
                         <div style={{ flex: 1 }}>
                             <div className="flex justify-between items-start">
@@ -199,10 +198,14 @@ export default function AnnouncementsPage() {
                                     <div className="flex items-center gap-2 text-xs text-muted" style={{ marginTop: '4px' }}>
                                         <Calendar size={14} />
                                         {ann.createdAt.toLocaleDateString()}
-                                        <span style={{ margin: '0 4px' }}>•</span>
-                                        <span className={`priority-badge priority-${ann.priority}`}>
-                                            {ann.priority}
-                                        </span>
+                                        {ann.showAsPopup && (
+                                            <>
+                                                <span style={{ margin: '0 4px' }}>•</span>
+                                                <span className="priority-badge" style={{ backgroundColor: '#8B5CF620', color: '#8B5CF6', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                                    <Smartphone size={11} /> Popup
+                                                </span>
+                                            </>
+                                        )}
                                         <span style={{ margin: '0 4px' }}>•</span>
                                         {UI_STRINGS.ANNOUNCEMENTS.TARGET_LABEL}: {
                                             ann.targetAudience === 'students' ? `${ann.targetStudentIds?.length || 0} students` :
@@ -246,19 +249,20 @@ export default function AnnouncementsPage() {
                             <FormField label={UI_STRINGS.ANNOUNCEMENTS.FORM_CONTENT}>
                                 <textarea rows={4} value={formData.content} onChange={e => setFormData({ ...formData, content: e.target.value })} required />
                             </FormField>
-                            <FormRow>
-                                <FormField label={UI_STRINGS.ANNOUNCEMENTS.FORM_PRIORITY}>
-                                    <CustomSelect
-                                        options={[
-                                            { value: PRIORITY_LEVELS.LOW, label: 'Low' },
-                                            { value: PRIORITY_LEVELS.MEDIUM, label: 'Medium' },
-                                            { value: PRIORITY_LEVELS.HIGH, label: 'High' }
-                                        ]}
-                                        value={formData.priority}
-                                        onChange={(val) => setFormData({ ...formData, priority: val as 'high' | 'medium' | 'low' })}
+
+                            <FormField label={UI_STRINGS.ANNOUNCEMENTS.FORM_POPUP}>
+                                <label className="batch-checkbox-item" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={formData.showAsPopup}
+                                        onChange={e => setFormData({ ...formData, showAsPopup: e.target.checked })}
                                     />
-                                </FormField>
-                            </FormRow>
+                                    {UI_STRINGS.ANNOUNCEMENTS.FORM_POPUP_DESC}
+                                </label>
+                                <span className="text-xs text-muted" style={{ marginTop: '4px', display: 'block' }}>
+                                    {UI_STRINGS.ANNOUNCEMENTS.FORM_POPUP_HINT}
+                                </span>
+                            </FormField>
                             <FormField label={UI_STRINGS.ANNOUNCEMENTS.TARGET_LABEL}>
                                 <div className="target-mode-selector">
                                     <button 
@@ -385,12 +389,9 @@ export default function AnnouncementsPage() {
                             <div className="mobile-preview-content">
                                 {(formData.title || formData.content) ? (
                                     <div className="mobile-preview-card">
-                                        <div className="flex justify-between items-start">
-                                            <span className={`priority-badge priority-${formData.priority}`}>
-                                                {formData.priority}
-                                            </span>
-                                            <span className="text-xs text-muted">Just now</span>
-                                        </div>
+                                        <div className="flex justify-end items-start">
+                                             <span className="text-xs text-muted">Just now</span>
+                                         </div>
                                         <div className="mobile-preview-card-title">{formData.title || 'Announcement Title'}</div>
                                         <div className="mobile-preview-card-text">
                                             {formData.content || 'Announcement content will appear here.'}

@@ -290,6 +290,7 @@ export interface Announcement {
     createdAt: Date;
     priority: 'low' | 'medium' | 'high';
     author: string;
+    showAsPopup?: boolean;           // When true, appears as slide-up popup on mobile home
 }
 
 export interface AppNotification {
