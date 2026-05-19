@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { CheckCircle, ExternalLink, FileText, Image as ImageIcon } from 'lucide-react';
 import { courseService } from '../services/courseService';
+import { batchService } from '../services/batchService';
 import type { AssignmentSubmission } from '../types';
 import { useToast } from '../hooks/useToast';
 import Modal from './Modal';
@@ -8,12 +9,13 @@ import { FormField, FormActions } from './FormField';
 
 interface GradingPanelProps {
     courseId: string;
+    targetType?: 'course' | 'batch';
     assignmentId: string;
     submission: AssignmentSubmission;
     onClose: () => void;
 }
 
-export default function GradingPanel({ courseId, assignmentId, submission, onClose }: GradingPanelProps) {
+export default function GradingPanel({ courseId, targetType = 'course', assignmentId, submission, onClose }: GradingPanelProps) {
     const [grade, setGrade] = useState<number>(submission.grade || 0);
     const [feedback, setFeedback] = useState<string>(submission.feedback || '');
     const [loading, setLoading] = useState(false);
@@ -44,8 +46,9 @@ export default function GradingPanel({ courseId, assignmentId, submission, onClo
     const handleSaveGrade = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
+        const service = targetType === 'course' ? courseService : batchService;
         try {
-            await courseService.updateSubmissionGrade(courseId, assignmentId, submission.id, {
+            await service.updateSubmissionGrade(courseId, assignmentId, submission.id, {
                 grade,
                 feedback,
                 gradedBy: 'Admin' // Should ideally come from auth context

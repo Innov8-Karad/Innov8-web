@@ -15,6 +15,7 @@ import ErrorAlert from '../components/ErrorAlert';
 import Modal from '../components/Modal';
 import { FormField, FormRow, FormActions } from '../components/FormField';
 import CurriculumBuilder from '../components/CurriculumBuilder';
+import AssignmentBuilder from '../components/AssignmentBuilder';
 import { useToast } from '../hooks/useToast';
 import './Batches.css';
 
@@ -39,7 +40,7 @@ export default function BatchesPage() {
     
     // Students states
     const [expandedBatchId, setExpandedBatchId] = useState<string | null>(null);
-    const [drawerTab, setDrawerTab] = useState<'students' | 'content'>('students');
+    const [drawerTab, setDrawerTab] = useState<'students' | 'content' | 'assignments'>('students');
     const [batchStudents, setBatchStudents] = useState<User[]>([]);
     const [loadingStudents, setLoadingStudents] = useState(false);
     const [studentSearchQuery, setStudentSearchQuery] = useState('');
@@ -382,6 +383,9 @@ export default function BatchesPage() {
 
                                     <div className="batch-card-header">
                                         <div className="batch-card-name">{batch.name}</div>
+                                        {batch.batchCode && (
+                                            <div className="batch-card-code">Code: {batch.batchCode}</div>
+                                        )}
                                     </div>
                                     
                                     <div className="batch-card-stats">
@@ -598,6 +602,12 @@ export default function BatchesPage() {
                                 >
                                     <Video size={16} /> Content
                                 </button>
+                                <button 
+                                    className={`tab-pill ${drawerTab === 'assignments' ? 'active' : ''}`}
+                                    onClick={() => setDrawerTab('assignments')}
+                                >
+                                    <FileText size={16} /> Assignments
+                                </button>
                             </div>
                         </div>
                         
@@ -687,8 +697,10 @@ export default function BatchesPage() {
                                         </div>
                                     )}
                                 </>
-                            ) : (
+                            ) : drawerTab === 'content' ? (
                                 <CurriculumBuilder targetId={expandedBatchId} targetType="batch" />
+                            ) : (
+                                <AssignmentBuilder targetId={expandedBatchId} targetType="batch" />
                             )}
                         </div>
                     </div>

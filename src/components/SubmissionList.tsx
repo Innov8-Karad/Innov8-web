@@ -1,18 +1,21 @@
 import { useState, useEffect } from 'react';
 import { Search, Filter, Eye, CheckCircle, Clock, Undo, FileText, Image as ImageIcon } from 'lucide-react';
 import { courseService } from '../services/courseService';
+import { batchService } from '../services/batchService';
 import type { AssignmentSubmission } from '../types';
 import Modal from './Modal';
 import GradingPanel from './GradingPanel';
 
 interface SubmissionListProps {
     courseId: string;
+    targetType?: 'course' | 'batch';
     assignmentId: string;
     assignmentTitle: string;
     onClose: () => void;
 }
 
-export default function SubmissionList({ courseId, assignmentId, assignmentTitle, onClose }: SubmissionListProps) {
+export default function SubmissionList({ courseId, targetType = 'course', assignmentId, assignmentTitle, onClose }: SubmissionListProps) {
+    const service = targetType === 'course' ? courseService : batchService;
     const [submissions, setSubmissions] = useState<AssignmentSubmission[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -20,12 +23,12 @@ export default function SubmissionList({ courseId, assignmentId, assignmentTitle
     const [selectedSubmission, setSelectedSubmission] = useState<AssignmentSubmission | null>(null);
 
     useEffect(() => {
-        const unsubscribe = courseService.subscribeToSubmissions(courseId, assignmentId, (data) => {
+        const unsubscribe = service.subscribeToSubmissions(courseId, assignmentId, (data) => {
             setSubmissions(data);
             setLoading(false);
         });
         return () => unsubscribe();
-    }, [courseId, assignmentId]);
+    }, [courseId, assignmentId, service]);
 
     const filteredSubmissions = submissions.filter(sub => {
         const matchesSearch = sub.userName.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -133,6 +136,7 @@ export default function SubmissionList({ courseId, assignmentId, assignmentTitle
             {selectedSubmission && (
                 <GradingPanel 
                     courseId={courseId}
+                    targetType={targetType}
                     assignmentId={assignmentId}
                     submission={selectedSubmission}
                     onClose={() => setSelectedSubmission(null)}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Edit2, Calendar, ClipboardList, FileText, X, UploadCloud } from 'lucide-react';
 import { courseService } from '../services/courseService';
+import { batchService } from '../services/batchService';
 import type { AssignmentType, CourseModule } from '../types';
 import { useToast } from '../hooks/useToast';
 import { uploadWithFallback } from '../lib/cloudinary';
@@ -10,10 +11,15 @@ import { FormField, FormActions } from './FormField';
 import SubmissionList from './SubmissionList';
 
 interface AssignmentBuilderProps {
-    courseId: string;
+    courseId?: string;
+    targetId?: string;
+    targetType?: 'course' | 'batch';
 }
 
-export default function AssignmentBuilder({ courseId }: AssignmentBuilderProps) {
+export default function AssignmentBuilder({ courseId, targetId, targetType = 'course' }: AssignmentBuilderProps) {
+    const activeId = targetId || courseId || '';
+    const service = targetType === 'course' ? courseService : batchService;
+
     const [assignments, setAssignments] = useState<AssignmentType[]>([]);
     const [modules, setModules] = useState<CourseModule[]>([]);
     const [loading, setLoading] = useState(true);
@@ -46,12 +52,14 @@ export default function AssignmentBuilder({ courseId }: AssignmentBuilderProps) 
     });
 
     useEffect(() => {
-        const unsubscribeAssignments = courseService.subscribeToAssignments(courseId, (fetchedAssignments) => {
+        if (!activeId) return;
+
+        const unsubscribeAssignments = service.subscribeToAssignments(activeId, (fetchedAssignments) => {
             setAssignments(fetchedAssignments as AssignmentType[]);
             setLoading(false);
         });
 
-        const unsubscribeModules = courseService.subscribeToModules(courseId, (fetchedModules) => {
+        const unsubscribeModules = service.subscribeToModules(activeId, (fetchedModules) => {
             setModules(fetchedModules);
         });
 
@@ -64,7 +72,7 @@ export default function AssignmentBuilder({ courseId }: AssignmentBuilderProps) 
             unsubscribeModules();
             clearTimeout(timer);
         };
-    }, [courseId]);
+    }, [activeId, service]);
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -77,7 +85,7 @@ export default function AssignmentBuilder({ courseId }: AssignmentBuilderProps) 
                 setUploading(true);
                 try {
                     const uploadResult = await uploadWithFallback(selectedFile, {
-                        folder: `innov8/course-assignments/${courseId}`,
+                        folder: `innov8/${targetType}-assignments/${activeId}`,
                         onProgress: (pct) => setUploadProgress(pct)
                     });
                     questionFileUrl = uploadResult.url;
@@ -105,10 +113,10 @@ export default function AssignmentBuilder({ courseId }: AssignmentBuilderProps) 
             };
 
             if (editingAssignment) {
-                await courseService.updateAssignment(courseId, editingAssignment.id, payload);
+                await service.updateAssignment(activeId, editingAssignment.id, payload);
                 showToast("Assignment updated", "success");
             } else {
-                await courseService.addAssignment(courseId, payload);
+                await service.addAssignment(activeId, payload);
                 showToast("Assignment added", "success");
             }
             closeModal();
@@ -133,7 +141,7 @@ export default function AssignmentBuilder({ courseId }: AssignmentBuilderProps) 
             message: "Are you sure you want to delete this assignment? This action cannot be undone.",
             onConfirm: async () => {
                 try {
-                    await courseService.deleteAssignment(courseId, id);
+                    await service.deleteAssignment(activeId, id);
                     showToast("Assignment deleted", "success");
                 } catch {
                     showToast("Failed to delete assignment", "error");
@@ -242,7 +250,8 @@ export default function AssignmentBuilder({ courseId }: AssignmentBuilderProps) 
 
             {selectedAssignment && (
                 <SubmissionList 
-                    courseId={courseId}
+                    courseId={activeId}
+                    targetType={targetType}
                     assignmentId={selectedAssignment.id}
                     assignmentTitle={selectedAssignment.title}
                     onClose={() => setSelectedAssignment(null)}
