@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Search } from 'lucide-react';
 
 export interface SelectOption {
     value: string;
@@ -14,6 +14,8 @@ interface CustomSelectProps {
     label?: string;
     className?: string;
     style?: React.CSSProperties;
+    searchable?: boolean;
+    searchPlaceholder?: string;
 }
 
 export default function CustomSelect({
@@ -23,18 +25,34 @@ export default function CustomSelect({
     placeholder = 'Select an option',
     label,
     className = '',
-    style
+    style,
+    searchable = false,
+    searchPlaceholder = 'Search...'
 }: CustomSelectProps) {
     const [isOpen, setIsOpen] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
     const containerRef = useRef<HTMLDivElement>(null);
 
     const selectedOption = options.find(opt => opt.value === value);
+
+    // Filter options based on search term
+    const filteredOptions = options.filter(option =>
+        option.label.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const toggleDropdown = () => {
+        if (isOpen) {
+            setSearchTerm('');
+        }
+        setIsOpen(!isOpen);
+    };
 
     // Close on click outside
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
                 setIsOpen(false);
+                setSearchTerm('');
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
@@ -44,6 +62,7 @@ export default function CustomSelect({
     const handleSelect = (val: string) => {
         onChange(val);
         setIsOpen(false);
+        setSearchTerm('');
     };
 
     return (
@@ -51,12 +70,12 @@ export default function CustomSelect({
             {label && <label className="custom-select-label">{label}</label>}
             <div 
                 className={`custom-select-trigger ${isOpen ? 'active' : ''}`} 
-                onClick={() => setIsOpen(!isOpen)}
+                onClick={toggleDropdown}
                 tabIndex={0}
                 onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();
-                        setIsOpen(!isOpen);
+                        toggleDropdown();
                     }
                 }}
             >
@@ -68,10 +87,23 @@ export default function CustomSelect({
 
             {isOpen && (
                 <div className="custom-select-dropdown">
-                    {options.length === 0 ? (
-                        <div className="custom-select-option empty">No options available</div>
+                    {searchable && (
+                        <div className="custom-select-search-container" onClick={(e) => e.stopPropagation()}>
+                            <Search size={14} className="custom-select-search-icon" />
+                            <input
+                                type="text"
+                                className="custom-select-search-input"
+                                placeholder={searchPlaceholder}
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                autoFocus
+                            />
+                        </div>
+                    )}
+                    {filteredOptions.length === 0 ? (
+                        <div className="custom-select-option empty">No options found</div>
                     ) : (
-                        options.map((option) => (
+                        filteredOptions.map((option) => (
                             <div
                                 key={option.value}
                                 className={`custom-select-option ${option.value === value ? 'selected' : ''}`}

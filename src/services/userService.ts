@@ -2,15 +2,14 @@ import {
   collection, 
   getDocs, 
   getDoc,
-  addDoc,
   updateDoc,
-  deleteDoc,
   doc,
   setDoc,
   Timestamp,
   query,
   where,
   increment,
+  runTransaction,
   type DocumentData 
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -44,41 +43,94 @@ export const userService = {
   },
 
   async createUser(data: Omit<User, 'id' | 'enrollmentDate' | 'createdAt'>): Promise<User> {
-    const docData: DocumentData = {
-      ...data,
-      role: 'student',
-      deviceCount: 0,
-      enrollmentDate: Timestamp.now(),
-      createdAt: Timestamp.now()
-    };
+    const userRef = doc(collection(db, COLLECTIONS.USERS));
+    const batchRef = data.batchId ? doc(db, COLLECTIONS.BATCHES, data.batchId) : null;
 
-    const docRef = await addDoc(collection(db, COLLECTIONS.USERS), docData);
-    
+    await runTransaction(db, async (transaction) => {
+      // 1. Create student document
+      const docData: DocumentData = {
+        ...data,
+        role: 'student',
+        deviceCount: 0,
+        enrollmentDate: Timestamp.now(),
+        createdAt: Timestamp.now()
+      };
+      transaction.set(userRef, docData);
+
+      // 2. Increment studentCount on batch if assigned
+      if (batchRef) {
+        const batchSnap = await transaction.get(batchRef);
+        if (batchSnap.exists()) {
+          const currentCount = batchSnap.data()?.studentCount || 0;
+          transaction.update(batchRef, { studentCount: currentCount + 1 });
+        }
+      }
+    });
+
     return {
-      id: docRef.id,
+      id: userRef.id,
       ...data,
       enrollmentDate: new Date(),
       createdAt: new Date()
     } as User;
   },
 
-  async updateUser(id: string, data: Partial<User>): Promise<void> {
-    const docRef = doc(db, COLLECTIONS.USERS, id);
+  async updateUser(id: string, data: Partial<User>, oldBatchId?: string): Promise<void> {
+    const userRef = doc(db, COLLECTIONS.USERS, id);
     
     // Clean undefined values
     const cleanedData = Object.fromEntries(
         Object.entries(data).filter((entry) => entry[1] !== undefined)
     );
     
-    await updateDoc(docRef, {
-      ...cleanedData,
-      updatedAt: Timestamp.now()
+    const newBatchId = cleanedData.batchId as string | undefined;
+
+    await runTransaction(db, async (transaction) => {
+      // 1. Update the student document
+      transaction.update(userRef, {
+        ...cleanedData,
+        updatedAt: Timestamp.now()
+      });
+
+      // 2. Handle batch count changes if batchId is updated
+      if (oldBatchId !== undefined && newBatchId !== undefined && oldBatchId !== newBatchId) {
+        if (oldBatchId) {
+          const oldBatchRef = doc(db, COLLECTIONS.BATCHES, oldBatchId);
+          const oldBatchSnap = await transaction.get(oldBatchRef);
+          if (oldBatchSnap.exists()) {
+            const currentCount = oldBatchSnap.data()?.studentCount || 0;
+            transaction.update(oldBatchRef, { studentCount: Math.max(0, currentCount - 1) });
+          }
+        }
+        if (newBatchId) {
+          const newBatchRef = doc(db, COLLECTIONS.BATCHES, newBatchId);
+          const newBatchSnap = await transaction.get(newBatchRef);
+          if (newBatchSnap.exists()) {
+            const currentCount = newBatchSnap.data()?.studentCount || 0;
+            transaction.update(newBatchRef, { studentCount: currentCount + 1 });
+          }
+        }
+      }
     });
   },
 
-  async deleteUser(id: string): Promise<void> {
-    const docRef = doc(db, COLLECTIONS.USERS, id);
-    await deleteDoc(docRef);
+  async deleteUser(id: string, batchId?: string): Promise<void> {
+    const userRef = doc(db, COLLECTIONS.USERS, id);
+    const batchRef = batchId ? doc(db, COLLECTIONS.BATCHES, batchId) : null;
+
+    await runTransaction(db, async (transaction) => {
+      // 1. Delete student document
+      transaction.delete(userRef);
+
+      // 2. Decrement studentCount on batch if assigned
+      if (batchRef) {
+        const batchSnap = await transaction.get(batchRef);
+        if (batchSnap.exists()) {
+          const currentCount = batchSnap.data()?.studentCount || 0;
+          transaction.update(batchRef, { studentCount: Math.max(0, currentCount - 1) });
+        }
+      }
+    });
   },
 
   async blockUser(id: string, reason?: string): Promise<User> {

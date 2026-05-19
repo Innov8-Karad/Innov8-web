@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import './Attendance.css';
 import { useAuth } from '../contexts/AuthContext';
 import { UI_STRINGS } from '../constants';
-import type { User, AttendanceRecord, AttendanceStatus } from '../types';
+import type { User, AttendanceRecord, AttendanceStatus, Batch } from '../types';
 import { userService } from '../services/userService';
 import { attendanceService } from '../services/attendanceService';
+import { batchService } from '../services/batchService';
 import LoadingState from '../components/LoadingState';
 import ErrorAlert from '../components/ErrorAlert';
 import DataTable from '../components/DataTable';
@@ -29,6 +30,7 @@ export default function AttendancePage() {
     // Selectors
     const [selectedBatchId, setSelectedBatchId] = useState<string>('');
     const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
+    const [batches, setBatches] = useState<Batch[]>([]);
 
     // Data
     const [loading, setLoading] = useState(true);
@@ -42,16 +44,22 @@ export default function AttendancePage() {
     /* ── Data Loading ─────────────────────────── */
     useEffect(() => { loadInitialData(); }, []);
 
+    // Subscribe to batches in real-time
+    useEffect(() => {
+        const unsubscribe = batchService.subscribeToBatches((data) => {
+            setBatches(data);
+            if (data.length > 0 && !selectedBatchId) {
+                setSelectedBatchId(data[0].id);
+            }
+        });
+        return () => unsubscribe();
+    }, [selectedBatchId]);
+
     const loadInitialData = async () => {
         try {
             setLoading(true);
             const fetchedUsers = await userService.fetchUsers();
             setUsers(fetchedUsers);
-            
-            const uniqueBatches = Array.from(new Set(fetchedUsers.map(u => u.batch))).filter(Boolean);
-            if (uniqueBatches.length > 0) {
-                setSelectedBatchId(uniqueBatches[0]);
-            }
         } catch (err) {
             console.error(err);
             setError(UI_STRINGS.ATTENDANCE.ERROR_LOAD);
@@ -60,13 +68,35 @@ export default function AttendancePage() {
         }
     };
 
-    const batches = Array.from(new Set(users.map(u => u.batch))).filter(Boolean);
+    const activeBatches = useMemo(() => batches.filter(b => b.active !== false), [batches]);
+
+    const batchOptions = useMemo(() => {
+        const options = activeBatches.map(b => ({
+            value: b.id,
+            label: b.name
+        }));
+        
+        // Find any unique batches among students that are not in activeBatches, and add them
+        users.forEach(u => {
+            if (u.batchId && u.batch) {
+                const alreadyAdded = options.some(opt => opt.value === u.batchId);
+                if (!alreadyAdded) {
+                    options.push({
+                        value: u.batchId,
+                        label: `${u.batch} (Inactive)`
+                    });
+                }
+            }
+        });
+        
+        return options;
+    }, [activeBatches, users]);
 
     useEffect(() => {
-        if (!selectedBatchId && batches.length > 0) {
-            setSelectedBatchId(batches[0]);
+        if (!selectedBatchId && batchOptions.length > 0) {
+            setSelectedBatchId(batchOptions[0].value);
         }
-    }, [batches, selectedBatchId]);
+    }, [batchOptions, selectedBatchId]);
 
     useEffect(() => {
         if (selectedBatchId && selectedDate) {
@@ -153,7 +183,7 @@ export default function AttendancePage() {
     };
 
     /* ── Derived ──────────────────────────────── */
-    const studentsInBatch = users.filter(u => u.batch === selectedBatchId && !u.isBlocked);
+    const studentsInBatch = users.filter(u => u.batchId === selectedBatchId && !u.isBlocked);
     const totalChecked = Object.keys(attendanceMap).length;
     const presentCount = Object.values(attendanceMap).filter(r => r.status === 'present').length;
     const absentCount = Object.values(attendanceMap).filter(r => r.status === 'absent').length;
@@ -514,9 +544,10 @@ export default function AttendancePage() {
                     <div className="att-select-group">
                         <label>Batch</label>
                         <CustomSelect
-                            options={batches.map(b => ({ value: b || '', label: b || '' }))}
+                            options={batchOptions}
                             value={selectedBatchId}
                             onChange={(val) => setSelectedBatchId(val)}
+                            searchable={true}
                         />
                     </div>
                     <div className="att-select-group">

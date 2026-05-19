@@ -74,10 +74,19 @@ export const announcementService = {
 
   async fetchUniqueBatches(): Promise<string[]> {
     try {
-      const snap = await getDocs(collection(db, COLLECTIONS.USERS));
       const batches = new Set<string>();
       
-      snap.forEach(doc => {
+      // 1. Fetch from BATCHES collection
+      const batchesSnap = await getDocs(collection(db, COLLECTIONS.BATCHES));
+      batchesSnap.forEach(doc => {
+        const name = doc.data().name;
+        const active = doc.data().active;
+        if (name && active !== false) batches.add(name);
+      });
+      
+      // 2. Fetch from USERS (for backward compatibility)
+      const usersSnap = await getDocs(collection(db, COLLECTIONS.USERS));
+      usersSnap.forEach(doc => {
         const batch = doc.data().batch;
         if (batch) batches.add(batch);
       });

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { userService } from '../userService';
 import { db } from '../../lib/firebase';
-import { collection, addDoc, doc, deleteDoc, updateDoc } from 'firebase/firestore';
+import { collection, doc, runTransaction } from 'firebase/firestore';
 
 // Mock Firebase
 vi.mock('../../lib/firebase', () => ({
@@ -15,16 +15,42 @@ vi.mock('../../lib/firebase', () => ({
 }));
 
 vi.mock('firebase/firestore', () => {
+    const mockCollection = vi.fn((_dbInstance, path) => ({ _isCollection: true, path }));
+    const mockDoc = vi.fn((collOrDb, collectionName, docId) => {
+        if (collOrDb && collOrDb._isCollection) {
+            return { id: 'new-user-123', path: `${collOrDb.path}/new-user-123` };
+        }
+        return { id: docId || 'mock-doc-id', path: `${collectionName}/${docId}` };
+    });
+
+    const mockTransaction = {
+        get: vi.fn(async () => ({
+            exists: () => true,
+            data: () => ({ studentCount: 5 })
+        })),
+        set: vi.fn(),
+        update: vi.fn(),
+        delete: vi.fn()
+    };
+
     return {
-        collection: vi.fn(),
+        collection: mockCollection,
+        doc: mockDoc,
+        getDoc: vi.fn(async () => ({
+            exists: () => true,
+            data: () => ({ email: 'test@student.com' })
+        })),
         addDoc: vi.fn(),
         getDocs: vi.fn(),
-        doc: vi.fn(),
         deleteDoc: vi.fn(),
         updateDoc: vi.fn(),
         query: vi.fn(),
         orderBy: vi.fn(),
         where: vi.fn(),
+        increment: vi.fn((n) => n),
+        runTransaction: vi.fn(async (_dbInstance, updateFunction) => {
+            return await updateFunction(mockTransaction);
+        }),
         Timestamp: {
             now: vi.fn(() => ({ toDate: () => new Date('2026-04-12T10:00:00Z') }))
         }
@@ -47,19 +73,15 @@ describe('userService', () => {
         skills: []
       };
 
-      const mockDocRef = { id: 'new-user-123' };
-      vi.mocked(addDoc).mockResolvedValue(mockDocRef as unknown as Awaited<ReturnType<typeof addDoc>>);
-
       const result = await userService.createUser(mockUser);
 
       expect(collection).toHaveBeenCalledWith(db, 'users');
-      expect(addDoc).toHaveBeenCalled();
       expect(result.id).toBe('new-user-123');
       expect(result.name).toBe('Test Student');
     });
 
-    it('should throw an error if addDoc fails', async () => {
-        vi.mocked(addDoc).mockRejectedValue(new Error('Firestore error'));
+    it('should throw an error if transaction fails', async () => {
+        vi.mocked(runTransaction).mockRejectedValueOnce(new Error('Firestore error'));
 
         await expect(userService.createUser({
             name: 'Fail Auth',
@@ -74,27 +96,19 @@ describe('userService', () => {
 
   describe('updateUser', () => {
     it('should update an existing user document', async () => {
-        const docRef = { id: 'user-to-update' };
-        vi.mocked(doc).mockReturnValue(docRef as ReturnType<typeof doc>);
-        vi.mocked(updateDoc).mockResolvedValue(undefined);
-
         await userService.updateUser('user-to-update', { name: 'Updated Name' });
 
         expect(doc).toHaveBeenCalledWith(db, 'users', 'user-to-update');
-        expect(updateDoc).toHaveBeenCalledWith(docRef, expect.objectContaining({ name: 'Updated Name' }));
+        expect(runTransaction).toHaveBeenCalled();
     });
   });
 
-    describe('deleteUser', () => {
+  describe('deleteUser', () => {
         it('should delete a user document by ID', async () => {
-            const docRef = { id: 'user-to-delete' };
-            vi.mocked(doc).mockReturnValue(docRef as ReturnType<typeof doc>);
-            vi.mocked(deleteDoc).mockResolvedValue(undefined);
-
             await userService.deleteUser('user-to-delete');
 
             expect(doc).toHaveBeenCalledWith(db, 'users', 'user-to-delete');
-            expect(deleteDoc).toHaveBeenCalledWith(docRef);
+            expect(runTransaction).toHaveBeenCalled();
         });
-    });
+  });
 });

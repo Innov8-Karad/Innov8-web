@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
-import type { User } from '../types';
+import type { User, Batch } from '../types';
 import { Edit2, Trash2, Ban, ShieldCheck, ShieldOff, AlertTriangle, CheckCircle } from 'lucide-react';
 import { userService } from '../services/userService';
+import { batchService } from '../services/batchService';
 import { UI_STRINGS } from '../constants';
 import PageHeader from '../components/PageHeader';
 import LoadingState from '../components/LoadingState';
@@ -12,6 +13,7 @@ import type { Column } from '../components/DataTable';
 import Avatar from '../components/Avatar';
 import CloudinaryUpload from '../components/CloudinaryUpload';
 import { FormField, FormRow, FormActions } from '../components/FormField';
+import CustomSelect from '../components/CustomSelect';
 import { useUser } from '../hooks/useUser';
 import { useToast } from '../hooks/useToast';
 
@@ -35,17 +37,28 @@ export default function UsersPage() {
     const [blockReason, setBlockReason] = useState('');
     const [blockLoading, setBlockLoading] = useState(false);
 
+    const [batches, setBatches] = useState<Batch[]>([]);
+
     const [newUser, setNewUser] = useState({
         name: '',
         email: '',
         phone: '',
         batch: '',
+        batchId: '',
         course: '',
         skills: '',
         profilePhoto: ''
     });
     const [editingUser, setEditingUser] = useState<User | null>(null);
     const { showToast } = useToast();
+
+    // Subscribe to batches in real-time
+    useEffect(() => {
+        const unsubscribe = batchService.subscribeToBatches((data) => {
+            setBatches(data);
+        });
+        return () => unsubscribe();
+    }, []);
 
     // Keep localUsers synchronized with Firebase Context
     useEffect(() => {
@@ -66,6 +79,19 @@ export default function UsersPage() {
             showToast("Mobile number must be exactly 10 digits", "error");
             return;
         }
+        if (!newUser.batchId) {
+            setError("Please select a batch for the student");
+            showToast("Please select a batch for the student", "error");
+            return;
+        }
+
+        const selectedBatch = batches.find(b => b.id === newUser.batchId);
+        if (!selectedBatch) {
+            setError("Selected batch is invalid");
+            showToast("Selected batch is invalid", "error");
+            return;
+        }
+
         try {
             setUploadingPhoto(true);
             const photoUrl = uploadedPhotoUrl || newUser.profilePhoto;
@@ -73,26 +99,25 @@ export default function UsersPage() {
                 ? newUser.skills.split(',').map(s => s.trim()).filter(Boolean)
                 : [];
                 
-            let studentCourse = newUser.course;
-            if (!studentCourse && newUser.batch) {
-                const sibling = localUsers.find(u => u.batch === newUser.batch && u.course);
-                if (sibling) {
-                    studentCourse = sibling.course;
-                }
-            }
+            const studentCourse = selectedBatch.courseName || '';
+            const studentCourseId = selectedBatch.courseId || '';
 
             if (editingUser) {
                 await userService.updateUser(editingUser.id, {
                     ...newUser,
+                    batch: selectedBatch.name,
                     course: studentCourse,
+                    courseId: studentCourseId,
                     skills: parsedSkills,
                     profilePhoto: photoUrl
-                });
+                }, editingUser.batchId);
                 showToast("Student updated successfully", "success");
             } else {
                 await userService.createUser({
                     ...newUser,
+                    batch: selectedBatch.name,
                     course: studentCourse,
+                    courseId: studentCourseId,
                     profilePhoto: photoUrl,
                     skills: parsedSkills,
                     status: 'active',
@@ -115,7 +140,7 @@ export default function UsersPage() {
     const resetForm = () => {
         setEditingUser(null);
         setUploadedPhotoUrl(null);
-        setNewUser({ name: '', email: '', phone: '', batch: '', course: '', skills: '', profilePhoto: '' });
+        setNewUser({ name: '', email: '', phone: '', batch: '', batchId: '', course: '', skills: '', profilePhoto: '' });
     };
 
     const handleBlockUser = async () => {
@@ -172,7 +197,7 @@ export default function UsersPage() {
     const confirmDelete = async () => {
         if (!deletingUser) return;
         try {
-            await userService.deleteUser(deletingUser.id);
+            await userService.deleteUser(deletingUser.id, deletingUser.batchId);
             showToast("Student deleted successfully", "success");
             setDeletingUser(null);
         } catch {
@@ -187,6 +212,7 @@ export default function UsersPage() {
             email: user.email || '',
             phone: user.phone || '',
             batch: user.batch || '',
+            batchId: user.batchId || '',
             course: user.course || '',
             skills: user.skills ? (Array.isArray(user.skills) ? user.skills.join(', ') : user.skills) : '',
             profilePhoto: user.profilePhoto || ''
@@ -324,6 +350,27 @@ export default function UsersPage() {
         },
     ];
 
+    const activeBatches = useMemo(() => batches.filter(b => b.active !== false), [batches]);
+
+    const batchOptions = useMemo(() => {
+        const options = activeBatches.map(b => ({
+            value: b.id,
+            label: b.name
+        }));
+        
+        // If editing a user and their current batch is inactive, add it to options
+        if (editingUser?.batchId && editingUser?.batch) {
+            const hasCurrentBatch = options.some(opt => opt.value === editingUser.batchId);
+            if (!hasCurrentBatch) {
+                options.unshift({
+                    value: editingUser.batchId,
+                    label: `${editingUser.batch} (Inactive)`
+                });
+            }
+        }
+        return options;
+    }, [activeBatches, editingUser]);
+
     if (loading || usersLoading) {
         return <LoadingState message={UI_STRINGS.USERS.LOADING} />;
     }
@@ -442,7 +489,13 @@ export default function UsersPage() {
                             />
                         </FormField>
                         <FormField label={UI_STRINGS.USERS.FORM_BATCH}>
-                            <input type="text" required placeholder={UI_STRINGS.USERS.FORM_BATCH_PLACEHOLDER} value={newUser.batch} onChange={e => setNewUser({ ...newUser, batch: e.target.value })} />
+                            <CustomSelect
+                                options={batchOptions}
+                                value={newUser.batchId}
+                                onChange={(val) => setNewUser({ ...newUser, batchId: val })}
+                                placeholder="Select dynamic batch..."
+                                searchable={true}
+                            />
                         </FormField>
                     </FormRow>
                     <FormRow>

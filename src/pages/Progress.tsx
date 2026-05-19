@@ -161,7 +161,7 @@ export default function ProgressPage() {
     const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
     return (
-        <div className="animate-in">
+        <div className="animate-in" style={{ paddingBottom: '40px' }}>
             <PageHeader
                 title={UI_STRINGS.PROGRESS.TITLE}
                 subtitle={UI_STRINGS.PROGRESS.SUBTITLE}
@@ -169,10 +169,16 @@ export default function ProgressPage() {
 
             {/* Analytics Dashboard */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                <div className="card shadow-sm">
+                <div className="card relative overflow-hidden" style={{
+                    background: 'rgba(30, 41, 59, 0.45)',
+                    border: '1px solid rgba(255, 255, 255, 0.06)',
+                    borderRadius: '20px',
+                    boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.15)',
+                    padding: '24px'
+                }}>
                     <div className="flex items-center gap-2 mb-6">
                         <BarChart3 className="text-primary" size={20} />
-                        <h3 className="text-lg font-semibold">Average Score by Batch</h3>
+                        <h3 className="text-lg font-bold text-main">Average Score by Batch</h3>
                     </div>
                     <div style={{ width: '100%', height: 350, display: 'flex', flexDirection: 'column' }}>
                         <div style={{ height: '300px', minHeight: '300px', position: 'relative' }}>
@@ -187,23 +193,23 @@ export default function ProgressPage() {
                                     bottom: 50
                                 }}
                             >
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--chart-grid)" />
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
                                 <XAxis 
                                     dataKey="name" 
                                     axisLine={false} 
                                     tickLine={false}
-                                    stroke="var(--chart-axis)"
+                                    stroke="rgba(255,255,255,0.4)"
                                     fontSize={12}
                                 />
-                                <YAxis axisLine={false} tickLine={false} stroke="var(--chart-axis)" fontSize={12} />
+                                <YAxis axisLine={false} tickLine={false} stroke="rgba(255,255,255,0.4)" fontSize={12} />
                                 <Tooltip 
                                     contentStyle={{ 
-                                        backgroundColor: 'var(--bg-card)', 
+                                        backgroundColor: '#0f172a', 
                                         borderRadius: '12px', 
-                                        border: '1px solid var(--border-subtle)', 
-                                        boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+                                        border: '1px solid rgba(255,255,255,0.08)', 
+                                        boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.3)',
                                         padding: '12px',
-                                        color: 'var(--text-main)'
+                                        color: '#cbd5e1'
                                     }}
                                 />
                                 <Bar dataKey="avgScore" name="Avg Score" radius={[6, 6, 0, 0]} barSize={40}>
@@ -223,10 +229,16 @@ export default function ProgressPage() {
                     </div>
                 </div>
 
-                <div className="card shadow-sm">
+                <div className="card relative overflow-hidden" style={{
+                    background: 'rgba(30, 41, 59, 0.45)',
+                    border: '1px solid rgba(255, 255, 255, 0.06)',
+                    borderRadius: '20px',
+                    boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.15)',
+                    padding: '24px'
+                }}>
                     <div className="flex items-center gap-2 mb-6">
                         <TrendingUp className="text-success" size={20} />
-                        <h3 className="text-lg font-semibold">Avg Attendance & Completion (%)</h3>
+                        <h3 className="text-lg font-bold text-main">Avg Attendance & Completion (%)</h3>
                     </div>
                     <div style={{ width: '100%', height: 350, display: 'flex', flexDirection: 'column' }}>
                         <div style={{ height: '300px', minHeight: '300px', position: 'relative' }}>
@@ -242,7 +254,7 @@ export default function ProgressPage() {
                                         bottom: 20
                                     }}
                                 >
-                                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--chart-grid)" />
+                                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(255,255,255,0.05)" />
                                     <XAxis type="number" hide />
                                     <YAxis 
                                         dataKey="name" 
@@ -250,17 +262,17 @@ export default function ProgressPage() {
                                         axisLine={false} 
                                         tickLine={false} 
                                         width={80}
-                                        stroke="var(--chart-axis)"
+                                        stroke="rgba(255,255,255,0.4)"
                                         fontSize={12}
                                     />
                                     <Tooltip 
                                         contentStyle={{ 
-                                            backgroundColor: 'var(--bg-card)',
+                                            backgroundColor: '#0f172a',
                                             borderRadius: '12px', 
-                                            border: '1px solid var(--border-subtle)', 
-                                            boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+                                            border: '1px solid rgba(255,255,255,0.08)', 
+                                            boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.3)',
                                             padding: '12px',
-                                            color: 'var(--text-main)'
+                                            color: '#cbd5e1'
                                         }}
                                     />
                                     <Legend wrapperStyle={{ paddingTop: '20px' }} />
@@ -280,8 +292,12 @@ export default function ProgressPage() {
             </div>
 
             {/* Management Section */}
-            <div className="card shadow-sm overflow-hidden">
-                <div className="p-6 border-b border-divider bg-light/30">
+            <div className="card shadow-sm overflow-hidden" style={{
+                background: 'rgba(30, 41, 59, 0.35)',
+                border: '1px solid rgba(255, 255, 255, 0.06)',
+                borderRadius: '20px'
+            }}>
+                <div className="p-6 border-b border-white/5 bg-slate-900/40">
                     <div style={{ display: 'flex', alignItems: 'center', gap: '16px', width: '100%' }}>
                         <div style={{ position: 'relative', flex: 1 }}>
                             <Search 
@@ -290,14 +306,21 @@ export default function ProgressPage() {
                                     left: '12px', 
                                     top: '50%', 
                                     transform: 'translateY(-50%)',
-                                    color: 'var(--text-secondary)'
+                                    color: 'rgba(255, 255, 255, 0.4)'
                                 }} 
                                 size={18} 
                             />
                             <input 
                                 type="text" 
-                                style={{ paddingLeft: '40px', width: '100%' }}
-                                className="rounded-lg border border-divider focus:ring-2 focus:ring-primary/20 outline-none"
+                                style={{ 
+                                    paddingLeft: '40px', 
+                                    width: '100%',
+                                    background: 'rgba(15, 23, 42, 0.5)',
+                                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                                    color: 'var(--text-main)',
+                                    height: '42px'
+                                }}
+                                className="rounded-lg focus:ring-2 focus:ring-primary/20 outline-none transition-all duration-200"
                                 placeholder="Search student name..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -320,20 +343,20 @@ export default function ProgressPage() {
 
                 <div className="table-wrapper">
                     <table className="table">
-                        <thead className="bg-light/50">
+                        <thead className="bg-slate-900/60" style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
                             <tr>
-                                <th className="px-6 py-4">Student</th>
-                                <th className="px-6 py-4">Batch</th>
-                                <th className="px-6 py-4">Attendance</th>
-                                <th className="px-6 py-4">Score</th>
-                                <th className="px-6 py-4">Current Module</th>
-                                <th className="px-6 py-4">Progress</th>
-                                <th className="px-6 py-4 text-right">Actions</th>
+                                <th className="px-6 py-4" style={{ color: 'rgba(255, 255, 255, 0.6)', fontWeight: 600 }}>Student</th>
+                                <th className="px-6 py-4" style={{ color: 'rgba(255, 255, 255, 0.6)', fontWeight: 600 }}>Batch</th>
+                                <th className="px-6 py-4" style={{ color: 'rgba(255, 255, 255, 0.6)', fontWeight: 600 }}>Attendance</th>
+                                <th className="px-6 py-4" style={{ color: 'rgba(255, 255, 255, 0.6)', fontWeight: 600 }}>Score</th>
+                                <th className="px-6 py-4" style={{ color: 'rgba(255, 255, 255, 0.6)', fontWeight: 600 }}>Current Module</th>
+                                <th className="px-6 py-4" style={{ color: 'rgba(255, 255, 255, 0.6)', fontWeight: 600 }}>Progress</th>
+                                <th className="px-6 py-4 text-right" style={{ color: 'rgba(255, 255, 255, 0.6)', fontWeight: 600 }}>Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-divider text-main">
+                        <tbody className="divide-y divide-white/5 text-main">
                             {filteredData.map(student => (
-                                <tr key={student.id} className="hover:bg-light/20 transition-colors">
+                                <tr key={student.id} className="hover:bg-white/5 transition-colors" style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.04)' }}>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center">
                                             <Avatar 
