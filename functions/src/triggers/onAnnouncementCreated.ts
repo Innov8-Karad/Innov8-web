@@ -55,8 +55,8 @@ export const onAnnouncementCreated = onDocumentCreated(
         body: content.substring(0, 100) + (content.length > 100 ? "..." : ""),
       },
       {
-        type: "announcement",
-        referenceId: event.params.announcementId,
+        type: data.mockScheduleId ? "mock_schedule" : "announcement",
+        referenceId: data.mockScheduleId || event.params.announcementId,
       }
     );
 

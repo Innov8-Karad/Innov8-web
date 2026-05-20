@@ -291,6 +291,7 @@ export interface Announcement {
     priority: 'low' | 'medium' | 'high';
     author: string;
     showAsPopup?: boolean;           // When true, appears as slide-up popup on mobile home
+    mockScheduleId?: string;         // Link to mock schedule registration
 }
 
 export interface AppNotification {
@@ -451,3 +452,30 @@ export interface Interview {
     createdAt?: Date;
     updatedAt?: Date;
 }
+
+// ─── Mock Scheduling ─────────────────────────────────────────────────────────
+
+export interface MockSchedule {
+    id: string;
+    title: string;
+    description: string;
+    scheduledDate: Date;
+    studentLimit: number;
+    registeredCount: number;
+    status: 'open' | 'closed' | 'completed';
+    targetAudience: 'all' | 'batch';
+    targetBatches: string[];
+    createdBy: string;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export interface MockRegistration {
+    id: string;
+    userId: string;
+    userName: string;
+    userEmail: string;
+    userBatch: string;
+    registeredAt: Date;
+}
+
