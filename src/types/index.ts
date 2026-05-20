@@ -111,6 +111,9 @@ export interface Exam {
     category: string;
     difficulty: 'easy' | 'medium' | 'hard';
     questions: Question[];
+    createdAt?: Date;
+    batchId?: string;
+    batchName?: string;
 }
 
 export interface ExamResult {
@@ -408,6 +411,7 @@ export interface StudentProgress {
     batch?: string;
     profilePhoto?: string;
     overallProgress?: number;
+    courseCompletionPercentage?: number;
     attendance?: number;
     attendancePercentage?: number;   // Web alias
     overallScore?: number;

@@ -4,6 +4,7 @@ import {
   doc, 
   serverTimestamp,
   setDoc,
+  collectionGroup,
   type DocumentData 
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -13,9 +14,11 @@ import { jsPDF } from 'jspdf';
 
 export const progressService = {
   async fetchProgress(): Promise<StudentProgress[]> {
-    const [progressSnap, usersSnap] = await Promise.all([
+    const [progressSnap, usersSnap, batchesSnap, modulesSnap] = await Promise.all([
       getDocs(collection(db, COLLECTIONS.PROGRESS)),
-      getDocs(collection(db, COLLECTIONS.USERS))
+      getDocs(collection(db, COLLECTIONS.USERS)),
+      getDocs(collection(db, COLLECTIONS.BATCHES)),
+      getDocs(collectionGroup(db, 'modules'))
     ]);
 
     const progressMap = new Map<string, DocumentData>();
@@ -26,6 +29,21 @@ export const progressService = {
       progressMap.set(key, { ...p, id: doc.id });
     });
 
+    const batchModuleCountMap = new Map<string, number>();
+    modulesSnap.docs.forEach(doc => {
+      const batchId = doc.ref.parent.parent?.id;
+      if (batchId) {
+        batchModuleCountMap.set(batchId, (batchModuleCountMap.get(batchId) || 0) + 1);
+      }
+    });
+
+    const batchNameToIdMap = new Map<string, string>();
+    batchesSnap.docs.forEach(doc => {
+      const b = doc.data();
+      if (b.name) {
+        batchNameToIdMap.set(b.name.trim().toLowerCase(), doc.id);
+      }
+    });
 
     return usersSnap.docs
       .map(doc => ({ id: doc.id, ...doc.data() } as User))
@@ -33,6 +51,14 @@ export const progressService = {
       .map(userData => {
         const progressData = progressMap.get(userData.id) || {};
         
+        // Calculate Course Completion percentage
+        const studentBatchId = userData.batchId || (userData.batch ? batchNameToIdMap.get(userData.batch.trim().toLowerCase()) : null);
+        const totalModules = studentBatchId ? (batchModuleCountMap.get(studentBatchId) || 0) : 0;
+        const completedCount = Math.max((progressData.completedModules || []).length, (progressData.completedModuleIds || []).length);
+        const courseCompletionPercentage = totalModules > 0 
+          ? Math.min(Math.round((completedCount / totalModules) * 100), 100) 
+          : 0;
+
         return {
           id: progressData.id || `${userData.id}_${userData.course || 'default'}`,
           studentId: userData.id,
@@ -47,7 +73,9 @@ export const progressService = {
           profilePhoto: userData.profilePhoto || '',
           // Map legacy fields for backward compatibility
           userId: userData.id,
-          userName: userData.name || 'Unknown Student'
+          userName: userData.name || 'Unknown Student',
+          overallProgress: courseCompletionPercentage,
+          courseCompletionPercentage: courseCompletionPercentage
         } as StudentProgress;
       });
   },
@@ -68,16 +96,16 @@ export const progressService = {
 
   async getBatchProgress() {
     const progress = await this.fetchProgress();
-    const batches: Record<string, { totalScore: number; totalAttendance: number; totalModules: number; count: number }> = {};
+    const batches: Record<string, { totalScore: number; totalAttendance: number; totalCompletion: number; count: number }> = {};
 
     progress.forEach(p => {
       const b = p.batch || 'Unassigned';
       if (!batches[b]) {
-        batches[b] = { totalScore: 0, totalAttendance: 0, totalModules: 0, count: 0 };
+        batches[b] = { totalScore: 0, totalAttendance: 0, totalCompletion: 0, count: 0 };
       }
       batches[b].totalScore += p.overallScore ?? 0;
       batches[b].totalAttendance += p.attendancePercentage ?? 0;
-      batches[b].totalModules += (p.completedModules ?? []).length;
+      batches[b].totalCompletion += p.overallProgress ?? 0;
       batches[b].count += 1;
     });
 
@@ -85,7 +113,7 @@ export const progressService = {
       name,
       avgScore: Math.round(stats.totalScore / stats.count),
       avgAttendance: Math.round(stats.totalAttendance / stats.count),
-      avgCompletion: Math.round(stats.totalModules / stats.count)
+      avgCompletion: Math.round(stats.totalCompletion / stats.count)
     }));
   },
 

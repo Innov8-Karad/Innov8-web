@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { Calendar, Clock, Award, Plus, Trash2 } from 'lucide-react';
 import './Exams.css';
 import { examService } from '../services/examService';
-import type { Exam, Question } from '../types';
+import { batchService } from '../services/batchService';
+import type { Exam, Question, Batch } from '../types';
 import { UI_STRINGS } from '../constants';
 import { getDifficultyColor } from '../styles/colors';
 import PageHeader from '../components/PageHeader';
@@ -18,6 +19,7 @@ import CustomSelect from '../components/CustomSelect';
 export default function ExamsPage() {
     const { showToast } = useToast();
     const [exams, setExams] = useState<Exam[]>([]);
+    const [batches, setBatches] = useState<Batch[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
@@ -34,6 +36,8 @@ export default function ExamsPage() {
         category: '',
         difficulty: 'medium' as 'easy' | 'medium' | 'hard',
         scheduledDate: '',
+        batchId: 'all',
+        batchName: 'All Batches',
         questions: [] as Question[]
     };
 
@@ -41,7 +45,17 @@ export default function ExamsPage() {
 
     useEffect(() => {
         fetchExams();
+        fetchBatches();
     }, []);
+
+    const fetchBatches = async () => {
+        try {
+            const data = await batchService.fetchBatches();
+            setBatches(data);
+        } catch (err) {
+            console.error("Error fetching batches:", err);
+        }
+    };
 
     const fetchExams = async () => {
         try {
@@ -73,6 +87,8 @@ export default function ExamsPage() {
             category: exam.category,
             difficulty: exam.difficulty,
             scheduledDate: exam.scheduledDate ? new Date(exam.scheduledDate).toISOString().slice(0, 16) : '',
+            batchId: exam.batchId || 'all',
+            batchName: exam.batchName || 'All Batches',
             questions: exam.questions || []
         });
         setShowModal(true);
@@ -190,9 +206,14 @@ export default function ExamsPage() {
                 {filteredExams.length > 0 ? (
                     filteredExams.map(exam => (
                         <div key={exam.id} className="card flex flex-col gap-4">
-                            <div>
-                                <span className="section-label">{exam.category}</span>
-                                <h3 style={{ marginTop: '4px' }}>{exam.title}</h3>
+                            <div className="flex justify-between items-start gap-2">
+                                <div>
+                                    <span className="section-label">{exam.category}</span>
+                                    <h3 style={{ marginTop: '4px' }}>{exam.title}</h3>
+                                </div>
+                                <span className={`badge ${exam.batchId && exam.batchId !== 'all' ? 'badge-primary' : 'badge-secondary'}`} style={{ fontSize: '0.75rem', padding: '4px 8px', borderRadius: '50px', whiteSpace: 'nowrap' }}>
+                                    {exam.batchName || 'All Batches'}
+                                </span>
                             </div>
 
                             <p className="text-sm text-muted" style={{ flex: 1 }}>{exam.description}</p>
@@ -273,6 +294,23 @@ export default function ExamsPage() {
                                     />
                                 </FormField>
                             </FormRow>
+                            <FormField label="Assign to Batch">
+                                <CustomSelect
+                                    options={[
+                                        { value: 'all', label: 'All Batches' },
+                                        ...batches.map(b => ({ value: b.id, label: b.name }))
+                                    ]}
+                                    value={formData.batchId || 'all'}
+                                    onChange={(val) => {
+                                        const selectedBatch = batches.find(b => b.id === val);
+                                        setFormData({ 
+                                            ...formData, 
+                                            batchId: val,
+                                            batchName: selectedBatch ? selectedBatch.name : 'All Batches'
+                                        });
+                                    }}
+                                />
+                            </FormField>
                             <FormRow>
                                 <FormField label={UI_STRINGS.EXAMS.FORM_DURATION}>
                                     <input type="number" required value={formData.duration} onChange={e => setFormData({ ...formData, duration: e.target.value })} />
