@@ -347,7 +347,7 @@ export default function ProgressPage() {
                             <tr>
                                 <th className="px-6 py-4" style={{ color: 'rgba(255, 255, 255, 0.6)', fontWeight: 600 }}>Student</th>
                                 <th className="px-6 py-4" style={{ color: 'rgba(255, 255, 255, 0.6)', fontWeight: 600 }}>Batch</th>
-                                <th className="px-6 py-4" style={{ color: 'rgba(255, 255, 255, 0.6)', fontWeight: 600 }}>Attendance</th>
+                                <th className="px-6 py-4" style={{ color: 'rgba(255, 255, 255, 0.6)', fontWeight: 600 }}>Course Completion (%)</th>
                                 <th className="px-6 py-4" style={{ color: 'rgba(255, 255, 255, 0.6)', fontWeight: 600 }}>Score</th>
                                 <th className="px-6 py-4" style={{ color: 'rgba(255, 255, 255, 0.6)', fontWeight: 600 }}>Current Module</th>
                                 <th className="px-6 py-4" style={{ color: 'rgba(255, 255, 255, 0.6)', fontWeight: 600 }}>Progress</th>
@@ -380,9 +380,9 @@ export default function ProgressPage() {
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-2">
                                             <div className="w-16 bg-divider rounded-full h-2">
-                                                <div className="bg-primary h-2 rounded-full" style={{ width: `${student.attendancePercentage}%` }}></div>
+                                                <div className="bg-success h-2 rounded-full" style={{ width: `${student.overallProgress || 0}%` }}></div>
                                             </div>
-                                            <span className="text-sm font-semibold">{student.attendancePercentage}%</span>
+                                            <span className="text-sm font-semibold">{student.overallProgress || 0}%</span>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 font-semibold">{student.overallScore}</td>
