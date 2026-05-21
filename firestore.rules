@@ -28,15 +28,16 @@ service cloud.firestore {
       return isOwner(userId)
           || (isAuthenticated()
               && resource != null
-              && resource.data.get('email', null) != null
-              && request.auth.token.get('email', null) != null
+              && 'email' in resource.data
+              && 'email' in request.auth.token
               && resource.data.email.lower() == request.auth.token.email.lower());
     }
 
     function isNotBlocked() {
-      return request.auth.token.get('isBlocked', false) != true
+      return (!('isBlocked' in request.auth.token) || request.auth.token.isBlocked != true)
           && (!exists(/databases/$(database)/documents/users/$(request.auth.uid))
-              || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('isBlocked', false) != true);
+              || !('isBlocked' in get(/databases/$(database)/documents/users/$(request.auth.uid)).data)
+              || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isBlocked != true);
     }
 
     // Authenticated AND not blocked (for student-facing reads)
@@ -57,7 +58,7 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if isAdmin() 
                     || isOwner(userId)
-                    || (isAuthenticated() && resource != null && (resource.data.email == request.auth.token.email || resource.data.email.lower() == request.auth.token.email.lower()));
+                    || (isAuthenticated() && resource != null && 'email' in request.auth.token && (resource.data.email == request.auth.token.email || resource.data.email.lower() == request.auth.token.email.lower()));
 
       allow create: if isAdmin()
                     || (isOwner(userId)
@@ -95,7 +96,7 @@ service cloud.firestore {
                   || (isAuthenticated()
                       && (resource.data.studentId == request.auth.uid
                           || resource.data.userId == request.auth.uid
-                          || resource.data.email == request.auth.token.email));
+                          || ('email' in request.auth.token && resource.data.email == request.auth.token.email)));
 
       allow create, update, delete: if isAdmin();
 
@@ -210,8 +211,7 @@ service cloud.firestore {
       allow read: if isAdmin()
                   || (isAuthenticated()
                       && (resource.data.studentId == request.auth.uid
-                          || resource.data.studentEmail == request.auth.token.email
-                          || resource.data.studentEmail.lower() == request.auth.token.email.lower()));
+                          || ('email' in request.auth.token && (resource.data.studentEmail == request.auth.token.email || resource.data.studentEmail.lower() == request.auth.token.email.lower()))));
 
       allow create, update, delete: if isAdmin();
     }
@@ -290,7 +290,7 @@ service cloud.firestore {
       allow list: if isAdmin()
                   || (isAuthenticated()
                       && (resource.data.userId == request.auth.uid
-                          || resource.data.email == request.auth.token.email));
+                          || ('email' in request.auth.token && resource.data.email == request.auth.token.email)));
 
       allow write: if isAdmin()
                    || (isAuthenticated()
@@ -437,9 +437,32 @@ service cloud.firestore {
     }
 
     // 21. USER BLOCK STATUS (Publicly readable for real-time unblock detection)
+
     match /user_block_status/{userId} {
       allow read: if true;
       allow write: if isAdmin();
+    }
+
+    // 22. MOCK SCHEDULES (Redesigned Flow)
+    // ─────────────────────────────────────────────────────────────────────
+    // Admin has full CRUD. Students can read/list.
+    // ═════════════════════════════════════════════════════════════════════
+    match /mockSchedules/{scheduleId} {
+      allow read: if isAuthenticated();
+      allow create, delete: if isAdmin();
+      allow update: if isAuthenticated() && (
+        isAdmin() || 
+        (
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['registeredCount', 'status', 'updatedAt']) &&
+          request.resource.data.registeredCount == resource.data.registeredCount + 1
+        )
+      );
+
+      match /registrations/{registrationId} {
+        allow read: if isAuthenticated() && (isAdmin() || registrationId == request.auth.uid);
+        allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+        allow update, delete: if isAdmin();
+      }
     }
 
   }

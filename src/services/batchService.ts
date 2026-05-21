@@ -436,5 +436,37 @@ export const batchService = {
   async updateSubmissionGrade(batchId: string, assignmentId: string, submissionId: string, data: Partial<AssignmentSubmission>): Promise<void> {
     const docRef = doc(db, COLLECTIONS.BATCHES, batchId, 'assignments', assignmentId, 'submissions', submissionId);
     await updateDoc(docRef, { ...data, gradedAt: Timestamp.now() });
+  },
+
+  async recalculateBatchStudentCounts(): Promise<void> {
+    try {
+      const batchesSnap = await getDocs(collection(db, COLLECTIONS.BATCHES));
+      const usersSnap = await getDocs(query(collection(db, COLLECTIONS.USERS), where('role', '==', 'student')));
+      
+      const counts: Record<string, number> = {};
+      usersSnap.docs.forEach((document) => {
+        const u = document.data();
+        if (u.batchId) {
+          counts[u.batchId] = (counts[u.batchId] || 0) + 1;
+        }
+      });
+
+      const batch = writeBatch(db);
+      let updatesCount = 0;
+      batchesSnap.docs.forEach((batchDoc) => {
+        const currentCount = counts[batchDoc.id] || 0;
+        if (batchDoc.data().studentCount !== currentCount) {
+          batch.update(doc(db, COLLECTIONS.BATCHES, batchDoc.id), { studentCount: currentCount });
+          updatesCount++;
+        }
+      });
+      
+      if (updatesCount > 0) {
+        await batch.commit();
+        console.log(`Successfully synced student counts for ${updatesCount} batches.`);
+      }
+    } catch (err) {
+      console.error("Error recalculating batch student counts:", err);
+    }
   }
 };

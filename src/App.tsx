@@ -27,6 +27,7 @@ import PlacementTallyPage from './pages/PlacementTally';
 import DeviceApprovalsPage from './pages/DeviceApprovals';
 import NotificationsPage from './pages/NotificationsPage';
 import BatchesPage from './pages/Batches';
+import MockSchedulingPage from './pages/MockScheduling';
 
 interface PrivateRouteProps {
   children: React.ReactNode;
@@ -71,6 +72,7 @@ function App() {
                   <Route path="/device-approvals" element={<PrivateRoute><Layout><DeviceApprovalsPage /></Layout></PrivateRoute>} />
                   <Route path="/notifications" element={<PrivateRoute><Layout><NotificationsPage /></Layout></PrivateRoute>} />
                   <Route path="/batches" element={<PrivateRoute><Layout><BatchesPage /></Layout></PrivateRoute>} />
+                  <Route path="/mock-scheduling" element={<PrivateRoute><Layout><MockSchedulingPage /></Layout></PrivateRoute>} />
 
                   {/* Redirects */}
                   <Route path="/profile/:id" element={<Navigate to="/progress" replace />} />
