@@ -5,7 +5,9 @@ import {
   serverTimestamp,
   setDoc,
   collectionGroup,
-  type DocumentData 
+  type DocumentData,
+  QuerySnapshot,
+  QueryDocumentSnapshot
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { COLLECTIONS } from '../constants';
@@ -14,12 +16,20 @@ import { jsPDF } from 'jspdf';
 
 export const progressService = {
   async fetchProgress(): Promise<StudentProgress[]> {
-    const [progressSnap, usersSnap, batchesSnap, modulesSnap] = await Promise.all([
+    const [progressSnap, usersSnap, batchesSnap] = await Promise.all([
       getDocs(collection(db, COLLECTIONS.PROGRESS)),
       getDocs(collection(db, COLLECTIONS.USERS)),
-      getDocs(collection(db, COLLECTIONS.BATCHES)),
-      getDocs(collectionGroup(db, 'modules'))
+      getDocs(collection(db, COLLECTIONS.BATCHES))
     ]);
+
+    let modulesSnap: QuerySnapshot<DocumentData> | { docs: QueryDocumentSnapshot<DocumentData>[] };
+    try {
+      modulesSnap = await getDocs(collectionGroup(db, 'modules'));
+    } catch (err) {
+      console.warn("Failed to fetch modules collectionGroup, falling back to 0 modules:", err);
+      modulesSnap = { docs: [] };
+    }
+
 
     const progressMap = new Map<string, DocumentData>();
     progressSnap.docs.forEach(doc => {
@@ -30,7 +40,7 @@ export const progressService = {
     });
 
     const batchModuleCountMap = new Map<string, number>();
-    modulesSnap.docs.forEach(doc => {
+    modulesSnap.docs.forEach((doc) => {
       const batchId = doc.ref.parent.parent?.id;
       if (batchId) {
         batchModuleCountMap.set(batchId, (batchModuleCountMap.get(batchId) || 0) + 1);

@@ -170,10 +170,11 @@ export default function ProgressPage() {
             {/* Analytics Dashboard */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
                 <div className="card relative overflow-hidden" style={{
-                    background: 'rgba(30, 41, 59, 0.45)',
-                    border: '1px solid rgba(255, 255, 255, 0.06)',
+                    background: 'var(--glass-bg)',
+                    backdropFilter: 'var(--glass-blur)',
+                    border: '1px solid var(--border-subtle)',
                     borderRadius: '20px',
-                    boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.15)',
+                    boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.08)',
                     padding: '24px'
                 }}>
                     <div className="flex items-center gap-2 mb-6">
@@ -193,23 +194,23 @@ export default function ProgressPage() {
                                     bottom: 50
                                 }}
                             >
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--chart-grid)" />
                                 <XAxis 
                                     dataKey="name" 
                                     axisLine={false} 
                                     tickLine={false}
-                                    stroke="rgba(255,255,255,0.4)"
+                                    stroke="var(--chart-axis)"
                                     fontSize={12}
                                 />
-                                <YAxis axisLine={false} tickLine={false} stroke="rgba(255,255,255,0.4)" fontSize={12} />
+                                <YAxis axisLine={false} tickLine={false} stroke="var(--chart-axis)" fontSize={12} />
                                 <Tooltip 
                                     contentStyle={{ 
-                                        backgroundColor: '#0f172a', 
+                                        backgroundColor: 'var(--bg-card)', 
                                         borderRadius: '12px', 
-                                        border: '1px solid rgba(255,255,255,0.08)', 
-                                        boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.3)',
+                                        border: '1px solid var(--border-subtle)', 
+                                        boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
                                         padding: '12px',
-                                        color: '#cbd5e1'
+                                        color: 'var(--text-main)'
                                     }}
                                 />
                                 <Bar dataKey="avgScore" name="Avg Score" radius={[6, 6, 0, 0]} barSize={40}>
@@ -230,10 +231,11 @@ export default function ProgressPage() {
                 </div>
 
                 <div className="card relative overflow-hidden" style={{
-                    background: 'rgba(30, 41, 59, 0.45)',
-                    border: '1px solid rgba(255, 255, 255, 0.06)',
+                    background: 'var(--glass-bg)',
+                    backdropFilter: 'var(--glass-blur)',
+                    border: '1px solid var(--border-subtle)',
                     borderRadius: '20px',
-                    boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.15)',
+                    boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.08)',
                     padding: '24px'
                 }}>
                     <div className="flex items-center gap-2 mb-6">
@@ -254,7 +256,7 @@ export default function ProgressPage() {
                                         bottom: 20
                                     }}
                                 >
-                                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(255,255,255,0.05)" />
+                                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--chart-grid)" />
                                     <XAxis type="number" hide />
                                     <YAxis 
                                         dataKey="name" 
@@ -262,17 +264,17 @@ export default function ProgressPage() {
                                         axisLine={false} 
                                         tickLine={false} 
                                         width={80}
-                                        stroke="rgba(255,255,255,0.4)"
+                                        stroke="var(--chart-axis)"
                                         fontSize={12}
                                     />
                                     <Tooltip 
                                         contentStyle={{ 
-                                            backgroundColor: '#0f172a',
+                                            backgroundColor: 'var(--bg-card)',
                                             borderRadius: '12px', 
-                                            border: '1px solid rgba(255,255,255,0.08)', 
-                                            boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.3)',
+                                            border: '1px solid var(--border-subtle)', 
+                                            boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
                                             padding: '12px',
-                                            color: '#cbd5e1'
+                                            color: 'var(--text-main)'
                                         }}
                                     />
                                     <Legend wrapperStyle={{ paddingTop: '20px' }} />
@@ -293,11 +295,11 @@ export default function ProgressPage() {
 
             {/* Management Section */}
             <div className="card shadow-sm overflow-hidden" style={{
-                background: 'rgba(30, 41, 59, 0.35)',
-                border: '1px solid rgba(255, 255, 255, 0.06)',
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border-subtle)',
                 borderRadius: '20px'
             }}>
-                <div className="p-6 border-b border-white/5 bg-slate-900/40">
+                <div className="p-6" style={{ borderBottom: '1px solid var(--border-subtle)', background: 'var(--bg-card-accent)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '16px', width: '100%' }}>
                         <div style={{ position: 'relative', flex: 1 }}>
                             <Search 
@@ -306,17 +308,17 @@ export default function ProgressPage() {
                                     left: '12px', 
                                     top: '50%', 
                                     transform: 'translateY(-50%)',
-                                    color: 'rgba(255, 255, 255, 0.4)'
+                                    color: 'var(--text-secondary)'
                                 }} 
                                 size={18} 
-                            />
+                             />
                             <input 
                                 type="text" 
                                 style={{ 
                                     paddingLeft: '40px', 
                                     width: '100%',
-                                    background: 'rgba(15, 23, 42, 0.5)',
-                                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                                    background: 'var(--input-bg)',
+                                    border: '1px solid var(--border-subtle)',
                                     color: 'var(--text-main)',
                                     height: '42px'
                                 }}
@@ -343,20 +345,20 @@ export default function ProgressPage() {
 
                 <div className="table-wrapper">
                     <table className="table">
-                        <thead className="bg-slate-900/60" style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                        <thead style={{ background: 'var(--bg-card-accent)', borderBottom: '1px solid var(--border-subtle)' }}>
                             <tr>
-                                <th className="px-6 py-4" style={{ color: 'rgba(255, 255, 255, 0.6)', fontWeight: 600 }}>Student</th>
-                                <th className="px-6 py-4" style={{ color: 'rgba(255, 255, 255, 0.6)', fontWeight: 600 }}>Batch</th>
-                                <th className="px-6 py-4" style={{ color: 'rgba(255, 255, 255, 0.6)', fontWeight: 600 }}>Course Completion (%)</th>
-                                <th className="px-6 py-4" style={{ color: 'rgba(255, 255, 255, 0.6)', fontWeight: 600 }}>Score</th>
-                                <th className="px-6 py-4" style={{ color: 'rgba(255, 255, 255, 0.6)', fontWeight: 600 }}>Current Module</th>
-                                <th className="px-6 py-4" style={{ color: 'rgba(255, 255, 255, 0.6)', fontWeight: 600 }}>Progress</th>
-                                <th className="px-6 py-4 text-right" style={{ color: 'rgba(255, 255, 255, 0.6)', fontWeight: 600 }}>Actions</th>
+                                <th className="px-6 py-4" style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>Student</th>
+                                <th className="px-6 py-4" style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>Batch</th>
+                                <th className="px-6 py-4" style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>Course Completion (%)</th>
+                                <th className="px-6 py-4" style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>Score</th>
+                                <th className="px-6 py-4" style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>Current Module</th>
+                                <th className="px-6 py-4" style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>Progress</th>
+                                <th className="px-6 py-4 text-right" style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5 text-main">
                             {filteredData.map(student => (
-                                <tr key={student.id} className="hover:bg-white/5 transition-colors" style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.04)' }}>
+                                <tr key={student.id} className="transition-colors" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center">
                                             <Avatar 
