@@ -8,9 +8,13 @@ import {
   onSnapshot,
   query,
   orderBy,
+  where,
   Timestamp,
   writeBatch,
-  type DocumentData
+  runTransaction,
+  type DocumentData,
+  type DocumentReference,
+  type QueryDocumentSnapshot
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { COLLECTIONS } from '../constants';
@@ -186,5 +190,105 @@ export const mockSchedulingService = {
     } catch (err) {
       console.error('Failed to clear associated announcements:', err);
     }
+  },
+
+  /**
+   * Block a student globally: Add to mock_blocked_students, and mark all their active registrations as 'blocked'
+   */
+  async blockStudentGlobally(user: MockRegistration): Promise<void> {
+    const batch = writeBatch(db);
+
+    // 1. Add to global block list
+    const blockRef = doc(db, 'mock_blocked_students', user.userId);
+    batch.set(blockRef, {
+      userId: user.userId,
+      userName: user.userName,
+      userEmail: user.userEmail,
+      userPhone: user.userPhone || '',
+      userBatch: user.userBatch,
+      blockedAt: Timestamp.now(),
+    });
+
+    // 2. Query all active mock schedules
+    const schedulesRef = collection(db, COLLECTIONS.MOCK_SCHEDULES);
+    const schedulesQuery = query(schedulesRef, where('status', '==', 'open'));
+    const schedulesSnap = await getDocs(schedulesQuery);
+
+    const registrationsToBlock: { regRef: DocumentReference, scheduleDoc: QueryDocumentSnapshot }[] = [];
+
+    // 3. Find if user is registered in any active schedule
+    for (const scheduleDoc of schedulesSnap.docs) {
+      const regRef = doc(db, COLLECTIONS.MOCK_SCHEDULES, scheduleDoc.id, 'registrations', user.userId);
+      registrationsToBlock.push({ regRef, scheduleDoc });
+    }
+
+    // We can't safely batch get within the loop and mix with batch sets easily, so let's do a runTransaction for each found schedule?
+    // Actually, a simple update is fine. Let's just do it directly.
+    await batch.commit(); // commit the block first.
+
+    // Now process active schedules individually to handle seats properly via transactions
+    for (const { regRef, scheduleDoc } of registrationsToBlock) {
+      try {
+        await runTransaction(db, async (transaction) => {
+          const rDoc = await transaction.get(regRef);
+          if (rDoc.exists() && (rDoc.data() as MockRegistration).status !== 'blocked') {
+            const sDoc = await transaction.get(scheduleDoc.ref);
+            if (sDoc.exists()) {
+              const sData = sDoc.data() as MockSchedule;
+              const newCount = Math.max(0, sData.registeredCount - 1);
+              transaction.update(regRef, {
+                status: 'blocked',
+                updatedAt: Timestamp.now()
+              });
+              transaction.update(scheduleDoc.ref, {
+                registeredCount: newCount,
+                status: newCount < sData.studentLimit ? 'open' : sData.status,
+                updatedAt: Timestamp.now()
+              });
+            }
+          }
+        });
+      } catch (err) {
+        console.error('Error blocking registration in schedule', scheduleDoc.id, err);
+      }
+    }
+  },
+
+  /**
+   * Unblock a student globally.
+   */
+  async unblockStudentGlobally(userId: string): Promise<void> {
+    const blockRef = doc(db, 'mock_blocked_students', userId);
+    await deleteDoc(blockRef);
+  },
+
+  /**
+   * Subscribe to globally blocked students
+   */
+  subscribeToGlobalBlockedStudents(callback: (blocked: MockRegistration[]) => void) {
+    const q = query(
+      collection(db, 'mock_blocked_students'),
+      orderBy('blockedAt', 'desc')
+    );
+
+    return onSnapshot(q, (snapshot) => {
+      const blocked = snapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          userId: data.userId,
+          userName: data.userName,
+          userEmail: data.userEmail,
+          userPhone: data.userPhone,
+          userBatch: data.userBatch,
+          registeredAt: data.blockedAt instanceof Timestamp ? data.blockedAt.toDate() : new Date(data.blockedAt),
+          status: 'blocked',
+        } as MockRegistration;
+      });
+      callback(blocked);
+    }, (error) => {
+      console.error('Error subscribing to mock blocked students:', error);
+      callback([]);
+    });
   },
 };

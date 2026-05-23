@@ -480,6 +480,8 @@ export interface MockRegistration {
     userName: string;
     userEmail: string;
     userBatch: string;
+    userPhone?: string;
     registeredAt: Date;
+    status?: 'active' | 'blocked';
 }
 
