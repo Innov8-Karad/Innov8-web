@@ -81,6 +81,11 @@ service cloud.firestore {
                         && (resource.data.get('activeDeviceDocId', null) == null || request.resource.data.get('activeDeviceDocId', null) == resource.data.get('activeDeviceDocId', null)));
 
       allow delete: if isAdmin();
+
+      // User-specific Persistent Notifications Subcollection
+      match /notifications/{notificationId} {
+        allow read, write: if isOwner(userId) || isAdmin();
+      }
     }
 
 
@@ -194,7 +199,7 @@ service cloud.firestore {
     // Mobile:     Reads all (client-side filtering by batch/audience)
     // ═════════════════════════════════════════════════════════════════════
     match /announcements/{announcementId} {
-      allow read: if isAuthenticated();
+      allow read: if true;
       allow create, update, delete: if isAdmin();
     }
 
