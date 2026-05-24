@@ -73,6 +73,11 @@ export default function BatchesPage() {
                 const fetchedCourses = await courseService.fetchCourses();
                 setCourses(fetchedCourses);
 
+                // Recalculate batch student counts in the background to ensure they are synchronized
+                batchService.recalculateBatchStudentCounts().catch(err => {
+                    console.error("Error recalculating batch student counts:", err);
+                });
+
                 unsubscribeBatches = batchService.subscribeToBatches((data) => {
                     setBatches(data);
                     setLoading(false);
