@@ -54,7 +54,7 @@ export const mockSchedulingService = {
         })}. Seats are limited to ${data.studentLimit}. Tap here to register!`,
         targetAudience: data.targetAudience,
         targetBatches: data.targetBatches,
-        showAsPopup: true,
+        showAsPopup: false,
         mockScheduleId: scheduleId,
         priority: 'high',
       });

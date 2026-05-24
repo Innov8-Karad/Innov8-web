@@ -51,7 +51,7 @@ const admin = __importStar(require("firebase-admin"));
 if (!admin.apps.length) {
     admin.initializeApp();
 }
-exports.deleteCloudinaryAsset = (0, https_1.onCall)({ maxInstances: 10, region: "asia-south1" }, async (request) => {
+exports.deleteCloudinaryAsset = (0, https_1.onCall)({ maxInstances: 10, region: "asia-south1", cors: true }, async (request) => {
     // Requirement: Global Auth Middleware (validate check)
     await (0, auth_1.validateAuth)(request);
     const { publicId, resourceType } = request.data;

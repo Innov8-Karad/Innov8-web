@@ -49,7 +49,7 @@ if (!admin.apps.length) {
     admin.initializeApp();
 }
 const db = admin.firestore();
-exports.onSendNotification = (0, https_1.onCall)({ region: "asia-south1" }, async (request) => {
+exports.onSendNotification = (0, https_1.onCall)({ region: "asia-south1", cors: true }, async (request) => {
     // ── Auth Check & Admin Check ──
     const userData = await (0, auth_1.validateAuth)(request);
     if (userData.role !== "admin") {
@@ -64,8 +64,9 @@ exports.onSendNotification = (0, https_1.onCall)({ region: "asia-south1" }, asyn
     if (!data.targetAudience) {
         throw new https_1.HttpsError("invalid-argument", "Target audience is required.");
     }
-    // ── Fetch Tokens ──
+    // ── Fetch Tokens & Student IDs ──
     let tokens = [];
+    let resolvedStudentIds = [];
     switch (data.targetAudience) {
         case "all": {
             const usersSnap = await db
@@ -73,6 +74,7 @@ exports.onSendNotification = (0, https_1.onCall)({ region: "asia-south1" }, asyn
                 .where("role", "==", "student")
                 .get();
             usersSnap.forEach((doc) => {
+                resolvedStudentIds.push(doc.id);
                 const userData = doc.data();
                 if (userData.fcmTokens && Array.isArray(userData.fcmTokens)) {
                     tokens.push(...userData.fcmTokens);
@@ -86,7 +88,24 @@ exports.onSendNotification = (0, https_1.onCall)({ region: "asia-south1" }, asyn
             if (!batches.length) {
                 throw new https_1.HttpsError("invalid-argument", "At least one batch must be selected.");
             }
-            tokens = await (0, sendPush_1.getBatchTokens)(batches);
+            const chunks = [];
+            for (let i = 0; i < batches.length; i += 30) {
+                chunks.push(batches.slice(i, i + 30));
+            }
+            for (const chunk of chunks) {
+                const snapshot = await db.collection("users")
+                    .where("batch", "in", chunk)
+                    .where("role", "==", "student")
+                    .get();
+                snapshot.forEach((doc) => {
+                    resolvedStudentIds.push(doc.id);
+                    const userData = doc.data();
+                    if (userData.fcmTokens && Array.isArray(userData.fcmTokens)) {
+                        tokens.push(...userData.fcmTokens);
+                    }
+                });
+            }
+            tokens = [...new Set(tokens)]; // Deduplicate
             break;
         }
         case "students": {
@@ -94,6 +113,7 @@ exports.onSendNotification = (0, https_1.onCall)({ region: "asia-south1" }, asyn
             if (!studentIds.length) {
                 throw new https_1.HttpsError("invalid-argument", "At least one student must be selected.");
             }
+            resolvedStudentIds = [...studentIds];
             // Fetch tokens for each selected student
             for (const studentId of studentIds) {
                 const studentTokens = await (0, sendPush_1.getUserTokens)(studentId);
@@ -107,6 +127,30 @@ exports.onSendNotification = (0, https_1.onCall)({ region: "asia-south1" }, asyn
     }
     // ── Send Push Notification ──
     await (0, sendPush_1.sendPush)(tokens, { title: data.title, body: data.body }, { type: "general" });
+    // ── Save Persistent Notification in Firestore for each target student ──
+    if (resolvedStudentIds.length > 0) {
+        const batchSize = 400;
+        for (let i = 0; i < resolvedStudentIds.length; i += batchSize) {
+            const batch = db.batch();
+            const chunk = resolvedStudentIds.slice(i, i + batchSize);
+            chunk.forEach((studentId) => {
+                const notifRef = db
+                    .collection("users")
+                    .doc(studentId)
+                    .collection("notifications")
+                    .doc();
+                batch.set(notifRef, {
+                    title: data.title,
+                    body: data.body,
+                    type: "general",
+                    isRead: false,
+                    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                });
+            });
+            await batch.commit();
+        }
+        console.log(`[onSendNotification] Saved persistent notification to ${resolvedStudentIds.length} students' inboxes.`);
+    }
     // ── Store Notification Record for Admin History ──
     const notificationRecord = {
         title: data.title,
@@ -122,7 +166,7 @@ exports.onSendNotification = (0, https_1.onCall)({ region: "asia-south1" }, asyn
     console.log(`[onSendNotification] Admin ${callerUid} sent "${data.title}" to ${tokens.length} devices (${data.targetAudience}).`);
     return {
         success: true,
-        message: `Notification sent to ${tokens.length} device(s).`,
+        message: `Notification sent to ${tokens.length} device(s) and saved to ${resolvedStudentIds.length} student inbox(es).`,
         tokenCount: tokens.length,
     };
 });

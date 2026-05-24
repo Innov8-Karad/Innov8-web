@@ -19,7 +19,7 @@ if (!admin.apps.length) {
 }
 
 export const deleteCloudinaryAsset = onCall(
-  { maxInstances: 10, region: "asia-south1" },
+  { maxInstances: 10, region: "asia-south1", cors: true },
   async (request: CallableRequest) => {
     // Requirement: Global Auth Middleware (validate check)
     await validateAuth(request);
