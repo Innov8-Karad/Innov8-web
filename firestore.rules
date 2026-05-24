@@ -121,7 +121,7 @@ service cloud.firestore {
     // Mobile:     Reads all courses and subcollections
     // ═════════════════════════════════════════════════════════════════════
     match /courses/{courseId} {
-      allow read: if isAuthenticated();
+      allow read: if true;
       allow create, delete: if isAdmin();
       allow update: if isAdmin()
                     || (isAuthenticated()
@@ -131,17 +131,17 @@ service cloud.firestore {
                         && request.resource.data.purchasedBy.hasAll([request.auth.uid]));
 
       match /modules/{moduleId} {
-        allow read: if isAuthenticated();
+        allow read: if true;
         allow create, update, delete: if isAdmin();
       }
 
       match /resources/{resourceId} {
-        allow read: if isAuthenticated();
+        allow read: if true;
         allow create, update, delete: if isAdmin();
       }
 
       match /assignments/{assignmentId} {
-        allow read: if isAuthenticated();
+        allow read: if true;
         allow create, update, delete: if isAdmin();
 
         // ── Assignment Submissions (students upload, admins grade) ──
@@ -161,14 +161,8 @@ service cloud.firestore {
     }
 
 
-    // ═════════════════════════════════════════════════════════════════════
-    // 4. EXAMS
-    // ─────────────────────────────────────────────────────────────────────
-    // Web Admin:  Full CRUD, dashboard queries with various filters
-    // Mobile:     Reads all exams, reads single exam by ID
-    // ═════════════════════════════════════════════════════════════════════
     match /exams/{examId} {
-      allow read: if isAuthenticated();
+      allow read: if true;
       allow create, update, delete: if isAdmin();
     }
 
@@ -222,14 +216,8 @@ service cloud.firestore {
     }
 
 
-    // ═════════════════════════════════════════════════════════════════════
-    // 8. PLACEMENTS (Success Stories)
-    // ─────────────────────────────────────────────────────────────────────
-    // Web Admin:  Full CRUD, dashboard reads entire collection
-    // Mobile:     Reads all (useSuccessStories, usePlacements)
-    // ═════════════════════════════════════════════════════════════════════
     match /placements/{placementId} {
-      allow read: if isAuthenticated();
+      allow read: if true;
       allow create, update, delete: if isAdmin();
     }
 
@@ -342,7 +330,7 @@ service cloud.firestore {
     // 14. SUCCESS STORIES (alternate collection name)
     // ─────────────────────────────────────────────────────────────────────
     match /successStories/{storyId} {
-      allow read: if isAdmin() || isActiveUser();
+      allow read: if true;
       allow create, update, delete: if isAdmin();
     }
 
@@ -454,7 +442,13 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // 22. MOCK SCHEDULES (Redesigned Flow)
+    // 22. MOCK BLOCKED STUDENTS (Global Block for Mock Schedules)
+    match /mock_blocked_students/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // 23. MOCK SCHEDULES (Redesigned Flow)
     // ─────────────────────────────────────────────────────────────────────
     // Admin has full CRUD. Students can read/list.
     // ═════════════════════════════════════════════════════════════════════
@@ -471,7 +465,9 @@ service cloud.firestore {
 
       match /registrations/{registrationId} {
         allow read: if isAuthenticated() && (isAdmin() || registrationId == request.auth.uid);
-        allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+        allow create: if isAuthenticated() && 
+                      request.resource.data.userId == request.auth.uid &&
+                      !exists(/databases/$(database)/documents/mock_blocked_students/$(request.auth.uid));
         allow update, delete: if isAdmin();
       }
     }

@@ -9,6 +9,23 @@
   animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* ── Global Actions ───────────────────────────────────── */
+.mock-global-actions {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.blocked-students-btn {
+  color: #ef4444 !important;
+  border-color: rgba(239, 68, 68, 0.3) !important;
+}
+
+.blocked-students-btn:hover {
+  background: rgba(239, 68, 68, 0.1) !important;
+  border-color: #ef4444 !important;
+}
+
 /* ── Create Mock Schedule Card & Form ───────────────────────────────────── */
 
 .mock-create-card {
@@ -710,6 +727,80 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* ── Blocked UI Elements ── */
+.registrants-section {
+  margin-bottom: 32px;
+}
+.registrants-section h4 {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text-main);
+  margin: 0 0 16px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.registrants-section h4 svg {
+  color: var(--primary);
+}
+.blocked-section h4 svg {
+  color: #ef4444;
+}
+
+.status-badge-inline {
+  display: inline-block;
+  margin-left: 10px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+.status-badge-inline.active {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10B981;
+}
+.status-badge-inline.blocked {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.actions-cell {
+  white-space: nowrap;
+}
+.block-student-btn, .unblock-student-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+.block-student-btn {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.2);
+}
+.block-student-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: #ef4444;
+  transform: translateY(-1px);
+}
+.unblock-student-btn {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10B981;
+  border-color: rgba(16, 185, 129, 0.2);
+}
+.unblock-student-btn:hover {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: #10B981;
+  transform: translateY(-1px);
 }
 
 /* ── Light theme support ── */

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
     Calendar, Users, Clock, Trash2, X, 
-    Check, Lock, Unlock, ChevronDown, ChevronUp, Info, ListOrdered, Download
+    Check, Lock, Unlock, ChevronDown, ChevronUp, Info, ListOrdered, Download, Ban
 } from 'lucide-react';
 import { batchService } from '../services/batchService';
 import { mockSchedulingService } from '../services/mockSchedulingService';
@@ -36,8 +36,12 @@ export default function MockSchedulingPage() {
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [showCreateForm, setShowCreateForm] = useState(false);
+    const [showBlockedPanel, setShowBlockedPanel] = useState(false);
     const [expandedScheduleId, setExpandedScheduleId] = useState<string | null>(null);
     const [scheduleToDelete, setScheduleToDelete] = useState<string | null>(null);
+
+    // ── Global Block State ──
+    const [globalBlockedStudents, setGlobalBlockedStudents] = useState<MockRegistration[]>([]);
 
     // ── Fetch batches and subscribe to schedules on mount ──
     useEffect(() => {
@@ -56,8 +60,13 @@ export default function MockSchedulingPage() {
             setLoading(false);
         });
 
+        const unsubBlocked = mockSchedulingService.subscribeToGlobalBlockedStudents((blocked) => {
+            setGlobalBlockedStudents(blocked);
+        });
+
         return () => {
             unsub();
+            unsubBlocked();
         };
     }, []);
 
@@ -140,6 +149,27 @@ export default function MockSchedulingPage() {
         }
     };
 
+    // ── Global Block / Unblock ──
+    const handleBlockStudentGlobally = async (reg: MockRegistration) => {
+        try {
+            await mockSchedulingService.blockStudentGlobally(reg);
+            showToast('Student blocked globally across all mock sessions.', 'success');
+        } catch (err: unknown) {
+            console.error('Error blocking student:', err);
+            showToast(err instanceof Error ? err.message : 'Failed to block student.', 'error');
+        }
+    };
+
+    const handleUnblockStudentGlobally = async (userId: string) => {
+        try {
+            await mockSchedulingService.unblockStudentGlobally(userId);
+            showToast('Student unblocked successfully. They can now register for mock sessions.', 'success');
+        } catch (err: unknown) {
+            console.error('Error unblocking student:', err);
+            showToast(err instanceof Error ? err.message : 'Failed to unblock student.', 'error');
+        }
+    };
+
     // ── Delete Schedule ──
     const handleDeleteSchedule = async () => {
         if (!scheduleToDelete) return;
@@ -207,9 +237,87 @@ export default function MockSchedulingPage() {
             <PageHeader
                 title={UI_STRINGS.MOCK_SCHEDULING.TITLE}
                 subtitle={UI_STRINGS.MOCK_SCHEDULING.SUBTITLE}
-                actionLabel={!showCreateForm ? UI_STRINGS.MOCK_SCHEDULING.CREATE_BTN : undefined}
-                onAction={() => setShowCreateForm(true)}
             />
+
+            <div className="mock-global-actions">
+                <button
+                    className="btn btn-primary"
+                    onClick={() => {
+                        setShowCreateForm(true);
+                        setShowBlockedPanel(false);
+                    }}
+                >
+                    <Calendar size={18} style={{ marginRight: '8px' }} />
+                    {UI_STRINGS.MOCK_SCHEDULING.CREATE_BTN}
+                </button>
+                <button
+                    className="btn btn-secondary blocked-students-btn"
+                    onClick={() => {
+                        setShowBlockedPanel(true);
+                        setShowCreateForm(false);
+                    }}
+                >
+                    <Ban size={18} color="#ef4444" style={{ marginRight: '8px' }} />
+                    Blocked Students ({globalBlockedStudents.length})
+                </button>
+            </div>
+
+            {/* Blocked Students Panel */}
+            {showBlockedPanel && (
+                <div className="mock-create-card fade-in-slide">
+                    <div className="card-header-row">
+                        <h3 style={{ color: '#ef4444' }}>
+                            <Ban size={18} style={{ marginRight: '8px', verticalAlign: '-3px' }} />
+                            Globally Blocked Students
+                        </h3>
+                        <button className="close-form-btn" onClick={() => setShowBlockedPanel(false)}>
+                            <X size={18} />
+                        </button>
+                    </div>
+                    <div className="registrants-section blocked-section" style={{ marginTop: '1rem', padding: 0, background: 'transparent' }}>
+                        {globalBlockedStudents.length === 0 ? (
+                            <div className="registrants-empty">No students are currently blocked.</div>
+                        ) : (
+                            <table className="registrants-table blocked-table">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Student Name</th>
+                                        <th>Batch</th>
+                                        <th>Mobile Number</th>
+                                        <th>Blocked At</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {globalBlockedStudents.map((reg, index) => (
+                                        <tr key={reg.id}>
+                                            <td>{index + 1}</td>
+                                            <td className="name-cell">
+                                                {reg.userName}
+                                            </td>
+                                            <td className="batch-cell">{reg.userBatch}</td>
+                                            <td className="email-cell">{reg.userPhone || 'N/A'}</td>
+                                            <td className="time-cell">
+                                                {reg.registeredAt.toLocaleDateString()} {reg.registeredAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            </td>
+                                            <td className="actions-cell">
+                                                <button 
+                                                    className="unblock-student-btn"
+                                                    onClick={() => handleUnblockStudentGlobally(reg.userId)}
+                                                    title="Unblock this student globally"
+                                                >
+                                                    <Check size={14} /> Unblock
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        )}
+                    </div>
+                </div>
+            )}
 
             {/* Create Mock Schedule Form Card */}
             {showCreateForm && (
@@ -465,43 +573,65 @@ export default function MockSchedulingPage() {
 
                                     {isExpanded && (
                                         <div className="registrants-expanded-panel">
-                                            <h4>
-                                                <ListOrdered size={16} />
-                                                Student Registrations
-                                            </h4>
-                                            
-                                            {!registrationsMap[schedule.id] ? (
-                                                <div className="registrants-loading">Loading registrants...</div>
-                                            ) : registrationsMap[schedule.id].length === 0 ? (
-                                                <div className="registrants-empty">
-                                                    {UI_STRINGS.MOCK_SCHEDULING.NO_REGISTRATIONS}
-                                                </div>
-                                            ) : (
-                                                <table className="registrants-table">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>#</th>
-                                                            <th>Student Name</th>
-                                                            <th>Batch</th>
-                                                            <th>Email</th>
-                                                            <th>Registered At</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        {registrationsMap[schedule.id].map((reg, index) => (
-                                                            <tr key={reg.id}>
-                                                                <td>{index + 1}</td>
-                                                                <td className="name-cell">{reg.userName}</td>
-                                                                <td className="batch-cell">{reg.userBatch}</td>
-                                                                <td className="email-cell">{reg.userEmail}</td>
-                                                                <td className="time-cell">
-                                                                    {reg.registeredAt.toLocaleDateString()} {reg.registeredAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                                </td>
-                                                            </tr>
-                                                        ))}
-                                                    </tbody>
-                                                </table>
-                                            )}
+                                            {(() => {
+                                                const allRegs = registrationsMap[schedule.id] || [];
+                                                const activeRegs = allRegs.filter(r => r.status !== 'blocked');
+
+                                                return (
+                                                    <>
+                                                        <div className="registrants-section">
+                                                            <h4>
+                                                                <ListOrdered size={16} />
+                                                                Active Registrations ({activeRegs.length})
+                                                            </h4>
+                                                            
+                                                            {activeRegs.length === 0 ? (
+                                                                <div className="registrants-empty">No active registrations yet.</div>
+                                                            ) : (
+                                                                <table className="registrants-table">
+                                                                    <thead>
+                                                                        <tr>
+                                                                            <th>#</th>
+                                                                            <th>Student Name</th>
+                                                                            <th>Batch</th>
+                                                                            <th>Mobile Number</th>
+                                                                            <th>Registered At</th>
+                                                                            <th>Actions</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        {activeRegs.map((reg, index) => (
+                                                                            <tr key={reg.id}>
+                                                                                <td>{index + 1}</td>
+                                                                                <td className="name-cell">
+                                                                                    {reg.userName}
+                                                                                    <span className="status-badge-inline active">Active</span>
+                                                                                </td>
+                                                                                <td className="batch-cell">{reg.userBatch}</td>
+                                                                                <td className="email-cell">{reg.userPhone || 'N/A'}</td>
+                                                                                <td className="time-cell">
+                                                                                    {reg.registeredAt.toLocaleDateString()} {reg.registeredAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                                                </td>
+                                                                                <td className="actions-cell">
+                                                                                    <button 
+                                                                                        className="block-student-btn"
+                                                                                        onClick={() => handleBlockStudentGlobally(reg)}
+                                                                                        title="Block this student globally"
+                                                                                    >
+                                                                                        <Ban size={14} /> Block
+                                                                                    </button>
+                                                                                </td>
+                                                                            </tr>
+                                                                        ))}
+                                                                    </tbody>
+                                                                </table>
+                                                            )}
+                                                        </div>
+
+                                                        {/* Blocked students per schedule section is removed as we now have a global list */}
+                                                    </>
+                                                );
+                                            })()}
                                         </div>
                                     )}
                                 </div>
