@@ -401,6 +401,12 @@ service cloud.firestore {
     }
 
 
+    // Collection Group query support for modules
+    match /{path=**}/modules/{moduleId} {
+      allow read: if isAuthenticated();
+    }
+
+
     // 18. ENROLLMENT REQUESTS
     // ─────────────────────────────────────────────────────────────────────
     // Web Admin:  Reads all, updates status to approve/reject

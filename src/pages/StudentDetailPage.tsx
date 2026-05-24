@@ -92,10 +92,10 @@ export default function StudentDetailPage() {
 
             {/* Profile Header Card */}
             <div className="card mb-8 p-6 overflow-hidden relative" style={{
-                background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.75), rgba(15, 23, 42, 0.85))',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
+                background: 'linear-gradient(135deg, var(--bg-card), var(--bg-card-accent))',
+                border: '1px solid var(--border-subtle)',
                 backdropFilter: 'blur(12px)',
-                boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.3)',
+                boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.1)',
                 borderRadius: '20px'
             }}>
                 {/* Decorative background glow */}
@@ -141,9 +141,7 @@ export default function StudentDetailPage() {
                         </span>
                         <h1 className="text-3xl font-extrabold text-main tracking-tight" style={{ 
                             margin: '8px 0',
-                            background: 'linear-gradient(to right, #ffffff, #cbd5e1)',
-                            WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor: 'transparent'
+                            color: 'var(--text-main)'
                         }}>
                             {student.studentName || 'Student'}
                         </h1>
@@ -171,8 +169,8 @@ export default function StudentDetailPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 {/* Attendance Metric */}
                 <div className="card relative overflow-hidden group hover:translate-y-[-2px] transition-all duration-300" style={{
-                    background: 'rgba(30, 41, 59, 0.45)',
-                    border: '1px solid rgba(255, 255, 255, 0.06)',
+                    background: 'var(--bg-card)',
+                    border: '1px solid var(--border-subtle)',
                     borderRadius: '16px',
                     padding: '24px'
                 }}>
@@ -201,8 +199,8 @@ export default function StudentDetailPage() {
 
                 {/* Overall Score Metric */}
                 <div className="card relative overflow-hidden group hover:translate-y-[-2px] transition-all duration-300" style={{
-                    background: 'rgba(30, 41, 59, 0.45)',
-                    border: '1px solid rgba(255, 255, 255, 0.06)',
+                    background: 'var(--bg-card)',
+                    border: '1px solid var(--border-subtle)',
                     borderRadius: '16px',
                     padding: '24px'
                 }}>
@@ -231,8 +229,8 @@ export default function StudentDetailPage() {
 
                 {/* Modules Done Metric */}
                 <div className="card relative overflow-hidden group hover:translate-y-[-2px] transition-all duration-300" style={{
-                    background: 'rgba(30, 41, 59, 0.45)',
-                    border: '1px solid rgba(255, 255, 255, 0.06)',
+                    background: 'var(--bg-card)',
+                    border: '1px solid var(--border-subtle)',
                     borderRadius: '16px',
                     padding: '24px'
                 }}>
@@ -266,20 +264,20 @@ export default function StudentDetailPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Academic Status Card */}
                 <div className="card overflow-hidden" style={{
-                    background: 'rgba(30, 41, 59, 0.35)',
-                    border: '1px solid rgba(255, 255, 255, 0.06)',
+                    background: 'var(--bg-card)',
+                    border: '1px solid var(--border-subtle)',
                     borderRadius: '20px',
                     padding: '24px'
                 }}>
                     <h3 className="text-lg font-bold flex items-center gap-2 mb-6 pb-4" style={{
-                        borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                        borderBottom: '1px solid var(--border-subtle)',
                         color: 'var(--text-main)'
                     }}>
                         <BookOpen size={20} className="text-primary" />
                         Academic Status
                     </h3>
                     <div className="flex flex-col gap-6">
-                        <div className="flex justify-between items-center bg-slate-800/40 p-4 rounded-xl border border-white/5">
+                        <div className="flex justify-between items-center p-4 rounded-xl" style={{ background: 'var(--bg-card-accent)', border: '1px solid var(--border-subtle)' }}>
                             <span className="text-sm text-secondary">Current Module</span>
                             <span className="font-semibold bg-primary/10 border border-primary/20 px-3 py-1 rounded-full text-xs text-primary">
                                 {student.currentModule || 'None'}
@@ -293,7 +291,7 @@ export default function StudentDetailPage() {
                                     {Math.round(((student.completedModules ?? []).length / 10) * 100)}%
                                 </span>
                             </div>
-                            <div className="w-full bg-slate-800/80 rounded-full h-3 overflow-hidden p-[2px]">
+                            <div className="w-full rounded-full h-3 overflow-hidden p-[2px]" style={{ background: 'var(--bg-card-accent)' }}>
                                 <div 
                                     className="h-full rounded-full transition-all duration-500" 
                                     style={{ 
@@ -314,13 +312,13 @@ export default function StudentDetailPage() {
 
                 {/* Completed Modules list */}
                 <div className="card overflow-hidden" style={{
-                    background: 'rgba(30, 41, 59, 0.35)',
-                    border: '1px solid rgba(255, 255, 255, 0.06)',
+                    background: 'var(--bg-card)',
+                    border: '1px solid var(--border-subtle)',
                     borderRadius: '20px',
                     padding: '24px'
                 }}>
                     <h3 className="text-lg font-bold flex items-center gap-2 mb-6 pb-4" style={{
-                        borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                        borderBottom: '1px solid var(--border-subtle)',
                         color: 'var(--text-main)'
                     }}>
                         <CheckCircle2 size={20} className="text-emerald-500" />
@@ -328,7 +326,7 @@ export default function StudentDetailPage() {
                     </h3>
                     <div className="flex flex-col gap-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
                         {(student.completedModules ?? []).map((m, i) => (
-                            <div key={i} className="flex items-center justify-between p-4 bg-slate-800/40 rounded-xl border border-white/5 hover:border-emerald-500/20 transition-all duration-200">
+                            <div key={i} className="flex items-center justify-between p-4 rounded-xl transition-all duration-200" style={{ background: 'var(--bg-card-accent)', border: '1px solid var(--border-subtle)' }}>
                                 <div className="flex items-center gap-3">
                                     <div className="w-6 h-6 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/25">
                                         <CheckCircle2 size={12} className="text-emerald-500" />
@@ -340,7 +338,7 @@ export default function StudentDetailPage() {
                         ))}
                         {(student.completedModules ?? []).length === 0 && (
                             <div className="text-center py-12 flex flex-col items-center justify-center opacity-70">
-                                <div className="w-16 h-16 rounded-full bg-slate-800/50 flex items-center justify-center border border-white/5 mb-4 text-secondary">
+                                <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4 text-secondary" style={{ background: 'var(--bg-card-accent)', border: '1px solid var(--border-subtle)' }}>
                                     <Circle size={32} />
                                 </div>
                                 <p className="text-sm font-semibold text-main">No modules completed yet</p>
