@@ -251,32 +251,6 @@
     opacity: 1;
 }
 
-/* Glass Shine Reflection */
-.batch-glass-card::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: linear-gradient(
-        45deg,
-        transparent,
-        rgba(255, 255, 255, 0.03) 45%,
-        rgba(255, 255, 255, 0.08) 50%,
-        rgba(255, 255, 255, 0.03) 55%,
-        transparent
-    );
-    transform: rotate(-45deg);
-    transition: all 0.6s ease;
-    pointer-events: none;
-    z-index: 0;
-}
-
-.batch-glass-card:hover::before {
-    top: -20%;
-    left: -20%;
-}
 
 .batch-card-tag {
     position: absolute;
