@@ -20,7 +20,8 @@ import {
     Shield,
     Layers,
     TrendingUp,
-    CalendarCheck
+    CalendarCheck,
+    GraduationCap
 } from 'lucide-react';
 import logo from '../assets/logo.png';
 import { ThemeToggle } from './ThemeToggle';
@@ -71,6 +72,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         { icon: BookOpen, label: UI_STRINGS.NAV.COURSES, path: '/courses' },
         { icon: Award, label: UI_STRINGS.NAV.PROGRESS, path: '/progress' },
         { icon: CalendarCheck, label: UI_STRINGS.NAV.MOCK_SCHEDULING, path: '/mock-scheduling' },
+        { icon: GraduationCap, label: UI_STRINGS.NAV.CERTIFICATIONS, path: '/certifications' },
         { icon: Bell, label: UI_STRINGS.NAV.ANNOUNCEMENTS, path: '/announcements' },
         { icon: Shield, label: UI_STRINGS.DEVICE_APPROVALS.TITLE, path: '/device-approvals', badge: pendingDeviceCount },
         { icon: BellRing, label: UI_STRINGS.NAV.NOTIFICATIONS, path: '/notifications' },

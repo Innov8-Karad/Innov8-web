@@ -15,6 +15,7 @@ import Dashboard from './pages/Dashboard';
 import UsersPage from './pages/Users';
 import FeesPage from './pages/Fees';
 import ExamsPage from './pages/Exams';
+import CertificationsPage from './pages/Certifications';
 import AnnouncementsPage from './pages/Announcements';
 import CoursesPage from './pages/Courses';
 import PlacementsPage from './pages/Placements';
@@ -60,6 +61,7 @@ function App() {
                   <Route path="/users" element={<PrivateRoute><Layout><UsersPage /></Layout></PrivateRoute>} />
                   <Route path="/fees" element={<PrivateRoute><Layout><FeesPage /></Layout></PrivateRoute>} />
                   <Route path="/exams" element={<PrivateRoute><Layout><ExamsPage /></Layout></PrivateRoute>} />
+                  <Route path="/certifications" element={<PrivateRoute><Layout><CertificationsPage /></Layout></PrivateRoute>} />
                   <Route path="/announcements" element={<PrivateRoute><Layout><AnnouncementsPage /></Layout></PrivateRoute>} />
                   <Route path="/courses" element={<PrivateRoute><Layout><CoursesPage /></Layout></PrivateRoute>} />
                   <Route path="/placements" element={<PrivateRoute><Layout><PlacementsPage /></Layout></PrivateRoute>} />
