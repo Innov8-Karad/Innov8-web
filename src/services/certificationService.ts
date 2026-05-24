@@ -138,7 +138,7 @@ export const certificationService = {
     const scoreVal = data.score ?? data.examScore ?? 100;
     
     const nameParts = userNameVal.trim().split(/\s+/);
-    let firstName = data.firstName || nameParts[0] || '';
+    const firstName = data.firstName || nameParts[0] || '';
     let middleName = data.middleName || '';
     let surname = data.surname || '';
     

@@ -17,7 +17,19 @@ import { courseService } from '../services/courseService';
 import { userService } from '../services/userService';
 import { db } from '../lib/firebase';
 import { collection, getDocs } from 'firebase/firestore';
-import type { CertificationExam, CertificationResult, Certificate, Course, User } from '../types';
+import type { CertificationExam, CertificationResult, Certificate, Course, User, CoursePurchase, StudentProgress, Question } from '../types';
+
+interface EligiblePair {
+  user: User;
+  course: Course;
+  purchase: CoursePurchase;
+  videoProgress: number;
+  exam: CertificationExam | undefined;
+  bestResult: CertificationResult | null;
+  attempts: number;
+  certificate: Certificate | undefined;
+  isEligibleForCert: boolean;
+}
 import PageHeader from '../components/PageHeader';
 import LoadingState from '../components/LoadingState';
 import ErrorAlert from '../components/ErrorAlert';
@@ -40,8 +52,8 @@ export default function CertificationsPage() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [exams, setExams] = useState<CertificationExam[]>([]);
   const [users, setUsers] = useState<User[]>([]);
-  const [purchases, setPurchases] = useState<any[]>([]);
-  const [progressList, setProgressList] = useState<any[]>([]);
+  const [purchases, setPurchases] = useState<CoursePurchase[]>([]);
+  const [progressList, setProgressList] = useState<StudentProgress[]>([]);
   const [examResults, setExamResults] = useState<CertificationResult[]>([]);
   const [issuedCertificates, setIssuedCertificates] = useState<Certificate[]>([]);
 
@@ -70,7 +82,7 @@ export default function CertificationsPage() {
     scheduledDate: '',
     endDate: '',
     isActive: true,
-    questions: [] as any[]
+    questions: [] as Question[]
   };
 
   const [examFormData, setExamFormData] = useState(initialExamState);
@@ -106,8 +118,8 @@ export default function CertificationsPage() {
       setCourses(fetchedCourses);
       setExams(fetchedExams);
       setUsers(fetchedUsers);
-      setPurchases(purchasesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-      setProgressList(progressSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setPurchases(purchasesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as CoursePurchase)));
+      setProgressList(progressSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as StudentProgress)));
       setExamResults(fetchedResults);
       setIssuedCertificates(fetchedCerts);
     } catch (err) {
@@ -196,10 +208,10 @@ export default function CertificationsPage() {
 
     try {
       if (editingExamId) {
-        await certificationService.updateCertExam(editingExamId, payload as any);
+        await certificationService.updateCertExam(editingExamId, payload as unknown as Partial<CertificationExam>);
         showToast("Certification exam updated successfully", "success");
       } else {
-        await certificationService.createCertExam(payload as any);
+        await certificationService.createCertExam(payload as unknown as Omit<CertificationExam, 'id' | 'createdAt'>);
         showToast("Certification exam created successfully", "success");
       }
       setShowExamModal(false);
@@ -272,8 +284,8 @@ export default function CertificationsPage() {
   };
 
   // Calculate external eligible student progress pairs
-  const getEligiblePairs = () => {
-    const list: any[] = [];
+  const getEligiblePairs = (): EligiblePair[] => {
+    const list: EligiblePair[] = [];
     
     users.forEach(user => {
       // 1. MUST NOT BE IN BATCH (Regular batch students are excluded)
@@ -341,7 +353,7 @@ export default function CertificationsPage() {
   };
 
   // Issue Certificate manually
-  const handleIssueCertificate = async (item: any) => {
+  const handleIssueCertificate = async (item: EligiblePair) => {
     try {
       const studentName = item.user.name || `${item.user.firstName || ''} ${item.user.surname || ''}`.trim() || 'Student';
       const bestScore = item.bestResult ? item.bestResult.score : 100;
@@ -353,7 +365,7 @@ export default function CertificationsPage() {
         courseTitle: item.course.title,
         examId: item.exam ? item.exam.id : 'manual',
         score: bestScore
-      } as any);
+      } as unknown as Omit<Certificate, 'id' | 'issuedAt' | 'certificateNumber'>);
 
       showToast(`Certificate successfully generated for ${studentName}!`, "success");
       loadAllData();
@@ -600,7 +612,7 @@ export default function CertificationsPage() {
                           {item.certificate ? (
                             <button 
                               className="btn btn-secondary btn-sm flex items-center gap-1"
-                              onClick={() => handleViewCertificate(item.certificate)}
+                              onClick={() => handleViewCertificate(item.certificate!)}
                             >
                               <Eye size={14} />
                               View
