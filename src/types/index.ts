@@ -11,7 +11,10 @@
 export interface User {
     id: string;
     email: string;
-    name: string;
+    name: string;                    // Computed full name: "FirstName MiddleName Surname"
+    firstName?: string;              // Display name shown in app
+    middleName?: string;             // Used on certificates
+    surname?: string;                // Used on certificates
     phone: string;
     batch: string;
     batchId?: string;
@@ -97,7 +100,8 @@ export interface Question {
     id?: string;
     questionText: string;
     options: string[];
-    correctAnswerIndex: number;
+    correctAnswerIndex?: number;
+    correctOptionIndex?: number;
     explanation?: string;
 }
 
@@ -483,5 +487,65 @@ export interface MockRegistration {
     userPhone?: string;
     registeredAt: Date;
     status?: 'active' | 'blocked';
+}
+
+// ─── Certification ───────────────────────────────────────────────────────────
+
+export interface CertificationExam {
+    id: string;
+    courseId: string;
+    courseName: string;
+    courseTitle?: string;                // Web fallback
+    title: string;
+    description: string;
+    duration: number;                    // in minutes
+    totalMarks: number;
+    passingPercentage: number;           // e.g. 60
+    minVideoCompletionPercentage: number;// e.g. 100
+    maxAttempts: number;                 // e.g. 3
+    questions: Question[];
+    scheduledDate: Date;
+    endDate?: Date;
+    isActive: boolean;
+    createdBy: string;
+    createdAt: Date;
+    updatedAt?: Date;
+}
+
+export interface CertificationResult {
+    id: string;
+    certExamId: string;
+    courseId: string;
+    userId: string;
+    userName: string;
+    userEmail: string;
+    score: number;
+    totalMarks: number;
+    percentage: number;
+    passed: boolean;
+    attemptNumber: number;
+    answers: Record<string, unknown>[];
+    timeTaken: number;
+    submittedAt: Date;
+}
+
+export interface Certificate {
+    id: string;
+    userId: string;
+    courseId: string;
+    courseName: string;
+    courseTitle?: string;                // Web fallback
+    certExamId: string;
+    examId?: string;                     // Web fallback
+    studentFullName: string;
+    userName?: string;                   // Web fallback
+    firstName: string;
+    middleName: string;
+    surname: string;
+    examScore: number;
+    score?: number;                      // Web fallback
+    examPercentage: number;
+    issuedAt: Date;
+    certificateNumber: string;           // e.g. "INNOV8-CR-2026-00001"
 }
 

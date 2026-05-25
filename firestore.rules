@@ -492,5 +492,25 @@ service cloud.firestore {
       }
     }
 
+    // ═════════════════════════════════════════════════════════════════════
+    // 23. CERTIFICATION SYSTEM
+    // ═════════════════════════════════════════════════════════════════════
+    match /certification_exams/{examId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    match /certification_results/{resultId} {
+      allow read: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAdmin();
+    }
+
+    match /certificates/{certId} {
+      allow read: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAdmin();
+    }
+
   }
 }

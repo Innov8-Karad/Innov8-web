@@ -4,11 +4,12 @@ interface SearchInputProps {
     placeholder: string;
     value: string;
     onChange: (value: string) => void;
+    style?: React.CSSProperties;
 }
 
-export default function SearchInput({ placeholder, value, onChange }: SearchInputProps) {
+export default function SearchInput({ placeholder, value, onChange, style }: SearchInputProps) {
     return (
-        <div style={{ position: 'relative', flex: 1 }}>
+        <div style={{ position: 'relative', flex: 1, ...style }}>
             <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
             <input
                 type="text"

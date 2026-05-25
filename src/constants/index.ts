@@ -18,6 +18,9 @@ export const COLLECTIONS = {
   ENROLLMENT_REQUESTS: 'enrollment_requests',
   PLACEMENT_TALLY: 'placementTally',
   MOCK_SCHEDULES: 'mockSchedules',
+  CERTIFICATION_EXAMS: 'certification_exams',
+  CERTIFICATION_RESULTS: 'certification_results',
+  CERTIFICATES: 'certificates',
 } as const;
 
 export const FEE_STATUS = {
@@ -422,6 +425,7 @@ export const UI_STRINGS = {
     NOTIFICATIONS: 'Notifications',
     BATCHES: 'Batches',
     MOCK_SCHEDULING: 'Mock Scheduling',
+    CERTIFICATIONS: 'Certifications',
     LOGOUT: 'Logout',
     ADMIN: 'Admin Portal',
   },

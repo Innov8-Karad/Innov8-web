@@ -4,12 +4,15 @@ interface FormFieldProps {
     label: string;
     children: ReactNode;
     htmlFor?: string;
+    required?: boolean;
 }
 
-export function FormField({ label, children, htmlFor }: FormFieldProps) {
+export function FormField({ label, children, htmlFor, required }: FormFieldProps) {
     return (
         <div className="form-field">
-            <label htmlFor={htmlFor}>{label}</label>
+            <label htmlFor={htmlFor}>
+                {label} {required && <span className="text-red-500" style={{ color: '#EF4444', marginLeft: '4px' }}>*</span>}
+            </label>
             {children}
         </div>
     );
@@ -25,8 +28,9 @@ export function FormRow({ children }: FormRowProps) {
 
 interface FormActionsProps {
     children: ReactNode;
+    style?: React.CSSProperties;
 }
 
-export function FormActions({ children }: FormActionsProps) {
-    return <div className="form-actions">{children}</div>;
+export function FormActions({ children, style }: FormActionsProps) {
+    return <div className="form-actions" style={style}>{children}</div>;
 }
