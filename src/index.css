@@ -2435,3 +2435,131 @@ input[type="checkbox"]:disabled {
   background: rgba(0, 0, 0, 0.06);
 }
 
+/* Batch Multi-Select Styles */
+.batch-multiselect-container {
+  position: relative;
+  width: 100%;
+}
+.batch-multiselect-trigger {
+  min-height: 46px;
+  padding: 8px 12px;
+  background: var(--bg-card-accent, #1e293b);
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.05));
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  gap: 8px;
+  box-sizing: border-box;
+}
+.batch-multiselect-trigger:hover {
+  border-color: var(--primary, #e95009);
+}
+.batch-multiselect-trigger.active {
+  border-color: var(--primary, #e95009);
+  box-shadow: 0 0 0 3px rgba(233, 80, 9, 0.15);
+}
+.batch-multiselect-selected {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  flex: 1;
+}
+.batch-multiselect-selected .placeholder {
+  color: var(--text-secondary, rgba(255, 255, 255, 0.5));
+  font-size: 0.9rem;
+}
+.batch-pill {
+  background: rgba(233, 80, 9, 0.15);
+  color: var(--primary, #e95009);
+  border: 1px solid rgba(233, 80, 9, 0.3);
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+.batch-pill:hover {
+  background: rgba(233, 80, 9, 0.25);
+}
+.batch-pill-remove {
+  background: transparent;
+  border: none;
+  color: var(--primary, #e95009);
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+.batch-pill-remove:hover {
+  color: var(--primary-hover, #f8c22e);
+}
+.batch-multiselect-trigger .chevron {
+  color: var(--text-secondary, rgba(255, 255, 255, 0.5));
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+.batch-multiselect-trigger .chevron.rotate {
+  transform: rotate(180deg);
+}
+.batch-multiselect-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  width: 100%;
+  background: var(--bg-card, #171f33);
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.05));
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  z-index: 100;
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 6px;
+  box-sizing: border-box;
+}
+.batch-multiselect-option {
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.15s ease;
+  color: var(--text-main, #dae2fd);
+  font-size: 0.9rem;
+}
+.batch-multiselect-option:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+.batch-multiselect-option.selected {
+  background: rgba(233, 80, 9, 0.08);
+}
+.batch-option-checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary, #e95009);
+  cursor: pointer;
+}
+.batch-option-name {
+  font-weight: 500;
+}
+.batch-option-code {
+  color: var(--text-secondary, rgba(255, 255, 255, 0.5));
+  font-size: 0.8rem;
+}
+.batch-multiselect-option.empty {
+  color: var(--text-secondary, rgba(255, 255, 255, 0.5));
+  justify-content: center;
+  cursor: default;
+}
+
