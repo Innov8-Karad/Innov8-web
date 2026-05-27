@@ -11,3 +11,5 @@ export { onDeviceCreated } from "./triggers/onDeviceCreated";
 export { onDeviceApproved } from "./triggers/onDeviceApproved";
 export { onSendNotification } from "./triggers/onSendNotification";
 export { deleteCloudinaryAsset } from "./utils/deleteCloudinaryAsset";
+export { sendSignupOTP } from "./triggers/sendSignupOTP";
+export { verifySignupOTP } from "./triggers/verifySignupOTP";
