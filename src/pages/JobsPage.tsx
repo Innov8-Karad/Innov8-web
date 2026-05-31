@@ -1,12 +1,13 @@
-import { useState, useEffect, useContext, useMemo } from 'react';
+import { useState, useEffect, useContext, useMemo, useRef } from 'react';
 import { 
   Briefcase, MapPin, DollarSign, Search, Pencil, Trash2, 
   ArrowLeft, Users, Building2, Filter, Plus, Calendar, 
-  ChevronRight, AlertTriangle
+  ChevronDown, ChevronRight, AlertTriangle
 } from 'lucide-react';
 import { jobService } from '../services/jobService';
+import { batchService } from '../services/batchService';
 import { ToastContext } from '../contexts/ToastContext';
-import type { Job, JobApplication, JobType } from '../types';
+import type { Job, JobApplication, JobType, Batch } from '../types';
 import { UI_STRINGS } from '../constants';
 import LoadingState from '../components/LoadingState';
 import ErrorAlert from '../components/ErrorAlert';
@@ -53,20 +54,56 @@ export default function JobsPage() {
   const [editingJobId, setEditingJobId] = useState<string | null>(null);
   const [jobToDelete, setJobToDelete] = useState<string | null>(null);
 
+  // Batches state & multi-select state
+  const [availableBatches, setAvailableBatches] = useState<Batch[]>([]);
+  const [isBatchDropdownOpen, setIsBatchDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
   // Job form
-  const [jobForm, setJobForm] = useState({
+  const [jobForm, setJobForm] = useState<{
+    companyName: string;
+    role: string;
+    location: string;
+    salary: string;
+    jobType: JobType;
+    requirements: string;
+    description: string;
+    eligibleBatches: string[];
+    applyLink: string;
+    deadline: string;
+    isActive: boolean;
+  }>({
     companyName: '',
     role: '',
     location: '',
     salary: '',
-    jobType: 'Full-time' as JobType,
+    jobType: 'Full-time',
     requirements: '',
     description: '',
-    eligibleBatches: '',
+    eligibleBatches: [],
     applyLink: '',
     deadline: '',
     isActive: true,
   });
+
+  // Subscribe to batches
+  useEffect(() => {
+    const unsub = batchService.subscribeToBatches((data) => {
+      setAvailableBatches(data);
+    });
+    return unsub;
+  }, []);
+
+  // Click outside batch dropdown handler
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsBatchDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Subscribe to jobs
   useEffect(() => {
@@ -145,8 +182,9 @@ export default function JobsPage() {
     setJobForm({
       companyName: '', role: '', location: '', salary: '',
       jobType: 'Full-time', requirements: '', description: '',
-      eligibleBatches: '', applyLink: '', deadline: '', isActive: true,
+      eligibleBatches: [], applyLink: '', deadline: '', isActive: true,
     });
+    setIsBatchDropdownOpen(false);
     setShowJobModal(true);
   };
 
@@ -168,12 +206,23 @@ export default function JobsPage() {
       jobType: job.jobType,
       requirements: (job.requirements || []).join('\n'),
       description: job.description || '',
-      eligibleBatches: (job.eligibleBatches || []).join(', '),
+      eligibleBatches: job.eligibleBatches || [],
       applyLink: job.applyLink || '',
       deadline: getDeadlineValue(job.deadline),
       isActive: job.isActive,
     });
+    setIsBatchDropdownOpen(false);
     setShowJobModal(true);
+  };
+
+  const handleToggleBatch = (batchName: string) => {
+    setJobForm(prev => {
+      const current = prev.eligibleBatches || [];
+      const updated = current.includes(batchName)
+        ? current.filter(b => b !== batchName)
+        : [...current, batchName];
+      return { ...prev, eligibleBatches: updated };
+    });
   };
 
   const handleSaveJob = async (e: React.FormEvent) => {
@@ -188,9 +237,7 @@ export default function JobsPage() {
         jobType: jobForm.jobType,
         requirements: jobForm.requirements.split('\n').map(r => r.trim()).filter(Boolean),
         description: jobForm.description.trim(),
-        eligibleBatches: jobForm.eligibleBatches
-          ? jobForm.eligibleBatches.split(',').map(b => b.trim()).filter(Boolean)
-          : [],
+        eligibleBatches: jobForm.eligibleBatches || [],
         isActive: jobForm.isActive,
         postedDate: new Date(),
       };
@@ -946,8 +993,66 @@ export default function JobsPage() {
               <textarea rows={2} placeholder="Detailed role responsibilities..." value={jobForm.description} onChange={e => setJobForm({ ...jobForm, description: e.target.value })} />
             </FormField>
             <FormRow>
-              <FormField label="Eligible Batches (Comma separated)">
-                <input type="text" placeholder="2024, 2025" value={jobForm.eligibleBatches} onChange={e => setJobForm({ ...jobForm, eligibleBatches: e.target.value })} />
+              <FormField label="Eligible Batches">
+                <div className="batch-multiselect-container" ref={dropdownRef}>
+                  <div 
+                    className={`batch-multiselect-trigger ${isBatchDropdownOpen ? 'active' : ''}`}
+                    onClick={() => setIsBatchDropdownOpen(!isBatchDropdownOpen)}
+                  >
+                    <div className="batch-multiselect-selected">
+                      {!jobForm.eligibleBatches || jobForm.eligibleBatches.length === 0 ? (
+                        <span className="placeholder">Select Batches</span>
+                      ) : (
+                        jobForm.eligibleBatches.map(batchName => (
+                          <span key={batchName} className="batch-pill">
+                            {batchName}
+                            <button
+                              type="button"
+                              className="batch-pill-remove"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleToggleBatch(batchName);
+                              }}
+                            >
+                              &times;
+                            </button>
+                          </span>
+                        ))
+                      )}
+                    </div>
+                    <ChevronDown size={16} className={`chevron ${isBatchDropdownOpen ? 'rotate' : ''}`} />
+                  </div>
+
+                  {isBatchDropdownOpen && (
+                    <div className="batch-multiselect-dropdown">
+                      {availableBatches.length === 0 ? (
+                        <div className="batch-multiselect-option empty">No batches found</div>
+                      ) : (
+                        availableBatches.map((batch) => {
+                          const isSelected = (jobForm.eligibleBatches || []).includes(batch.name);
+                          return (
+                            <div
+                              key={batch.id}
+                              className={`batch-multiselect-option ${isSelected ? 'selected' : ''}`}
+                              onClick={() => handleToggleBatch(batch.name)}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={() => {}}
+                                className="batch-option-checkbox"
+                              />
+                              <span className="batch-option-name">{batch.name}</span>
+                              {batch.batchCode && (
+                                <span className="batch-option-code">({batch.batchCode})</span>
+                              )}
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  )}
+                </div>
               </FormField>
               <FormField label="External Link (Optional)">
                 <input type="url" placeholder="https://careers.google.com/..." value={jobForm.applyLink} onChange={e => setJobForm({ ...jobForm, applyLink: e.target.value })} />
