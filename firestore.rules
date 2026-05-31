@@ -512,5 +512,13 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
+    // ═════════════════════════════════════════════════════════════════════
+    // 24. OTP VERIFICATIONS
+    // ═════════════════════════════════════════════════════════════════════
+    // Only accessible via Cloud Functions (Admin SDK)
+    match /otp_verifications/{docId} {
+      allow read, write: if false;
+    }
+
   }
 }
