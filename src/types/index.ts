@@ -401,6 +401,7 @@ export interface JobApplication {
     status: ApplicationStatus;
     appliedAt: Date;
     updatedAt?: Date;
+    appliedVia?: 'in-app' | 'external-link'; // Tracks how the student applied
 }
 
 // ─── Progress ────────────────────────────────────────────────────────────────

@@ -355,6 +355,7 @@ export default function JobsPage() {
                     <th>APPLICANT</th>
                     <th>BATCH</th>
                     <th>APPLIED ON</th>
+                    <th>VIA</th>
                     <th>STATUS</th>
                   </tr>
                 </thead>
@@ -372,6 +373,19 @@ export default function JobsPage() {
                       </td>
                       <td><span className="batch-tag">{app.userBatch}</span></td>
                       <td><span className="date-cell">{formatDate(app.appliedAt)}</span></td>
+                      <td>
+                        {app.appliedVia === 'external-link' ? (
+                          <span className="via-badge via-external">
+                            <span className="via-dot" />
+                            External Link
+                          </span>
+                        ) : (
+                          <span className="via-badge via-inapp">
+                            <span className="via-dot" />
+                            In-App
+                          </span>
+                        )}
+                      </td>
                       <td>
                         <span className="status-badge-applied">
                           <span className="dot"></span>
@@ -947,6 +961,36 @@ export default function JobsPage() {
           transition: all 0.2s;
         }
         .btn-danger-outline:hover { background: rgba(239, 68, 68, 0.1); }
+
+        /* Via Badge */
+        .via-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 4px 10px;
+          border-radius: 20px;
+          font-size: 0.75rem;
+          font-weight: 700;
+          white-space: nowrap;
+        }
+        .via-dot {
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          flex-shrink: 0;
+        }
+        .via-external {
+          background: rgba(245, 158, 11, 0.12);
+          color: #F59E0B;
+          border: 1px solid rgba(245, 158, 11, 0.25);
+        }
+        .via-external .via-dot { background: #F59E0B; }
+        .via-inapp {
+          background: rgba(59, 130, 246, 0.12);
+          color: #3B82F6;
+          border: 1px solid rgba(59, 130, 246, 0.25);
+        }
+        .via-inapp .via-dot { background: #3B82F6; }
       `}</style>
     );
   }
