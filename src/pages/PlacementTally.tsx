@@ -1,5 +1,5 @@
-import { useState, useEffect, useContext } from 'react';
-import { Users, Pencil, Trash2, Plus, Book, Clock, ChevronDown, ChevronUp } from 'lucide-react';
+import { useState, useEffect, useContext, useRef } from 'react';
+import { Users, Pencil, Trash2, Plus, Book, Clock, ChevronDown, ChevronUp, Download, FileSpreadsheet } from 'lucide-react';
 import { placementTallyService, type PlacementTallyStudent, type PaymentRecord } from '../services/placementTallyService';
 import { ToastContext } from '../contexts/ToastContext';
 import PageHeader from '../components/PageHeader';
@@ -7,6 +7,8 @@ import LoadingState from '../components/LoadingState';
 import ErrorAlert from '../components/ErrorAlert';
 import Modal from '../components/Modal';
 import { FormField, FormRow } from '../components/FormField';
+import { useUser } from '../hooks/useUser';
+import type { User } from '../types';
 
 export default function PlacementTallyPage() {
     const toastContext = useContext(ToastContext);
@@ -23,6 +25,8 @@ export default function PlacementTallyPage() {
     const [studentToDelete, setStudentToDelete] = useState<string | null>(null);
 
     const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
+    const [exportingAll, setExportingAll] = useState(false);
+    const [exportingStudentId, setExportingStudentId] = useState<string | null>(null);
 
     const toggleCardExpand = (studentId: string) => {
         setExpandedCards(prev => {
@@ -58,6 +62,59 @@ export default function PlacementTallyPage() {
         paymentDetails: []
     });
 
+    const userContext = useUser();
+    const allStudents = userContext?.students || [];
+    const [showDropdown, setShowDropdown] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    const getSearchScore = (name: string, query: string) => {
+        const n = name.toLowerCase();
+        const q = query.toLowerCase();
+        if (n === q) return 0;
+        if (n.startsWith(q)) return 1;
+        const words = n.split(/\s+/);
+        if (words.some(w => w.startsWith(q))) return 2;
+        if (n.includes(q)) return 3;
+        return 4;
+    };
+
+    const searchTerm = studentForm.name || '';
+    const filteredAndSortedStudents = allStudents
+        .filter(s => {
+            if (!searchTerm) return true;
+            return s.name.toLowerCase().includes(searchTerm.toLowerCase());
+        })
+        .sort((a, b) => {
+            if (!searchTerm) {
+                return a.name.localeCompare(b.name);
+            }
+            const scoreA = getSearchScore(a.name, searchTerm);
+            const scoreB = getSearchScore(b.name, searchTerm);
+            if (scoreA !== scoreB) {
+                return scoreA - scoreB;
+            }
+            return a.name.localeCompare(b.name);
+        });
+
+    const handleSelectStudent = (selectedStudent: User) => {
+        setStudentForm(prev => ({
+            ...prev,
+            name: selectedStudent.name || '',
+            mobileNo: selectedStudent.phone || prev.mobileNo || ''
+        }));
+        setShowDropdown(false);
+    };
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setShowDropdown(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
     useEffect(() => {
         setLoading(true);
         setError(null);
@@ -76,6 +133,105 @@ export default function PlacementTallyPage() {
 
         return () => unsub();
     }, []);
+
+    // --- CSV Export Helpers ---
+    const escapeCSV = (value: string | number | undefined | null): string => {
+        const str = String(value ?? '');
+        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+            return `"${str.replace(/"/g, '""')}"`;
+        }
+        return str;
+    };
+
+    const downloadCSV = (csvContent: string, fileName: string) => {
+        const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    };
+
+    const getStudentFees = (student: PlacementTallyStudent) => {
+        const totalFee = student.totalPayable || 0;
+        const paidFee = student.paymentDetails?.reduce((sum, p) => sum + (Number(p.amount) || 0), 0) || 0;
+        const remainingFee = totalFee - paidFee;
+        return { totalFee, paidFee, remainingFee };
+    };
+
+    const getPlacementStatus = (student: PlacementTallyStudent): string => {
+        const { totalFee, paidFee } = getStudentFees(student);
+        if (paidFee >= totalFee && totalFee > 0) return 'Fully Paid';
+        if (paidFee > 0) return 'Partially Paid';
+        return 'Pending';
+    };
+
+    const handleExportAllCSV = async () => {
+        if (students.length === 0) {
+            showToast?.('No students to export.', 'error');
+            return;
+        }
+        try {
+            setExportingAll(true);
+            // Small delay for loading indicator visibility
+            await new Promise(resolve => setTimeout(resolve, 300));
+
+            const headers = ['Student Name', 'Parent Number', 'Company Name', 'Job Role', 'Total Fee', 'Paid Fee', 'Remaining Fee', 'Placement Date', 'Placement Status'];
+            const rows = students.map(student => {
+                const { totalFee, paidFee, remainingFee } = getStudentFees(student);
+                return [
+                    escapeCSV(student.name),
+                    escapeCSV(student.emailId),
+                    escapeCSV(student.companyName),
+                    escapeCSV(student.designation),
+                    escapeCSV(totalFee),
+                    escapeCSV(paidFee),
+                    escapeCSV(remainingFee),
+                    escapeCSV(student.joiningDate ? new Date(student.joiningDate).toLocaleDateString() : ''),
+                    escapeCSV(getPlacementStatus(student))
+                ].join(',');
+            });
+
+            const csvContent = [headers.join(','), ...rows].join('\n');
+            const today = new Date().toISOString().split('T')[0];
+            downloadCSV(csvContent, `placement_tally_all_students_${today}.csv`);
+            showToast?.('All students CSV exported successfully!', 'success');
+        } catch (err) {
+            console.error('Error exporting all CSV:', err);
+            showToast?.('Failed to export CSV. Please try again.', 'error');
+        } finally {
+            setExportingAll(false);
+        }
+    };
+
+    const handleExportStudentCSV = async (student: PlacementTallyStudent) => {
+        try {
+            setExportingStudentId(student.id);
+            await new Promise(resolve => setTimeout(resolve, 300));
+
+            const { totalFee, paidFee, remainingFee } = getStudentFees(student);
+
+            const headers = ['Initial Total Payable', 'Total Paid', 'Remaining Payable'];
+            const row = [
+                escapeCSV(`₹${totalFee.toLocaleString()}`),
+                escapeCSV(`₹${paidFee.toLocaleString()}`),
+                escapeCSV(`₹${remainingFee.toLocaleString()}`)
+            ];
+
+            const csvContent = [headers.join(','), row.join(',')].join('\n');
+            const safeName = student.name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/(^_|_$)/g, '');
+            downloadCSV(csvContent, `${safeName}_placement_details.csv`);
+            showToast?.(`CSV exported for ${student.name}!`, 'success');
+        } catch (err) {
+            console.error('Error exporting student CSV:', err);
+            showToast?.('Failed to export CSV. Please try again.', 'error');
+        } finally {
+            setExportingStudentId(null);
+        }
+    };
 
     const handleAddStudent = () => {
         setEditingStudentId(null);
@@ -160,6 +316,12 @@ export default function PlacementTallyPage() {
         e.preventDefault();
 
         // --- Custom Validation Logic ---
+        if (studentForm.emailId && !/^\d{10}$/.test(studentForm.emailId)) {
+            showToast?.("Parent number must be exactly 10 digits.", "error");
+            setActiveTab('basic');
+            return;
+        }
+
         if (studentForm.mobileNo && !/^\d{10}$/.test(studentForm.mobileNo)) {
             showToast?.("Mobile number must be exactly 10 digits.", "error");
             setActiveTab('previous');
@@ -226,7 +388,27 @@ export default function PlacementTallyPage() {
                 subtitle="Track student placements, financial details, and payment history"
                 actionLabel="Add New Student"
                 onAction={handleAddStudent}
-            />
+            >
+                <button
+                    className="btn btn-secondary flex items-center gap-2"
+                    onClick={handleExportAllCSV}
+                    disabled={exportingAll || students.length === 0}
+                    title="Export all students to CSV"
+                    style={{ whiteSpace: 'nowrap' }}
+                >
+                    {exportingAll ? (
+                        <span className="flex items-center gap-2">
+                            <span className="spinner" style={{ width: '16px', height: '16px', border: '2px solid rgba(var(--primary-rgb), 0.2)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 0.6s linear infinite', display: 'inline-block' }} />
+                            Exporting...
+                        </span>
+                    ) : (
+                        <>
+                            <FileSpreadsheet size={18} />
+                            📊 Export All CSV
+                        </>
+                    )}
+                </button>
+            </PageHeader>
 
             {students.length === 0 ? (
                 <div className="card text-center py-xl text-muted">No students found. Add a new student to get started.</div>
@@ -244,13 +426,26 @@ export default function PlacementTallyPage() {
                                     </div>
                                     <div>
                                         <h3 style={{ margin: 0, fontSize: '1.25rem' }}>{student.name}</h3>
-                                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '2px 0 6px 0' }}>{student.emailId}</p>
+                                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '2px 0 6px 0' }}>Parent: {student.emailId}</p>
                                         <div style={{ display: 'inline-block', padding: '4px 10px', backgroundColor: 'rgba(var(--primary-rgb), 0.1)', color: 'var(--primary)', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600 }}>
                                             {student.companyName} {student.designation ? `• ${student.designation}` : ''}
                                         </div>
                                     </div>
                                 </div>
                                 <div className="flex gap-1 items-start">
+                                    <button
+                                        onClick={() => handleExportStudentCSV(student)}
+                                        className="icon-btn"
+                                        title="Export CSV"
+                                        disabled={exportingStudentId === student.id}
+                                        style={{ position: 'relative' }}
+                                    >
+                                        {exportingStudentId === student.id ? (
+                                            <span className="spinner" style={{ width: '18px', height: '18px', border: '2px solid rgba(var(--primary-rgb), 0.2)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 0.6s linear infinite', display: 'inline-block' }} />
+                                        ) : (
+                                            <Download size={18} />
+                                        )}
+                                    </button>
                                     <button onClick={() => handleEditStudent(student)} className="icon-btn" title="Edit">
                                         <Pencil size={18} />
                                     </button>
@@ -379,8 +574,8 @@ export default function PlacementTallyPage() {
                                 </div>
                             )}
 
-                            {/* Expand/Collapse Toggle Button */}
-                            <div className="flex justify-center mt-2 pt-4 border-t border-divider">
+                            {/* Expand/Collapse Toggle Button & Export */}
+                            <div className="flex justify-center items-center mt-2 pt-4 border-t border-divider gap-3">
                                 <button 
                                     onClick={() => toggleCardExpand(student.id)}
                                     className={`btn ${expandedCards.has(student.id) ? 'btn-primary' : 'btn-secondary'} rounded-full text-sm py-1.5 px-5 flex items-center gap-1.5 transition-all shadow-none`}
@@ -388,6 +583,25 @@ export default function PlacementTallyPage() {
                                     {expandedCards.has(student.id) ? 'Hide Details' : 'View Full Details'}
                                     {expandedCards.has(student.id) ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                                 </button>
+                                {expandedCards.has(student.id) && (
+                                    <button
+                                        onClick={() => handleExportStudentCSV(student)}
+                                        className="btn btn-secondary rounded-full text-sm py-1.5 px-5 flex items-center gap-1.5 transition-all shadow-none"
+                                        disabled={exportingStudentId === student.id}
+                                    >
+                                        {exportingStudentId === student.id ? (
+                                            <>
+                                                <span className="spinner" style={{ width: '14px', height: '14px', border: '2px solid rgba(var(--primary-rgb), 0.2)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 0.6s linear infinite', display: 'inline-block' }} />
+                                                Exporting...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Download size={14} />
+                                                📄 Export CSV
+                                            </>
+                                        )}
+                                    </button>
+                                )}
                             </div>
                         </div>
                     ))}
@@ -434,14 +648,59 @@ export default function PlacementTallyPage() {
                                 <h3 className="section-label mb-4">Student Details</h3>
                                 <FormRow>
                                 <FormField label="Full Name">
-                                    <input type="text" required value={studentForm.name || ''} onChange={e => setStudentForm({ ...studentForm, name: e.target.value })} />
+                                    <div className="custom-select-container" ref={dropdownRef}>
+                                        <input 
+                                            type="text" 
+                                            required 
+                                            value={studentForm.name || ''} 
+                                            onChange={e => {
+                                                setStudentForm({ ...studentForm, name: e.target.value });
+                                                setShowDropdown(true);
+                                            }} 
+                                            onFocus={() => setShowDropdown(true)}
+                                            placeholder="Type or select student..."
+                                            autoComplete="off"
+                                        />
+                                        {showDropdown && (
+                                            <div className="custom-select-dropdown" style={{ top: '100%', marginTop: '4px' }}>
+                                                {filteredAndSortedStudents.length === 0 ? (
+                                                    <div className="custom-select-option empty">No students found</div>
+                                                ) : (
+                                                    filteredAndSortedStudents.map((student) => (
+                                                        <div
+                                                            key={student.id}
+                                                            className="custom-select-option"
+                                                            onClick={() => handleSelectStudent(student)}
+                                                            style={{ display: 'flex', flexDirection: 'column', gap: '2px', padding: '10px 16px' }}
+                                                        >
+                                                            <span style={{ fontWeight: 500 }}>{student.name}</span>
+                                                            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                                                                {student.email} {student.batch ? `• ${student.batch}` : ''}
+                                                            </span>
+                                                        </div>
+                                                    ))
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
                                 </FormField>
-                                <FormField label="Email ID">
-                                    <input type="email" required value={studentForm.emailId || ''} onChange={e => setStudentForm({ ...studentForm, emailId: e.target.value })} />
+                                <FormField label="Parent Number">
+                                    <input 
+                                        type="tel" 
+                                        required 
+                                        maxLength={10}
+                                        pattern="[0-9]{10}"
+                                        title="Parent number must be exactly 10 digits"
+                                        value={studentForm.emailId || ''} 
+                                        onChange={e => {
+                                            const val = e.target.value.replace(/\D/g, '');
+                                            setStudentForm({ ...studentForm, emailId: val });
+                                        }} 
+                                    />
                                 </FormField>
                             </FormRow>
                             <FormRow>
-                                <FormField label="Company's Name">
+                                <FormField label="Current Company's Name">
                                     <input type="text" required value={studentForm.companyName || ''} onChange={e => setStudentForm({ ...studentForm, companyName: e.target.value })} />
                                 </FormField>
                                 <FormField label="Designation">
