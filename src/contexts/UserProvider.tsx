@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { COLLECTIONS } from '../constants';
+import { getUserDisplayName } from '../services/userService';
 import type { User } from '../types';
 import { UserContext } from './UserContext';
 
@@ -22,12 +23,14 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       (snapshot) => {
         const studentList = snapshot.docs.map((doc) => {
           const data = doc.data();
-          return {
+          const student = {
             id: doc.id,
             ...data,
             enrollmentDate: data.enrollmentDate?.toDate() || new Date(),
             createdAt: data.createdAt?.toDate() || new Date(),
           } as User;
+          student.name = getUserDisplayName(student);
+          return student;
         });
         
         const sorted = [...studentList].sort((a, b) => 
