@@ -21,6 +21,8 @@ export const COLLECTIONS = {
   CERTIFICATION_EXAMS: 'certification_exams',
   CERTIFICATION_RESULTS: 'certification_results',
   CERTIFICATES: 'certificates',
+  COURSE_PURCHASES: 'course_purchases',
+  PAYMENT_SETTINGS: 'payment_settings',
 } as const;
 
 export const FEE_STATUS = {
