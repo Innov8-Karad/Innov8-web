@@ -48,6 +48,19 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         return () => unsub();
     }, []);
 
+    const [pendingPurchasesCount, setPendingPurchasesCount] = React.useState(0);
+    // Real-time pending purchase requests count for badge
+    React.useEffect(() => {
+        const q = query(
+            collection(db, COLLECTIONS.COURSE_PURCHASES),
+            where('status', '==', 'pending')
+        );
+        const unsub = onSnapshot(q, (snap) => {
+            setPendingPurchasesCount(snap.size);
+        });
+        return () => unsub();
+    }, []);
+
     async function handleLogout() {
         try {
             await logout();
@@ -75,6 +88,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         { icon: GraduationCap, label: UI_STRINGS.NAV.CERTIFICATIONS, path: '/certifications' },
         { icon: Bell, label: UI_STRINGS.NAV.ANNOUNCEMENTS, path: '/announcements' },
         { icon: Shield, label: UI_STRINGS.DEVICE_APPROVALS.TITLE, path: '/device-approvals', badge: pendingDeviceCount },
+        { icon: CreditCard, label: 'Purchase Requests', path: '/course-purchases', badge: pendingPurchasesCount },
         { icon: BellRing, label: UI_STRINGS.NAV.NOTIFICATIONS, path: '/notifications' },
     ];
 

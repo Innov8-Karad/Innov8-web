@@ -29,6 +29,7 @@ import DeviceApprovalsPage from './pages/DeviceApprovals';
 import NotificationsPage from './pages/NotificationsPage';
 import BatchesPage from './pages/Batches';
 import MockSchedulingPage from './pages/MockScheduling';
+import CoursePurchasesPage from './pages/CoursePurchases';
 
 interface PrivateRouteProps {
   children: React.ReactNode;
@@ -75,6 +76,7 @@ function App() {
                   <Route path="/notifications" element={<PrivateRoute><Layout><NotificationsPage /></Layout></PrivateRoute>} />
                   <Route path="/batches" element={<PrivateRoute><Layout><BatchesPage /></Layout></PrivateRoute>} />
                   <Route path="/mock-scheduling" element={<PrivateRoute><Layout><MockSchedulingPage /></Layout></PrivateRoute>} />
+                  <Route path="/course-purchases" element={<PrivateRoute><Layout><CoursePurchasesPage /></Layout></PrivateRoute>} />
 
                   {/* Redirects */}
                   <Route path="/profile/:id" element={<Navigate to="/progress" replace />} />

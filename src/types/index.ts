@@ -424,6 +424,11 @@ export interface StudentProgress {
     currentModule?: string;
     completedModules?: string[];     // Legacy
     completedModuleIds?: string[];   // Reactive implementation (mobile)
+    completedVideoIds?: string[];    // Tracks completed video resource IDs
+    completedNoteIds?: string[];     // Tracks completed note/link resource IDs
+    completedAssignmentIds?: string[]; // Tracks completed assignment IDs
+    totalItems?: number;             // Total trackable items in the course
+    completedItems?: number;         // Total completed items count
     lastAccessed?: Date;
     updatedAt?: { seconds: number; nanoseconds: number } | Date;
 }
