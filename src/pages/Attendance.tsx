@@ -250,7 +250,6 @@ export default function AttendancePage() {
                             <h2 className="att-board__title">Attendance Board</h2>
                             <p className="att-board__subtitle">
                                 {new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-                                {' · '}<span style={{ color: 'var(--primary)' }}>{selectedBatchId}</span>
                             </p>
                         </div>
                     </div>
@@ -268,7 +267,7 @@ export default function AttendancePage() {
                 <div className="att-table-head">
                     <div className="att-table-head__col att-table-head__col--idx">#</div>
                     <div className="att-table-head__col att-table-head__col--name">Student Name</div>
-                    <div className="att-table-head__col att-table-head__col--email">Email / ID</div>
+                    <div className="att-table-head__col att-table-head__col--email">Email</div>
                     <div className="att-table-head__col att-table-head__col--phone">Mobile</div>
                     <div className="att-table-head__col att-table-head__col--batch">Batch</div>
                     <div className="att-table-head__col att-table-head__col--status">Status</div>
