@@ -17,24 +17,64 @@ import { uploadWithFallback } from '../lib/cloudinary';
 import { COLLECTIONS } from '../constants';
 import type { User } from '../types';
 
+export function getUserDisplayName(user: { name?: string; firstName?: string; middleName?: string; surname?: string }): string {
+  if (user.firstName || user.surname) {
+    return [user.firstName, user.middleName, user.surname]
+      .filter(Boolean)
+      .join(' ')
+      .trim();
+  }
+  return user.name || 'Unknown Student';
+}
+
+export function splitFullName(fullName: string) {
+  const parts = fullName.trim().split(/\s+/);
+  let firstName = '';
+  let middleName = '';
+  let surname = '';
+
+  if (parts.length === 1) {
+    firstName = parts[0];
+  } else if (parts.length === 2) {
+    firstName = parts[0];
+    surname = parts[1];
+  } else if (parts.length >= 3) {
+    firstName = parts[0];
+    surname = parts[parts.length - 1];
+    middleName = parts.slice(1, parts.length - 1).join(' ');
+  }
+
+  return { firstName, middleName, surname };
+}
+
 export const userService = {
   async fetchUsers(): Promise<User[]> {
     const snap = await getDocs(collection(db, COLLECTIONS.USERS));
-    return snap.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      enrollmentDate: (doc.data() as DocumentData).enrollmentDate?.toDate() || new Date(),
-    } as User));
+    return snap.docs.map(doc => {
+      const data = doc.data() as DocumentData;
+      const user = {
+        id: doc.id,
+        ...data,
+        enrollmentDate: data.enrollmentDate?.toDate() || new Date(),
+      } as User;
+      user.name = getUserDisplayName(user);
+      return user;
+    });
   },
 
   async fetchUsersByBatch(batchId: string): Promise<User[]> {
     const q = query(collection(db, COLLECTIONS.USERS), where('batchId', '==', batchId));
     const snap = await getDocs(q);
-    return snap.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      enrollmentDate: (doc.data() as DocumentData).enrollmentDate?.toDate() || new Date(),
-    } as User));
+    return snap.docs.map(doc => {
+      const data = doc.data() as DocumentData;
+      const user = {
+        id: doc.id,
+        ...data,
+        enrollmentDate: data.enrollmentDate?.toDate() || new Date(),
+      } as User;
+      user.name = getUserDisplayName(user);
+      return user;
+    });
   },
 
   async updateStudentStatus(id: string, status: 'active' | 'inactive'): Promise<void> {
@@ -45,11 +85,13 @@ export const userService = {
   async createUser(data: Omit<User, 'id' | 'enrollmentDate' | 'createdAt'>): Promise<User> {
     const userRef = doc(collection(db, COLLECTIONS.USERS));
     const batchRef = data.batchId ? doc(db, COLLECTIONS.BATCHES, data.batchId) : null;
+    const nameParts = splitFullName(data.name || '');
 
     await runTransaction(db, async (transaction) => {
       // 1. Create student document
       const docData: DocumentData = {
         ...data,
+        ...nameParts,
         role: 'student',
         deviceCount: 0,
         enrollmentDate: Timestamp.now(),
@@ -67,12 +109,15 @@ export const userService = {
       }
     });
 
-    return {
+    const createdUser = {
       id: userRef.id,
       ...data,
+      ...nameParts,
       enrollmentDate: new Date(),
       createdAt: new Date()
     } as User;
+    createdUser.name = getUserDisplayName(createdUser);
+    return createdUser;
   },
 
   async updateUser(id: string, data: Partial<User>, oldBatchId?: string): Promise<void> {
@@ -84,11 +129,16 @@ export const userService = {
     );
     
     const newBatchId = cleanedData.batchId as string | undefined;
+    let nameParts = {};
+    if (typeof cleanedData.name === 'string') {
+      nameParts = splitFullName(cleanedData.name);
+    }
 
     await runTransaction(db, async (transaction) => {
       // 1. Update the student document
       transaction.update(userRef, {
         ...cleanedData,
+        ...nameParts,
         updatedAt: Timestamp.now()
       });
 
@@ -156,12 +206,14 @@ export const userService = {
 
     const updatedSnap = await getDoc(docRef);
     const data = updatedSnap.data() as DocumentData;
-    return {
+    const user = {
       id: updatedSnap.id,
       ...data,
       enrollmentDate: data.enrollmentDate?.toDate() || new Date(),
       createdAt: data.createdAt?.toDate() || new Date(),
     } as User;
+    user.name = getUserDisplayName(user);
+    return user;
   },
 
   async unblockUser(id: string): Promise<User> {
@@ -187,12 +239,14 @@ export const userService = {
 
     const updatedSnap = await getDoc(docRef);
     const data = updatedSnap.data() as DocumentData;
-    return {
+    const user = {
       id: updatedSnap.id,
       ...data,
       enrollmentDate: data.enrollmentDate?.toDate() || new Date(),
       createdAt: data.createdAt?.toDate() || new Date(),
     } as User;
+    user.name = getUserDisplayName(user);
+    return user;
   },
 
   /**
@@ -216,10 +270,13 @@ export const userService = {
     const snap = await getDocs(q);
     if (snap.empty) return null;
     const doc = snap.docs[0];
-    return {
+    const data = doc.data() as DocumentData;
+    const user = {
       id: doc.id,
-      ...doc.data(),
-      enrollmentDate: (doc.data() as DocumentData).enrollmentDate?.toDate() || new Date(),
+      ...data,
+      enrollmentDate: data.enrollmentDate?.toDate() || new Date(),
     } as User;
+    user.name = getUserDisplayName(user);
+    return user;
   }
 };
