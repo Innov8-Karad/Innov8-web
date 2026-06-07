@@ -8,6 +8,8 @@ import {
   updateDoc,
   deleteDoc,
   Timestamp,
+  where,
+  writeBatch,
   type DocumentData 
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -16,23 +18,38 @@ import type { Announcement } from '../types';
 
 export const announcementService = {
   async fetchAnnouncements(): Promise<Announcement[]> {
+    // Run cleanup in background
+    this.cleanupExpiredAnnouncements().catch(err => console.error("Error during announcement cleanup:", err));
+
     const q = query(
       collection(db, COLLECTIONS.ANNOUNCEMENTS), 
       orderBy("createdAt", "desc")
     );
     const snap = await getDocs(q);
     
-    // Auto-expiry Logic: Filter out announcements older than 8 days
+    return snap.docs.map(doc => this.mapDocToAnnouncement(doc));
+  },
+
+  async cleanupExpiredAnnouncements(): Promise<void> {
     const EXPIRY_DAYS = 8;
-    const EXPIRY_MS = EXPIRY_DAYS * 24 * 60 * 60 * 1000;
-    const now = Date.now();
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - EXPIRY_DAYS);
     
-    return snap.docs
-      .map(doc => this.mapDocToAnnouncement(doc))
-      .filter(ann => {
-        const announcementAge = now - ann.createdAt.getTime();
-        return announcementAge <= EXPIRY_MS;
-      });
+    const q = query(
+      collection(db, COLLECTIONS.ANNOUNCEMENTS),
+      where("createdAt", "<", Timestamp.fromDate(cutoffDate))
+    );
+    
+    const snap = await getDocs(q);
+    if (snap.empty) return;
+
+    const batch = writeBatch(db);
+    snap.docs.forEach(doc => {
+      batch.delete(doc.ref);
+    });
+    
+    await batch.commit();
+    console.log(`Auto-cleaned ${snap.size} expired announcements.`);
   },
 
   async createAnnouncement(data: Omit<Announcement, 'id' | 'createdAt' | 'author'>): Promise<Announcement> {

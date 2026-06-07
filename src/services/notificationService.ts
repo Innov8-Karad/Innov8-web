@@ -13,6 +13,8 @@ import {
     limit,
     getDocs,
     Timestamp,
+    where,
+    writeBatch,
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
@@ -68,6 +70,9 @@ export async function sendNotification(
 export async function fetchNotificationHistory(
     maxResults = 50
 ): Promise<NotificationRecord[]> {
+    // Run cleanup in background
+    cleanupExpiredNotifications().catch(err => console.error("Error during notification cleanup:", err));
+
     const q = query(
         collection(db, 'notifications'),
         orderBy('createdAt', 'desc'),
@@ -91,4 +96,29 @@ export async function fetchNotificationHistory(
                 : new Date(data.createdAt),
         };
     });
+}
+
+/**
+ * Cleanup notifications older than 8 days.
+ */
+export async function cleanupExpiredNotifications(): Promise<void> {
+    const EXPIRY_DAYS = 8;
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - EXPIRY_DAYS);
+
+    const q = query(
+        collection(db, 'notifications'),
+        where("createdAt", "<", Timestamp.fromDate(cutoffDate))
+    );
+
+    const snap = await getDocs(q);
+    if (snap.empty) return;
+
+    const batch = writeBatch(db);
+    snap.docs.forEach(doc => {
+        batch.delete(doc.ref);
+    });
+
+    await batch.commit();
+    console.log(`Auto-cleaned ${snap.size} expired notifications.`);
 }
