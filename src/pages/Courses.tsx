@@ -156,7 +156,7 @@ export default function CoursesPage() {
                             </div>
                             <div style={{ position: 'absolute', top: '12px', right: '12px' }}>
                                 <span style={{ backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem', color: 'white' }}>
-                                    {course.isFree ? UI_STRINGS.COURSES.BADGE_FREE : `₹ ${course.price.toLocaleString()}`}
+                                    {course.isFree ? UI_STRINGS.COURSES.BADGE_FREE : `₹ ${(course.price !== undefined && course.price !== null) ? course.price.toLocaleString() : '0'}`}
                                 </span>
                             </div>
                         </div>
@@ -164,7 +164,7 @@ export default function CoursesPage() {
                         <div style={{ padding: 'var(--space-md)', flex: 1, display: 'flex', flexDirection: 'column' }}>
                             <h3 style={{ margin: 0 }}>{course.title}</h3>
                             <p className="text-sm text-muted mt-md" style={{ flex: 1 }}>
-                                {course.description.length > 100 ? course.description.substring(0, 100) + '...' : course.description}
+                                {course.description ? (course.description.length > 100 ? course.description.substring(0, 100) + '...' : course.description) : ''}
                             </p>
 
                             <div className="flex gap-4 mt-md text-sm text-muted">
