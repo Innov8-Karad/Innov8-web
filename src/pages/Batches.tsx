@@ -45,12 +45,6 @@ export default function BatchesPage() {
     const [loadingStudents, setLoadingStudents] = useState(false);
     const [studentSearchQuery, setStudentSearchQuery] = useState('');
     
-    // Add Student states
-    const [showAddStudentModal, setShowAddStudentModal] = useState(false);
-    const [findEmail, setFindEmail] = useState('');
-    const [foundStudent, setFoundStudent] = useState<User | null>(null);
-    const [searchingStudent, setSearchingStudent] = useState(false);
-    const [addingStudent, setAddingStudent] = useState(false);
     
     const [newBatch, setNewBatch] = useState({
         name: '',
@@ -216,46 +210,7 @@ export default function BatchesPage() {
         }
     };
 
-    const handleFindStudent = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!findEmail) return;
-        setSearchingStudent(true);
-        setFoundStudent(null);
-        try {
-            const student = await userService.findUserByEmail(findEmail);
-            if (student) {
-                setFoundStudent(student);
-            } else {
-                showToast("No student found with this email", "error");
-            }
-        } catch (err) {
-            console.error("Error finding student:", err);
-            showToast("Error searching for student", "error");
-        } finally {
-            setSearchingStudent(false);
-        }
-    };
 
-    const handleAddStudentToBatch = async () => {
-        if (!foundStudent || !expandedBatchId) return;
-        setAddingStudent(true);
-        try {
-            await batchService.addStudentToBatch(foundStudent.id, expandedBatchId);
-            showToast(`Added ${foundStudent.name} to batch`, "success");
-            setShowAddStudentModal(false);
-            setFindEmail('');
-            setFoundStudent(null);
-            
-            // Refresh list
-            const students = await userService.fetchUsersByBatch(expandedBatchId);
-            setBatchStudents(students);
-        } catch (err) {
-            console.error("Error adding student:", err);
-            showToast("Failed to add student to batch", "error");
-        } finally {
-            setAddingStudent(false);
-        }
-    };
 
     const resetForm = () => {
         setEditingBatch(null);
@@ -631,14 +586,6 @@ export default function BatchesPage() {
                                                 onChange={(e) => setStudentSearchQuery(e.target.value)}
                                             />
                                         </div>
-                                        <button 
-                                            className="btn btn-primary flex items-center gap-2"
-                                            style={{ height: '40px', padding: '0 16px', borderRadius: '10px', fontSize: '14px' }}
-                                            onClick={() => setShowAddStudentModal(true)}
-                                        >
-                                            <UserPlus size={18} />
-                                            <span>Add Student</span>
-                                        </button>
                                     </div>
 
                                     {loadingStudents ? (
@@ -730,77 +677,7 @@ export default function BatchesPage() {
                 </div>
             </Modal>
 
-            {/* Add Student Modal */}
-            <Modal
-                isOpen={showAddStudentModal}
-                onClose={() => { setShowAddStudentModal(false); setFoundStudent(null); setFindEmail(''); }}
-                title="Add Student to Batch"
-                maxWidth="500px"
-            >
-                <div className="p-6">
-                    <form onSubmit={handleFindStudent} className="flex gap-2 mb-6">
-                        <div style={{ position: 'relative', flex: 1 }}>
-                            <Search size={16} style={{ position: 'absolute', top: '12px', left: '12px', color: 'var(--text-muted)' }} />
-                            <input 
-                                type="email" 
-                                className="form-input" 
-                                placeholder="Search student email (e.g. name@example.com)" 
-                                style={{ paddingLeft: '36px', height: '40px', fontSize: '14px' }}
-                                value={findEmail}
-                                onChange={(e) => setFindEmail(e.target.value)}
-                                required
-                            />
-                        </div>
-                        <button type="submit" className="btn btn-primary" disabled={searchingStudent}>
-                            {searchingStudent ? '...' : 'Find'}
-                        </button>
-                    </form>
 
-                    {foundStudent ? (
-                        <div className="student-found-card glass-card p-4 animate-fade-in">
-                            <div className="flex items-center gap-4 mb-4">
-                                <div className="avatar-circle">
-                                    {foundStudent.name[0].toUpperCase()}
-                                </div>
-                                <div className="flex-1">
-                                    <div className="font-bold text-lg">{foundStudent.name}</div>
-                                    <div className="text-sm text-muted">{foundStudent.email}</div>
-                                </div>
-                            </div>
-                            
-                            <div className="info-row-item mb-4">
-                                <span className="label">Current Batch:</span>
-                                <span className={foundStudent.batch ? "value text-primary" : "value text-muted"}>
-                                    {foundStudent.batch || 'None (Unassigned)'}
-                                </span>
-                            </div>
-
-                            <button 
-                                className="btn btn-primary w-full flex items-center justify-center gap-2"
-                                onClick={handleAddStudentToBatch}
-                                disabled={addingStudent}
-                            >
-                                {addingStudent ? (
-                                    <>
-                                        <Clock className="animate-spin" size={18} />
-                                        <span>Adding...</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <CheckCircle2 size={18} />
-                                        <span>Confirm Enrollment</span>
-                                    </>
-                                )}
-                            </button>
-                        </div>
-                    ) : (
-                        <div className="text-center py-10 text-muted opacity-60">
-                            <UserPlus size={48} className="mx-auto mb-4 opacity-20" />
-                            <p>Search for a student by their registered email address</p>
-                        </div>
-                    )}
-                </div>
-            </Modal>
         </div>
     );
 }

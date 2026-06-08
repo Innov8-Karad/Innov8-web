@@ -383,8 +383,6 @@ export default function UsersPage() {
             <PageHeader
                 title={UI_STRINGS.USERS.TITLE}
                 subtitle={UI_STRINGS.USERS.SUBTITLE}
-                actionLabel={UI_STRINGS.USERS.NEW_BTN}
-                onAction={() => setShowModal(true)}
             />
 
             {/* Tab Navigation */}
