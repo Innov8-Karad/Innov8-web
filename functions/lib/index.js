@@ -3,7 +3,7 @@
 // Innov8 Cloud Functions — Entry Point
 // ═══════════════════════════════════════════════════════════════════════════════
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.verifySignupOTP = exports.sendSignupOTP = exports.deleteCloudinaryAsset = exports.onSendNotification = exports.onDeviceApproved = exports.onDeviceCreated = exports.onFeeCreated = exports.onAssignmentGraded = exports.onAnnouncementCreated = exports.onUserUpdated = exports.onUserCreated = void 0;
+exports.generateCloudinarySignature = exports.submitExam = exports.verifySignupOTP = exports.sendSignupOTP = exports.deleteCloudinaryAsset = exports.onSendNotification = exports.onDeviceApproved = exports.onDeviceCreated = exports.onFeeCreated = exports.onAssignmentGraded = exports.onAnnouncementCreated = exports.onUserUpdated = exports.onUserCreated = void 0;
 var onUserCreated_1 = require("./triggers/onUserCreated");
 Object.defineProperty(exports, "onUserCreated", { enumerable: true, get: function () { return onUserCreated_1.onUserCreated; } });
 var onUserUpdated_1 = require("./triggers/onUserUpdated");
@@ -26,4 +26,8 @@ var sendSignupOTP_1 = require("./triggers/sendSignupOTP");
 Object.defineProperty(exports, "sendSignupOTP", { enumerable: true, get: function () { return sendSignupOTP_1.sendSignupOTP; } });
 var verifySignupOTP_1 = require("./triggers/verifySignupOTP");
 Object.defineProperty(exports, "verifySignupOTP", { enumerable: true, get: function () { return verifySignupOTP_1.verifySignupOTP; } });
+var submitExam_1 = require("./callable/submitExam");
+Object.defineProperty(exports, "submitExam", { enumerable: true, get: function () { return submitExam_1.submitExam; } });
+var generateCloudinarySignature_1 = require("./callable/generateCloudinarySignature");
+Object.defineProperty(exports, "generateCloudinarySignature", { enumerable: true, get: function () { return generateCloudinarySignature_1.generateCloudinarySignature; } });
 //# sourceMappingURL=index.js.map

@@ -1,24 +1,26 @@
-import * as functions from "firebase-functions";
+import { onCall, HttpsError } from "firebase-functions/v2/https";
 import * as crypto from "crypto";
 
-export const generateCloudinarySignature = functions.region("asia-south1").https.onCall((data, context) => {
+export const generateCloudinarySignature = onCall(
+  { region: "asia-south1" },
+  (request) => {
     // 1. Ensure user is authenticated
-    if (!context.auth) {
-        throw new functions.https.HttpsError("unauthenticated", "You must be logged in to upload files.");
+    if (!request.auth) {
+        throw new HttpsError("unauthenticated", "You must be logged in to upload files.");
     }
 
-    const { folder, public_id, timestamp } = data;
+    const { folder, public_id, timestamp } = request.data;
 
     if (!timestamp) {
-        throw new functions.https.HttpsError("invalid-argument", "Missing timestamp.");
+        throw new HttpsError("invalid-argument", "Missing timestamp.");
     }
 
-    // Get Cloudinary API secret from Firebase config
-    const apiSecret = functions.config().cloudinary?.api_secret || process.env.CLOUDINARY_API_SECRET;
+    // Get Cloudinary API secret from environment config
+    const apiSecret = process.env.CLOUDINARY_API_SECRET;
     
     if (!apiSecret) {
         console.error("Cloudinary API secret is missing in environment config.");
-        throw new functions.https.HttpsError("internal", "Cloudinary configuration is missing.");
+        throw new HttpsError("internal", "Cloudinary configuration is missing.");
     }
 
     // Build the string to sign. Parameters must be in alphabetical order.
@@ -40,6 +42,7 @@ export const generateCloudinarySignature = functions.region("asia-south1").https
     return {
         signature,
         timestamp,
-        apiKey: functions.config().cloudinary?.api_key || process.env.CLOUDINARY_API_KEY
+        apiKey: process.env.CLOUDINARY_API_KEY
     };
-});
+  }
+);

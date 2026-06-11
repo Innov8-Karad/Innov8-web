@@ -1,17 +1,19 @@
-import * as functions from "firebase-functions";
+import { onCall, HttpsError } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
 
-export const submitExam = functions.region("asia-south1").https.onCall(async (data, context) => {
+export const submitExam = onCall(
+  { region: "asia-south1" },
+  async (request) => {
     // 1. Ensure user is authenticated
-    if (!context.auth) {
-        throw new functions.https.HttpsError("unauthenticated", "You must be logged in to submit an exam.");
+    if (!request.auth) {
+        throw new HttpsError("unauthenticated", "You must be logged in to submit an exam.");
     }
-    const uid = context.auth.uid;
+    const uid = request.auth.uid;
 
-    const { examId, answers, timeTaken } = data;
+    const { examId, answers, timeTaken } = request.data;
 
     if (!examId || !Array.isArray(answers) || typeof timeTaken !== "number") {
-        throw new functions.https.HttpsError("invalid-argument", "Missing required fields.");
+        throw new HttpsError("invalid-argument", "Missing required fields.");
     }
 
     const db = admin.firestore();
@@ -20,21 +22,21 @@ export const submitExam = functions.region("asia-south1").https.onCall(async (da
         // 2. Fetch the exam to get questions and marks
         const examDoc = await db.collection("exams").doc(examId).get();
         if (!examDoc.exists) {
-            throw new functions.https.HttpsError("not-found", "Exam not found.");
+            throw new HttpsError("not-found", "Exam not found.");
         }
         const examData = examDoc.data();
         if (!examData) {
-            throw new functions.https.HttpsError("not-found", "Exam data missing.");
+            throw new HttpsError("not-found", "Exam data missing.");
         }
 
         // 3. Fetch the secure answers
         const answersDoc = await db.collection("exam_answers").doc(examId).get();
         if (!answersDoc.exists) {
-            throw new functions.https.HttpsError("not-found", "Exam answers not found.");
+            throw new HttpsError("not-found", "Exam answers not found.");
         }
         const secureAnswersData = answersDoc.data();
         if (!secureAnswersData || !Array.isArray(secureAnswersData.answers)) {
-            throw new functions.https.HttpsError("internal", "Exam answers data corrupted.");
+            throw new HttpsError("internal", "Exam answers data corrupted.");
         }
 
         const correctAnswers = secureAnswersData.answers; // Array of { questionId, correctAnswerIndex }
@@ -88,6 +90,6 @@ export const submitExam = functions.region("asia-south1").https.onCall(async (da
         };
     } catch (error: any) {
         console.error("Error submitting exam:", error);
-        throw new functions.https.HttpsError("internal", error.message || "An error occurred while scoring the exam.");
+        throw new HttpsError("internal", error.message || "An error occurred while scoring the exam.");
     }
 });

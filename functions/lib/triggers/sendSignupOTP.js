@@ -85,6 +85,7 @@ exports.sendSignupOTP = (0, https_1.onCall)({ region: "asia-south1" }, async (re
         await (0, auth_1.getAuth)().getUserByEmail(email);
         // If no error thrown, user exists — reject early with a helpful message
         throw new https_1.HttpsError("already-exists", "This email is already registered. Please go to the Login screen.");
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
     }
     catch (authError) {
         // auth/user-not-found means email is free — continue
