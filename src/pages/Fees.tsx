@@ -15,6 +15,7 @@ import type { Column } from '../components/DataTable';
 import { useToast } from '../hooks/useToast';
 import { FormField, FormRow, FormActions } from '../components/FormField';
 import CustomSelect from '../components/CustomSelect';
+import CustomDatePicker from '../components/CustomDatePicker';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -731,7 +732,7 @@ export default function FeesPage() {
                             <input type="number" required min="1" value={newFee.amount} onChange={e => setNewFee({ ...newFee, amount: e.target.value })} placeholder="0" />
                         </FormField>
                         <FormField label={UI_STRINGS.FEES.FORM_DUE_DATE}>
-                            <input type="date" required value={newFee.dueDate} onChange={e => setNewFee({ ...newFee, dueDate: e.target.value })} />
+                            <CustomDatePicker required value={newFee.dueDate} onChange={e => setNewFee({ ...newFee, dueDate: e.target.value })} />
                         </FormField>
                     </FormRow>
                     <FormField label={UI_STRINGS.FEES.FORM_DESCRIPTION}>
@@ -753,7 +754,7 @@ export default function FeesPage() {
                                 <input type="number" required min="0" value={editForm.amount} onChange={e => setEditForm({ ...editForm, amount: e.target.value })} />
                             </FormField>
                             <FormField label={UI_STRINGS.FEES.FORM_DUE_DATE}>
-                                <input type="date" required value={editForm.dueDate} onChange={e => setEditForm({ ...editForm, dueDate: e.target.value })} />
+                                <CustomDatePicker required value={editForm.dueDate} onChange={e => setEditForm({ ...editForm, dueDate: e.target.value })} />
                             </FormField>
                         </FormRow>
                         <FormField label={UI_STRINGS.FEES.FORM_DESCRIPTION}>
@@ -785,7 +786,7 @@ export default function FeesPage() {
                                         placeholder={`Max: ₹${(installmentFee.amount - (installmentFee.totalPaid || 0)).toLocaleString()}`} />
                                 </FormField>
                                 <FormField label={UI_STRINGS.FEES.INSTALLMENT_DATE}>
-                                    <input type="date" required value={newInstallment.paidDate} onChange={e => setNewInstallment({ ...newInstallment, paidDate: e.target.value })} />
+                                    <CustomDatePicker required value={newInstallment.paidDate} onChange={e => setNewInstallment({ ...newInstallment, paidDate: e.target.value })} />
                                 </FormField>
                             </FormRow>
                             <FormField label={UI_STRINGS.FEES.INSTALLMENT_METHOD}>

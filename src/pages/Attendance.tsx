@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '../hooks/useToast';
 import CustomSelect from '../components/CustomSelect';
+import CustomDatePicker from '../components/CustomDatePicker';
 
 /* ─────────────────────────────────────────────
    Attendance Page – Premium SaaS Dashboard
@@ -551,9 +552,9 @@ export default function AttendancePage() {
                     </div>
                     <div className="att-select-group">
                         <label>Date</label>
-                        <input
-                            type="date" className="att-date-input"
-                            value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)}
+                        <CustomDatePicker
+                            value={selectedDate}
+                            onChange={(e) => setSelectedDate(e.target.value)}
                             max={new Date().toISOString().split('T')[0]}
                         />
                     </div>

@@ -12,6 +12,7 @@ import LoadingState from '../components/LoadingState';
 import ConfirmModal from '../components/ConfirmModal';
 import { useToast } from '../hooks/useToast';
 import { useAuth } from '../contexts/AuthContext';
+import CustomDatePicker from '../components/CustomDatePicker';
 import './MockScheduling.css';
 
 export default function MockSchedulingPage() {
@@ -347,8 +348,7 @@ export default function MockSchedulingPage() {
                         <div className="form-row-grid">
                             <div className="form-group">
                                 <label>{UI_STRINGS.MOCK_SCHEDULING.FORM_DATE} *</label>
-                                <input
-                                    type="date"
+                                <CustomDatePicker
                                     value={scheduledDate}
                                     onChange={(e) => setScheduledDate(e.target.value)}
                                     required

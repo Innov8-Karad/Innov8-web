@@ -15,6 +15,7 @@ import EmptyState from '../components/EmptyState';
 import { FormField, FormRow, FormActions } from '../components/FormField';
 import { useToast } from '../hooks/useToast';
 import CustomSelect from '../components/CustomSelect';
+import CustomDatePicker from '../components/CustomDatePicker';
 
 export default function ExamsPage() {
     const { showToast } = useToast();
@@ -323,8 +324,7 @@ export default function ExamsPage() {
                                 <div className="att-date-time-grid">
                                     <div className="att-date-time-inputs">
                                         <div className="att-date-input-wrapper">
-                                            <input 
-                                                type="date" 
+                                            <CustomDatePicker 
                                                 required 
                                                 value={formData.scheduledDate.split('T')[0] || ''} 
                                                 onChange={e => {

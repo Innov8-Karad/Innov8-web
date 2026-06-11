@@ -17,6 +17,7 @@ import { FormField, FormRow, FormActions } from '../components/FormField';
 import CurriculumBuilder from '../components/CurriculumBuilder';
 import AssignmentBuilder from '../components/AssignmentBuilder';
 import { useToast } from '../hooks/useToast';
+import CustomDatePicker from '../components/CustomDatePicker';
 import './Batches.css';
 
 export default function BatchesPage() {
@@ -495,8 +496,7 @@ export default function BatchesPage() {
                     </FormRow>
                     <FormRow>
                         <FormField label={UI_STRINGS.BATCHES.FORM_START_DATE}>
-                            <input 
-                                type="date" 
+                            <CustomDatePicker 
                                 value={newBatch.startDate}
                                 onChange={e => setNewBatch({ ...newBatch, startDate: e.target.value })}
                             />
