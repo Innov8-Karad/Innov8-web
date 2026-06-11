@@ -16,6 +16,7 @@ interface CustomSelectProps {
     style?: React.CSSProperties;
     searchable?: boolean;
     searchPlaceholder?: string;
+    disabled?: boolean;
 }
 
 export default function CustomSelect({
@@ -27,7 +28,8 @@ export default function CustomSelect({
     className = '',
     style,
     searchable = false,
-    searchPlaceholder = 'Search...'
+    searchPlaceholder = 'Search...',
+    disabled = false
 }: CustomSelectProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -41,6 +43,7 @@ export default function CustomSelect({
     );
 
     const toggleDropdown = () => {
+        if (disabled) return;
         if (isOpen) {
             setSearchTerm('');
         }
@@ -69,10 +72,12 @@ export default function CustomSelect({
         <div className={`custom-select-container ${className}`} ref={containerRef} style={style}>
             {label && <label className="custom-select-label">{label}</label>}
             <div 
-                className={`custom-select-trigger ${isOpen ? 'active' : ''}`} 
+                className={`custom-select-trigger ${isOpen ? 'active' : ''} ${disabled ? 'disabled' : ''}`} 
+                style={disabled ? { opacity: 0.5, cursor: 'not-allowed', pointerEvents: 'none', backgroundColor: 'var(--input-bg-disabled, rgba(255,255,255,0.05))' } : undefined}
                 onClick={toggleDropdown}
-                tabIndex={0}
+                tabIndex={disabled ? -1 : 0}
                 onKeyDown={(e) => {
+                    if (disabled) return;
                     if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();
                         toggleDropdown();

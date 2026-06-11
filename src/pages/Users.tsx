@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
-import type { User, Batch } from '../types';
-import { Edit2, Trash2, Ban, ShieldCheck, ShieldOff, AlertTriangle, CheckCircle } from 'lucide-react';
+import type { User, Batch, Course } from '../types';
+import { Edit2, Trash2, Ban, ShieldCheck, ShieldOff, AlertTriangle, CheckCircle, BookOpen } from 'lucide-react';
 import { userService } from '../services/userService';
 import { batchService } from '../services/batchService';
+import { courseService } from '../services/courseService';
 import { UI_STRINGS } from '../constants';
 import PageHeader from '../components/PageHeader';
 import LoadingState from '../components/LoadingState';
@@ -26,6 +27,7 @@ export default function UsersPage() {
     const [viewingUser, setViewingUser] = useState<User | null>(null);
     const [deletingUser, setDeletingUser] = useState<User | null>(null);
     const [activeTab, setActiveTab] = useState<'active' | 'blocked'>('active');
+    const [classificationFilter, setClassificationFilter] = useState<'classroom' | 'non-classroom'>('classroom');
 
     // Photo upload states
     const [uploadedPhotoUrl, setUploadedPhotoUrl] = useState<string | null>(null);
@@ -38,6 +40,7 @@ export default function UsersPage() {
     const [blockLoading, setBlockLoading] = useState(false);
 
     const [batches, setBatches] = useState<Batch[]>([]);
+    const [courses, setCourses] = useState<Course[]>([]);
 
     const [newUser, setNewUser] = useState({
         name: '',
@@ -46,6 +49,7 @@ export default function UsersPage() {
         batch: '',
         batchId: '',
         course: '',
+        courseId: '',
         skills: '',
         profilePhoto: ''
     });
@@ -60,6 +64,14 @@ export default function UsersPage() {
         return () => unsubscribe();
     }, []);
 
+    // Subscribe to courses in real-time
+    useEffect(() => {
+        const unsubscribe = courseService.subscribeToCourses((data) => {
+            setCourses(data);
+        });
+        return () => unsubscribe();
+    }, []);
+
     // Keep localUsers synchronized with Firebase Context
     useEffect(() => {
         setLocalUsers(users);
@@ -68,6 +80,37 @@ export default function UsersPage() {
     // Split users into active and blocked using localUsers for instant updates
     const activeUsers = useMemo(() => localUsers.filter(u => !u.isBlocked), [localUsers]);
     const blockedUsers = useMemo(() => localUsers.filter(u => u.isBlocked), [localUsers]);
+
+    // Filter active and blocked users based on the classification filter
+    const filteredActiveUsers = useMemo(() => {
+        return activeUsers.filter(u => {
+            const hasBatch = !!(u.batchId || u.batch);
+            if (classificationFilter === 'classroom') {
+                return hasBatch;
+            } else {
+                return !hasBatch;
+            }
+        });
+    }, [activeUsers, classificationFilter]);
+
+    const filteredBlockedUsers = useMemo(() => {
+        return blockedUsers.filter(u => {
+            const hasBatch = !!(u.batchId || u.batch);
+            if (classificationFilter === 'classroom') {
+                return hasBatch;
+            } else {
+                return !hasBatch;
+            }
+        });
+    }, [blockedUsers, classificationFilter]);
+
+    // Active counts for sub-tabs
+    const activeClassroomCount = useMemo(() => activeUsers.filter(u => u.batchId || u.batch).length, [activeUsers]);
+    const activeNonClassroomCount = useMemo(() => activeUsers.filter(u => !u.batchId && !u.batch).length, [activeUsers]);
+
+    // Blocked counts for sub-tabs
+    const blockedClassroomCount = useMemo(() => blockedUsers.filter(u => u.batchId || u.batch).length, [blockedUsers]);
+    const blockedNonClassroomCount = useMemo(() => blockedUsers.filter(u => !u.batchId && !u.batch).length, [blockedUsers]);
 
 
 
@@ -79,17 +122,39 @@ export default function UsersPage() {
             showToast("Mobile number must be exactly 10 digits", "error");
             return;
         }
-        if (!newUser.batchId) {
-            setError("Please select a batch for the student");
-            showToast("Please select a batch for the student", "error");
-            return;
-        }
 
-        const selectedBatch = batches.find(b => b.id === newUser.batchId);
-        if (!selectedBatch) {
-            setError("Selected batch is invalid");
-            showToast("Selected batch is invalid", "error");
-            return;
+        let studentBatchName = '';
+        let studentBatchId = '';
+        let studentCourseName = '';
+        let studentCourseId = '';
+
+        if (newUser.batchId) {
+            const selectedBatch = batches.find(b => b.id === newUser.batchId);
+            if (!selectedBatch) {
+                setError("Selected batch is invalid");
+                showToast("Selected batch is invalid", "error");
+                return;
+            }
+            studentBatchName = selectedBatch.name;
+            studentBatchId = selectedBatch.id;
+            studentCourseName = selectedBatch.courseName || '';
+            studentCourseId = selectedBatch.courseId || '';
+        } else {
+            if (!newUser.courseId) {
+                setError("Please select either a batch or a course for the student");
+                showToast("Please select either a batch or a course for the student", "error");
+                return;
+            }
+            const selectedCourse = courses.find(c => c.id === newUser.courseId);
+            if (!selectedCourse) {
+                setError("Selected course is invalid");
+                showToast("Selected course is invalid", "error");
+                return;
+            }
+            studentBatchName = '';
+            studentBatchId = '';
+            studentCourseName = selectedCourse.title;
+            studentCourseId = selectedCourse.id;
         }
 
         try {
@@ -98,15 +163,13 @@ export default function UsersPage() {
             const parsedSkills = newUser.skills
                 ? newUser.skills.split(',').map(s => s.trim()).filter(Boolean)
                 : [];
-                
-            const studentCourse = selectedBatch.courseName || '';
-            const studentCourseId = selectedBatch.courseId || '';
 
             if (editingUser) {
                 await userService.updateUser(editingUser.id, {
                     ...newUser,
-                    batch: selectedBatch.name,
-                    course: studentCourse,
+                    batch: studentBatchName,
+                    batchId: studentBatchId,
+                    course: studentCourseName,
                     courseId: studentCourseId,
                     skills: parsedSkills,
                     profilePhoto: photoUrl
@@ -115,8 +178,9 @@ export default function UsersPage() {
             } else {
                 await userService.createUser({
                     ...newUser,
-                    batch: selectedBatch.name,
-                    course: studentCourse,
+                    batch: studentBatchName,
+                    batchId: studentBatchId,
+                    course: studentCourseName,
                     courseId: studentCourseId,
                     profilePhoto: photoUrl,
                     skills: parsedSkills,
@@ -140,7 +204,7 @@ export default function UsersPage() {
     const resetForm = () => {
         setEditingUser(null);
         setUploadedPhotoUrl(null);
-        setNewUser({ name: '', email: '', phone: '', batch: '', batchId: '', course: '', skills: '', profilePhoto: '' });
+        setNewUser({ name: '', email: '', phone: '', batch: '', batchId: '', course: '', courseId: '', skills: '', profilePhoto: '' });
     };
 
     const handleBlockUser = async () => {
@@ -214,6 +278,7 @@ export default function UsersPage() {
             batch: user.batch || '',
             batchId: user.batchId || '',
             course: user.course || '',
+            courseId: user.courseId || '',
             skills: user.skills ? (Array.isArray(user.skills) ? user.skills.join(', ') : user.skills) : '',
             profilePhoto: user.profilePhoto || ''
         });
@@ -221,8 +286,8 @@ export default function UsersPage() {
         setShowModal(true);
     };
 
-    // Active students columns
-    const activeColumns: Column<User>[] = [
+    // Active students columns based on classification
+    const activeColumns = useMemo<Column<User>[]>(() => [
         {
             key: 'name',
             header: UI_STRINGS.USERS.TH_NAME,
@@ -243,7 +308,7 @@ export default function UsersPage() {
             width: '20%',
             render: (user) => <span className="text-sm">{user.phone}</span>,
         },
-        {
+        classificationFilter === 'classroom' ? {
             key: 'batch',
             header: UI_STRINGS.USERS.TH_BATCH,
             width: '15%',
@@ -252,6 +317,15 @@ export default function UsersPage() {
                     {user.batch}
                 </span>
             ) : null,
+        } : {
+            key: 'course',
+            header: UI_STRINGS.USERS.TH_COURSE,
+            width: '15%',
+            render: (user) => user.course ? (
+                <span style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', color: 'var(--success)', padding: '4px 8px', borderRadius: '4px', fontSize: '0.85rem' }}>
+                    {user.course}
+                </span>
+            ) : <span className="text-xs text-muted">—</span>,
         },
         {
             key: 'joined',
@@ -278,10 +352,10 @@ export default function UsersPage() {
                 </div>
             ),
         },
-    ];
+    ], [classificationFilter]);
 
-    // Blocked students columns
-    const blockedColumns: Column<User>[] = [
+    // Blocked students columns based on classification
+    const blockedColumns = useMemo<Column<User>[]>(() => [
         {
             key: 'name',
             header: UI_STRINGS.USERS.TH_NAME,
@@ -302,13 +376,22 @@ export default function UsersPage() {
             width: '15%',
             render: (user) => <span className="text-sm">{user.phone}</span>,
         },
-        {
+        classificationFilter === 'classroom' ? {
             key: 'batch',
             header: UI_STRINGS.USERS.TH_BATCH,
             width: '12%',
             render: (user) => user.batch ? (
                 <span style={{ backgroundColor: 'rgba(99, 102, 241, 0.1)', color: 'var(--accent-blue)', padding: '4px 8px', borderRadius: '4px', fontSize: '0.85rem' }}>
                     {user.batch}
+                </span>
+            ) : <span className="text-xs text-muted">—</span>,
+        } : {
+            key: 'course',
+            header: UI_STRINGS.USERS.TH_COURSE,
+            width: '12%',
+            render: (user) => user.course ? (
+                <span style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', color: 'var(--success)', padding: '4px 8px', borderRadius: '4px', fontSize: '0.85rem' }}>
+                    {user.course}
                 </span>
             ) : <span className="text-xs text-muted">—</span>,
         },
@@ -348,7 +431,7 @@ export default function UsersPage() {
                 </div>
             ),
         },
-    ];
+    ], [classificationFilter]);
 
     const activeBatches = useMemo(() => batches.filter(b => b.active !== false), [batches]);
 
@@ -358,11 +441,16 @@ export default function UsersPage() {
             label: b.name
         }));
         
+        options.unshift({
+            value: '',
+            label: 'None (Non-Classroom Student)'
+        });
+
         // If editing a user and their current batch is inactive, add it to options
         if (editingUser?.batchId && editingUser?.batch) {
             const hasCurrentBatch = options.some(opt => opt.value === editingUser.batchId);
             if (!hasCurrentBatch) {
-                options.unshift({
+                options.push({
                     value: editingUser.batchId,
                     label: `${editingUser.batch} (Inactive)`
                 });
@@ -370,6 +458,13 @@ export default function UsersPage() {
         }
         return options;
     }, [activeBatches, editingUser]);
+
+    const courseOptions = useMemo(() => {
+        return courses.map(c => ({
+            value: c.id,
+            label: c.title
+        }));
+    }, [courses]);
 
     if (loading || usersLoading) {
         return <LoadingState message={UI_STRINGS.USERS.LOADING} />;
@@ -407,23 +502,91 @@ export default function UsersPage() {
                 </button>
             </div>
 
+            {/* Classification Sub-Tabs */}
+            <div className="sub-tab-navigation" style={{ display: 'flex', gap: '12px', marginBottom: '20px', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '12px' }}>
+                <button
+                    className={`sub-tab-btn ${classificationFilter === 'classroom' ? 'active' : ''}`}
+                    onClick={() => setClassificationFilter('classroom')}
+                    style={{
+                        padding: '8px 18px',
+                        borderRadius: '20px',
+                        border: '1px solid var(--border-subtle)',
+                        background: classificationFilter === 'classroom' ? 'rgba(var(--primary-rgb), 0.12)' : 'transparent',
+                        color: classificationFilter === 'classroom' ? 'var(--primary)' : 'var(--text-secondary)',
+                        cursor: 'pointer',
+                        fontWeight: 600,
+                        fontSize: '0.85rem',
+                        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                    }}
+                >
+                    <BookOpen size={16} />
+                    Classroom Students
+                    <span style={{
+                        background: classificationFilter === 'classroom' ? 'rgba(var(--primary-rgb), 0.2)' : 'rgba(255,255,255,0.08)',
+                        color: classificationFilter === 'classroom' ? 'var(--primary)' : 'var(--text-secondary)',
+                        padding: '2px 8px',
+                        borderRadius: '10px',
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        marginLeft: '4px'
+                    }}>
+                        {activeTab === 'active' ? activeClassroomCount : blockedClassroomCount}
+                    </span>
+                </button>
+                <button
+                    className={`sub-tab-btn ${classificationFilter === 'non-classroom' ? 'active' : ''}`}
+                    onClick={() => setClassificationFilter('non-classroom')}
+                    style={{
+                        padding: '8px 18px',
+                        borderRadius: '20px',
+                        border: '1px solid var(--border-subtle)',
+                        background: classificationFilter === 'non-classroom' ? 'rgba(var(--primary-rgb), 0.12)' : 'transparent',
+                        color: classificationFilter === 'non-classroom' ? 'var(--primary)' : 'var(--text-secondary)',
+                        cursor: 'pointer',
+                        fontWeight: 600,
+                        fontSize: '0.85rem',
+                        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                    }}
+                >
+                    <BookOpen size={16} />
+                    Non-Classroom Students
+                    <span style={{
+                        background: classificationFilter === 'non-classroom' ? 'rgba(var(--primary-rgb), 0.2)' : 'rgba(255,255,255,0.08)',
+                        color: classificationFilter === 'non-classroom' ? 'var(--primary)' : 'var(--text-secondary)',
+                        padding: '2px 8px',
+                        borderRadius: '10px',
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        marginLeft: '4px'
+                    }}>
+                        {activeTab === 'active' ? activeNonClassroomCount : blockedNonClassroomCount}
+                    </span>
+                </button>
+            </div>
+
             {/* Tab Content */}
             <div className="card mb-lg tab-content">
                 {activeTab === 'active' ? (
                     <DataTable
                         columns={activeColumns}
-                        data={activeUsers}
+                        data={filteredActiveUsers}
                         keyExtractor={(user) => user.id}
-                        emptyMessage={UI_STRINGS.USERS.EMPTY}
-                        searchPlaceholder="Search students by name, email, or batch..."
+                        emptyMessage={classificationFilter === 'classroom' ? UI_STRINGS.USERS.EMPTY : "No non-classroom students found."}
+                        searchPlaceholder={classificationFilter === 'classroom' ? "Search students by name, email, or batch..." : "Search students by name, email, or course..."}
                         searchable
                         pageSize={10}
                     />
                 ) : (
-                    blockedUsers.length > 0 ? (
+                    filteredBlockedUsers.length > 0 ? (
                         <DataTable
                             columns={blockedColumns}
-                            data={blockedUsers}
+                            data={filteredBlockedUsers}
                             keyExtractor={(user) => user.id}
                             emptyMessage={UI_STRINGS.USERS.BLOCKED_EMPTY}
                             searchPlaceholder="Search blocked students..."
@@ -497,6 +660,16 @@ export default function UsersPage() {
                         </FormField>
                     </FormRow>
                     <FormRow>
+                        <FormField label={UI_STRINGS.USERS.TH_COURSE}>
+                            <CustomSelect
+                                options={courseOptions}
+                                value={newUser.batchId ? (batches.find(b => b.id === newUser.batchId)?.courseId || newUser.courseId || '') : newUser.courseId}
+                                onChange={(val) => setNewUser({ ...newUser, courseId: val })}
+                                placeholder="Select course..."
+                                searchable={true}
+                                disabled={!!newUser.batchId}
+                            />
+                        </FormField>
                         <FormField label="Skills (comma-separated)">
                             <input type="text" placeholder="React, Node.js, UI/UX" value={newUser.skills} onChange={e => setNewUser({ ...newUser, skills: e.target.value })} />
                         </FormField>
@@ -518,7 +691,11 @@ export default function UsersPage() {
                             <div style={{ margin: '0 auto 16px' }}>
                                 <Avatar src={viewingUser.profilePhoto} fallback={viewingUser.name?.charAt(0) || '?'} size="md" className="" />
                             </div>
-                            <p style={{ color: 'var(--primary)', fontWeight: 500 }}>{UI_STRINGS.USERS.TH_BATCH} {viewingUser.batch}</p>
+                            <p style={{ color: 'var(--primary)', fontWeight: 500 }}>
+                                {viewingUser.batch 
+                                    ? `${UI_STRINGS.USERS.TH_BATCH}: ${viewingUser.batch}` 
+                                    : `${UI_STRINGS.USERS.TH_COURSE}: ${viewingUser.course || 'None'}`}
+                            </p>
                         </div>
                         <div className="grid-single" style={{ gap: 'var(--space-lg)' }}>
                             <div className="glass-card" style={{ padding: 'var(--space-md)', borderRadius: 'var(--radius-md)' }}>
@@ -541,6 +718,18 @@ export default function UsersPage() {
                                         <span className="text-muted">{UI_STRINGS.USERS.ENROLLMENT_DATE_LABEL}</span>
                                         <span className="font-medium">{viewingUser.enrollmentDate?.toLocaleDateString() || 'N/A'}</span>
                                     </div>
+                                    {viewingUser.batch && (
+                                        <div className="flex justify-between">
+                                            <span className="text-muted">Batch:</span>
+                                            <span className="font-medium">{viewingUser.batch}</span>
+                                        </div>
+                                    )}
+                                    {viewingUser.course && (
+                                        <div className="flex justify-between">
+                                            <span className="text-muted">Course:</span>
+                                            <span className="font-medium">{viewingUser.course}</span>
+                                        </div>
+                                    )}
                                     <div className="flex justify-between">
                                         <span className="text-muted">{UI_STRINGS.USERS.CURRENT_STATUS_LABEL}</span>
                                         <span className="badge badge-success">{UI_STRINGS.USERS.STATUS_ACTIVE}</span>
