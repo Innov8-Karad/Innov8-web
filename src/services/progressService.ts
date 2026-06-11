@@ -4,10 +4,7 @@ import {
   doc, 
   serverTimestamp,
   setDoc,
-  collectionGroup,
   type DocumentData,
-  QuerySnapshot,
-  QueryDocumentSnapshot
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { COLLECTIONS } from '../constants';
@@ -22,29 +19,12 @@ export const progressService = {
       getDocs(collection(db, COLLECTIONS.BATCHES))
     ]);
 
-    let modulesSnap: QuerySnapshot<DocumentData> | { docs: QueryDocumentSnapshot<DocumentData>[] };
-    try {
-      modulesSnap = await getDocs(collectionGroup(db, 'modules'));
-    } catch (err) {
-      console.warn("Failed to fetch modules collectionGroup, falling back to 0 modules:", err);
-      modulesSnap = { docs: [] };
-    }
-
-
     const progressMap = new Map<string, DocumentData>();
     progressSnap.docs.forEach(doc => {
       const p = doc.data();
       const docUserId = doc.id.split('_')[0];
       const key = p.userId || p.studentId || docUserId;
       progressMap.set(key, { ...p, id: doc.id });
-    });
-
-    const batchModuleCountMap = new Map<string, number>();
-    modulesSnap.docs.forEach((doc) => {
-      const batchId = doc.ref.parent.parent?.id;
-      if (batchId) {
-        batchModuleCountMap.set(batchId, (batchModuleCountMap.get(batchId) || 0) + 1);
-      }
     });
 
     const batchNameToIdMap = new Map<string, string>();
@@ -61,13 +41,36 @@ export const progressService = {
       .map(userData => {
         const progressData = progressMap.get(userData.id) || {};
         
-        // Calculate Course Completion percentage
-        const studentBatchId = userData.batchId || (userData.batch ? batchNameToIdMap.get(userData.batch.trim().toLowerCase()) : null);
-        const totalModules = studentBatchId ? (batchModuleCountMap.get(studentBatchId) || 0) : 0;
-        const completedCount = Math.max((progressData.completedModules || []).length, (progressData.completedModuleIds || []).length);
-        const courseCompletionPercentage = totalModules > 0 
-          ? Math.min(Math.round((completedCount / totalModules) * 100), 100) 
+        // Calculate Course Completion percentage from granular items
+        const completedVideoIds = progressData.completedVideoIds || [];
+        const completedNoteIds = progressData.completedNoteIds || [];
+        const completedAssignmentIds = progressData.completedAssignmentIds || [];
+        const totalItems = Number(progressData.totalItems || 0);
+        const completedItems = Number(progressData.completedItems || (completedVideoIds.length + completedNoteIds.length + completedAssignmentIds.length));
+        
+        const completionPercentage = totalItems > 0 
+          ? Math.min(Math.round((completedItems / totalItems) * 100), 100) 
           : 0;
+
+        // Attendance Metric
+        const attendancePercentage = Number(progressData.attendancePercentage || progressData.attendance || 0);
+
+        // Overall Integrated Progress: (Completion + Attendance) / 2
+        const overallIntegratedProgress = Math.round((completionPercentage + attendancePercentage) / 2);
+
+
+
+        // Last active timestamp
+        let lastActive: Date | null = null;
+        if (progressData.updatedAt) {
+          if (progressData.updatedAt.toDate) {
+            lastActive = progressData.updatedAt.toDate();
+          } else if (progressData.updatedAt.seconds) {
+            lastActive = new Date(progressData.updatedAt.seconds * 1000);
+          } else if (progressData.updatedAt instanceof Date) {
+            lastActive = progressData.updatedAt;
+          }
+        }
 
         return {
           id: progressData.id || `${userData.id}_${userData.course || 'default'}`,
@@ -75,17 +78,21 @@ export const progressService = {
           studentName: userData.name || 'Unknown Student',
           email: userData.email || '',
           batch: userData.batch || 'Unassigned',
-          attendancePercentage: Number(progressData.attendancePercentage || progressData.attendance || 0),
+          attendancePercentage,
           overallScore: Number(progressData.overallScore || 0),
-          currentModule: progressData.currentModule || 'None',
-          completedModules: progressData.completedModules || [],
-          updatedAt: progressData.updatedAt?.toDate() || new Date(),
+          completedVideoIds,
+          completedNoteIds,
+          completedAssignmentIds,
+          totalItems,
+          completedItems,
+          updatedAt: lastActive || new Date(),
           profilePhoto: userData.profilePhoto || '',
-          // Map legacy fields for backward compatibility
+          // Map fields for UI
           userId: userData.id,
           userName: userData.name || 'Unknown Student',
-          overallProgress: courseCompletionPercentage,
-          courseCompletionPercentage: courseCompletionPercentage
+          overallProgress: overallIntegratedProgress,
+          courseCompletionPercentage: completionPercentage,
+          lastAccessed: lastActive || undefined,
         } as StudentProgress;
       });
   },
@@ -150,29 +157,29 @@ export const progressService = {
     doc.text(`Batch:`, 20, startY + lineSpacing);
     doc.text(`Attendance:`, 20, startY + lineSpacing * 2);
     doc.text(`Overall Score:`, 20, startY + lineSpacing * 3);
-    doc.text(`Current Module:`, 20, startY + lineSpacing * 4);
-    
-    doc.setFont('helvetica', 'normal');
     doc.text(student.studentName || 'Unknown', 60, startY);
     doc.text(student.batch || 'N/A', 60, startY + lineSpacing);
     doc.text(`${student.attendancePercentage ?? 0}%`, 60, startY + lineSpacing * 2);
     doc.text(`${student.overallScore ?? 0}`, 60, startY + lineSpacing * 3);
-    doc.text(student.currentModule || 'None', 60, startY + lineSpacing * 4);
     
-    // Completed Modules
+    // Additional Metrics
     doc.setFont('helvetica', 'bold');
-    doc.text(`Completed Modules:`, 20, startY + lineSpacing * 6);
+    doc.text(`Course Completion:`, 20, startY + lineSpacing * 4);
+    doc.text(`Integrated Progress:`, 20, startY + lineSpacing * 5);
+    
+    doc.setFont('helvetica', 'normal');
+    doc.text(`${student.courseCompletionPercentage ?? 0}%`, 60, startY + lineSpacing * 4);
+    doc.text(`${student.overallProgress ?? 0}%`, 60, startY + lineSpacing * 5);
+    
+    // Activity Summary
+    doc.setFont('helvetica', 'bold');
+    doc.text(`Learning Activity:`, 20, startY + lineSpacing * 7);
     doc.setFont('helvetica', 'normal');
     
-    const moduleY = startY + lineSpacing * 7;
-    const modules = student.completedModules ?? [];
-    if (modules.length > 0) {
-      modules.forEach((m, index) => {
-        doc.text(`• ${m}`, 25, moduleY + (index * 7));
-      });
-    } else {
-      doc.text('None', 25, moduleY);
-    }
+    const activityY = startY + lineSpacing * 8;
+    doc.text(`• Videos Watched: ${student.completedVideoIds?.length || 0}`, 25, activityY);
+    doc.text(`• Tasks Completed: ${student.completedAssignmentIds?.length || 0}`, 25, activityY + 7);
+    doc.text(`• Resources Read: ${student.completedNoteIds?.length || 0}`, 25, activityY + 14);
     
     // Footer
     const pageHeight = doc.internal.pageSize.height;

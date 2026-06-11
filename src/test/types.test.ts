@@ -118,15 +118,15 @@ describe('Announcement type', () => {
 
   it('should accept announcement with student targeting', () => {
     const ann: Announcement = {
-        id: 'ann-2',
-        title: 'Fee Reminder',
-        content: 'Your fee is overdue',
-        priority: 'high',
-        author: 'Admin',
-        targetAudience: 'students',
-        targetBatches: [],
-        targetStudentIds: ['uid-123', 'uid-456'],
-        createdAt: new Date()
+      id: 'ann-2',
+      title: 'Fee Reminder',
+      content: 'Your fee is overdue',
+      priority: 'high',
+      author: 'Admin',
+      targetAudience: 'students',
+      targetBatches: [],
+      targetStudentIds: ['uid-123', 'uid-456'],
+      createdAt: new Date()
     };
     expect(ann.targetAudience).toBe('students');
     expect(ann.targetStudentIds).toHaveLength(2);
@@ -177,15 +177,18 @@ describe('StudentProgress type', () => {
       batch: 'Batch A',
       attendancePercentage: 85,
       overallScore: 78,
-      currentModule: 'React Hooks',
-      completedModules: ['HTML', 'CSS', 'JavaScript'],
-      // Keep legacy fields if needed for test coverage
+      overallProgress: 82,
+      completedVideoIds: ['v1', 'v2'],
+      completedAssignmentIds: ['a1'],
+      totalItems: 10,
+      completedItems: 3,
+      // Keep aliases if needed
       userId: 'user-1',
       userName: 'John',
       attendance: 85
     };
     expect(progress.attendancePercentage).toBe(85);
-    expect(progress.completedModules).toHaveLength(3);
+    expect(progress.completedVideoIds).toHaveLength(2);
   });
 });
 
