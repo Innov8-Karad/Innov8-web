@@ -9,6 +9,7 @@ import Modal from '../components/Modal';
 import { FormField, FormRow } from '../components/FormField';
 import { useUser } from '../hooks/useUser';
 import type { User } from '../types';
+import CustomDatePicker from '../components/CustomDatePicker';
 
 export default function PlacementTallyPage() {
     const toastContext = useContext(ToastContext);
@@ -641,7 +642,7 @@ export default function PlacementTallyPage() {
                     </div>
 
                     <div className="animate-in">
-                        <form onSubmit={handleSaveStudent} className="form-layout" style={{ maxHeight: '65vh', overflowY: 'auto', paddingRight: '12px' }}>
+                        <form onSubmit={handleSaveStudent} className="form-layout" style={{ maxHeight: '65vh', overflowY: 'auto', paddingRight: '12px', paddingBottom: '140px' }}>
                     
                         {activeTab === 'basic' && (
                             <div className="animate-in">
@@ -709,7 +710,7 @@ export default function PlacementTallyPage() {
                             </FormRow>
                             <FormRow>
                                 <FormField label="Joining Date">
-                                    <input type="date" value={studentForm.joiningDate || ''} onChange={e => setStudentForm({ ...studentForm, joiningDate: e.target.value })} />
+                                    <CustomDatePicker value={studentForm.joiningDate || ''} onChange={e => setStudentForm({ ...studentForm, joiningDate: e.target.value })} />
                                 </FormField>
                                 <FormField label="Package (LPA/Amount)">
                                     <input type="number" min="0" step="0.01" value={studentForm.package || ''} onChange={e => setStudentForm({ ...studentForm, package: Number(e.target.value) })} />
@@ -731,18 +732,18 @@ export default function PlacementTallyPage() {
                                 <h3 className="section-label mb-4">Previous Company Details</h3>
                                 <FormRow>
                                 <FormField label="Internship Start Date">
-                                    <input type="date" value={studentForm.internshipStartDate || ''} onChange={e => setStudentForm({ ...studentForm, internshipStartDate: e.target.value })} />
+                                    <CustomDatePicker value={studentForm.internshipStartDate || ''} onChange={e => setStudentForm({ ...studentForm, internshipStartDate: e.target.value })} />
                                 </FormField>
                                 <FormField label="Internship End Date">
-                                    <input type="date" min={studentForm.internshipStartDate || ''} value={studentForm.internshipEndDate || ''} onChange={e => setStudentForm({ ...studentForm, internshipEndDate: e.target.value })} />
+                                    <CustomDatePicker min={studentForm.internshipStartDate || ''} value={studentForm.internshipEndDate || ''} onChange={e => setStudentForm({ ...studentForm, internshipEndDate: e.target.value })} />
                                 </FormField>
                             </FormRow>
                             <FormRow>
                                 <FormField label="Job Joining Date">
-                                    <input type="date" value={studentForm.jobJoiningDate || ''} onChange={e => setStudentForm({ ...studentForm, jobJoiningDate: e.target.value })} />
+                                    <CustomDatePicker value={studentForm.jobJoiningDate || ''} onChange={e => setStudentForm({ ...studentForm, jobJoiningDate: e.target.value })} />
                                 </FormField>
                                 <FormField label="Job Release Date">
-                                    <input type="date" min={studentForm.jobJoiningDate || ''} value={studentForm.jobReleaseDate || ''} onChange={e => setStudentForm({ ...studentForm, jobReleaseDate: e.target.value })} />
+                                    <CustomDatePicker min={studentForm.jobJoiningDate || ''} value={studentForm.jobReleaseDate || ''} onChange={e => setStudentForm({ ...studentForm, jobReleaseDate: e.target.value })} />
                                 </FormField>
                             </FormRow>
                             <FormRow>
@@ -810,7 +811,7 @@ export default function PlacementTallyPage() {
                                             <div className="font-medium text-sm text-muted mb-xs">Payment #{index + 1}</div>
                                             <FormRow>
                                                 <FormField label="Date">
-                                                    <input type="date" required value={payment.date} onChange={e => handlePaymentChange(payment.id, 'date', e.target.value)} />
+                                                    <CustomDatePicker required value={payment.date} onChange={e => handlePaymentChange(payment.id, 'date', e.target.value)} />
                                                 </FormField>
                                                 <FormField label="Amount (₹)">
                                                     <input type="number" min="1" required value={payment.amount || ''} onChange={e => handlePaymentChange(payment.id, 'amount', Number(e.target.value))} />

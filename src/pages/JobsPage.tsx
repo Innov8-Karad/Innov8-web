@@ -14,6 +14,7 @@ import ErrorAlert from '../components/ErrorAlert';
 import Modal from '../components/Modal';
 import { FormField, FormRow, FormActions } from '../components/FormField';
 import CustomSelect from '../components/CustomSelect';
+import CustomDatePicker from '../components/CustomDatePicker';
 
 type ViewMode = 'list' | 'detail';
 
@@ -1027,7 +1028,7 @@ export default function JobsPage() {
                 </select>
               </FormField>
               <FormField label="Application Deadline">
-                <input type="date" value={jobForm.deadline} onChange={e => setJobForm({ ...jobForm, deadline: e.target.value })} />
+                <CustomDatePicker value={jobForm.deadline} onChange={e => setJobForm({ ...jobForm, deadline: e.target.value })} />
               </FormField>
             </FormRow>
             <FormField label="Key Requirements (One per line)">

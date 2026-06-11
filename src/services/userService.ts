@@ -92,6 +92,7 @@ export const userService = {
       const docData: DocumentData = {
         ...data,
         ...nameParts,
+        email: data.email?.toLowerCase().trim() || '',
         role: 'student',
         deviceCount: 0,
         enrollmentDate: Timestamp.now(),
@@ -127,6 +128,9 @@ export const userService = {
     const cleanedData = Object.fromEntries(
         Object.entries(data).filter((entry) => entry[1] !== undefined)
     );
+    if (typeof cleanedData.email === 'string') {
+      cleanedData.email = cleanedData.email.toLowerCase().trim();
+    }
     
     const newBatchId = cleanedData.batchId as string | undefined;
     let nameParts = {};
@@ -196,8 +200,25 @@ export const userService = {
       updatedAt: Timestamp.now()
     });
     
-    // Update public block status for real-time mobile sync (using email as ID)
+    // Resilient fix: find and update all duplicate user docs with the same email
     if (email) {
+      const q = query(collection(db, COLLECTIONS.USERS), where('email', '==', email));
+      const querySnap = await getDocs(q);
+      const batchPromises = querySnap.docs.map(userDoc => {
+        if (userDoc.id !== id) {
+          return updateDoc(doc(db, COLLECTIONS.USERS, userDoc.id), {
+            isBlocked: true,
+            blockedAt: Timestamp.now(),
+            blockedReason: reason || '',
+            tokenVersion: increment(1),
+            updatedAt: Timestamp.now()
+          });
+        }
+        return Promise.resolve();
+      });
+      await Promise.all(batchPromises);
+
+      // Update public block status for real-time mobile sync (using email as ID)
       await setDoc(doc(db, 'user_block_status', email.toLowerCase().trim()), {
         isBlocked: true,
         updatedAt: Timestamp.now()
@@ -229,8 +250,25 @@ export const userService = {
       updatedAt: Timestamp.now()
     });
     
-    // Update public block status for real-time mobile sync (using email as ID)
+    // Resilient fix: find and update all duplicate user docs with the same email
     if (email) {
+      const q = query(collection(db, COLLECTIONS.USERS), where('email', '==', email));
+      const querySnap = await getDocs(q);
+      const batchPromises = querySnap.docs.map(userDoc => {
+        if (userDoc.id !== id) {
+          return updateDoc(doc(db, COLLECTIONS.USERS, userDoc.id), {
+            isBlocked: false,
+            blockedAt: null,
+            blockedReason: null,
+            tokenVersion: increment(1),
+            updatedAt: Timestamp.now()
+          });
+        }
+        return Promise.resolve();
+      });
+      await Promise.all(batchPromises);
+
+      // Update public block status for real-time mobile sync (using email as ID)
       await setDoc(doc(db, 'user_block_status', email.toLowerCase().trim()), {
         isBlocked: false,
         updatedAt: Timestamp.now()
