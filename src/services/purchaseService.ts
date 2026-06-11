@@ -82,12 +82,6 @@ export async function approvePurchaseRequest(
         updatedAt: serverTimestamp(),
     });
 
-    // 2. Add student to course's purchasedBy list
-    const courseRef = doc(db, COLLECTIONS.COURSES, courseId);
-    batch.update(courseRef, {
-        purchasedBy: arrayUnion(userId),
-    });
-
     await batch.commit();
 }
 
@@ -109,12 +103,6 @@ export async function rejectPurchaseRequest(
         status: 'rejected',
         rejectionReason: reason || '',
         updatedAt: serverTimestamp(),
-    });
-
-    // 2. Remove student from course's purchasedBy list (if previously added)
-    const courseRef = doc(db, COLLECTIONS.COURSES, courseId);
-    batch.update(courseRef, {
-        purchasedBy: arrayRemove(userId),
     });
 
     await batch.commit();

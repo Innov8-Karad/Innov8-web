@@ -185,7 +185,7 @@ export default function CoursesPage() {
                                 {!course.isFree && (
                                     <div className="flex items-center gap-1 text-sm text-accent-blue font-medium">
                                         <ShoppingBag size={14} />
-                                        <span>{(course.purchasedBy || []).length} Purchases</span>
+                                        <span>{course.purchaseCount || 0} Purchases</span>
                                     </div>
                                 )}
                                 <div className="flex items-center gap-2">

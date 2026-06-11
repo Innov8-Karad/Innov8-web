@@ -121,7 +121,7 @@ service cloud.firestore {
     // Mobile:     Reads all courses and subcollections
     // ═════════════════════════════════════════════════════════════════════
     match /courses/{courseId} {
-      allow read: if true;
+      allow read: if isAuthenticated();
       allow create, delete: if isAdmin();
       allow update: if isAdmin()
                     || (isAuthenticated()
@@ -131,17 +131,17 @@ service cloud.firestore {
                         && request.resource.data.purchasedBy.hasAll([request.auth.uid]));
 
       match /modules/{moduleId} {
-        allow read: if true;
+        allow read: if isAuthenticated();
         allow create, update, delete: if isAdmin();
       }
 
       match /resources/{resourceId} {
-        allow read: if true;
+        allow read: if isAuthenticated();
         allow create, update, delete: if isAdmin();
       }
 
       match /assignments/{assignmentId} {
-        allow read: if true;
+        allow read: if isAuthenticated();
         allow create, update, delete: if isAdmin();
 
         // ── Assignment Submissions (students upload, admins grade) ──
@@ -162,7 +162,7 @@ service cloud.firestore {
 
 
     match /exams/{examId} {
-      allow read: if true;
+      allow read: if isAuthenticated();
       allow create, update, delete: if isAdmin();
     }
 
@@ -193,7 +193,7 @@ service cloud.firestore {
     // Mobile:     Reads all (client-side filtering by batch/audience)
     // ═════════════════════════════════════════════════════════════════════
     match /announcements/{announcementId} {
-      allow read: if true;
+      allow read: if isAuthenticated();
       allow create, update, delete: if isAdmin();
     }
 
@@ -217,7 +217,7 @@ service cloud.firestore {
 
 
     match /placements/{placementId} {
-      allow read: if true;
+      allow read: if isAuthenticated();
       allow create, update, delete: if isAdmin();
     }
 
@@ -330,7 +330,7 @@ service cloud.firestore {
     // 14. SUCCESS STORIES (alternate collection name)
     // ─────────────────────────────────────────────────────────────────────
     match /successStories/{storyId} {
-      allow read: if true;
+      allow read: if isAuthenticated();
       allow create, update, delete: if isAdmin();
     }
 
@@ -458,7 +458,7 @@ service cloud.firestore {
     // 21. USER BLOCK STATUS (Publicly readable for real-time unblock detection)
 
     match /user_block_status/{userId} {
-      allow read: if true;
+      allow read: if isAuthenticated();
       allow write: if isAdmin();
     }
 

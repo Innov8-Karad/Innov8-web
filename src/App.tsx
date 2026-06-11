@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -9,27 +9,37 @@ import ErrorBoundary from './components/ErrorBoundary';
 
 import Layout from './components/Layout';
 
-import Login from './pages/Login';
-import ResetPassword from './pages/ResetPassword';
-import Dashboard from './pages/Dashboard';
-import UsersPage from './pages/Users';
-import FeesPage from './pages/Fees';
-import ExamsPage from './pages/Exams';
-import CertificationsPage from './pages/Certifications';
-import AnnouncementsPage from './pages/Announcements';
-import CoursesPage from './pages/Courses';
-import PlacementsPage from './pages/Placements';
-import ProgressPage from './pages/Progress';
-import AttendancePage from './pages/Attendance';
-import StudentDetailPage from './pages/StudentDetailPage';
-import ExamResultsPage from './pages/ExamResults';
-import JobsPage from './pages/JobsPage';
-import PlacementTallyPage from './pages/PlacementTally';
-import DeviceApprovalsPage from './pages/DeviceApprovals';
-import NotificationsPage from './pages/NotificationsPage';
-import BatchesPage from './pages/Batches';
-import MockSchedulingPage from './pages/MockScheduling';
-import CoursePurchasesPage from './pages/CoursePurchases';
+// ── Lazy-loaded Pages (Code Splitting) ─────────────────────────────────
+const Login = React.lazy(() => import('./pages/Login'));
+const ResetPassword = React.lazy(() => import('./pages/ResetPassword'));
+const Dashboard = React.lazy(() => import('./pages/Dashboard'));
+const UsersPage = React.lazy(() => import('./pages/Users'));
+const FeesPage = React.lazy(() => import('./pages/Fees'));
+const ExamsPage = React.lazy(() => import('./pages/Exams'));
+const CertificationsPage = React.lazy(() => import('./pages/Certifications'));
+const AnnouncementsPage = React.lazy(() => import('./pages/Announcements'));
+const CoursesPage = React.lazy(() => import('./pages/Courses'));
+const PlacementsPage = React.lazy(() => import('./pages/Placements'));
+const ProgressPage = React.lazy(() => import('./pages/Progress'));
+const AttendancePage = React.lazy(() => import('./pages/Attendance'));
+const StudentDetailPage = React.lazy(() => import('./pages/StudentDetailPage'));
+const ExamResultsPage = React.lazy(() => import('./pages/ExamResults'));
+const JobsPage = React.lazy(() => import('./pages/JobsPage'));
+const PlacementTallyPage = React.lazy(() => import('./pages/PlacementTally'));
+const DeviceApprovalsPage = React.lazy(() => import('./pages/DeviceApprovals'));
+const NotificationsPage = React.lazy(() => import('./pages/NotificationsPage'));
+const BatchesPage = React.lazy(() => import('./pages/Batches'));
+const MockSchedulingPage = React.lazy(() => import('./pages/MockScheduling'));
+const CoursePurchasesPage = React.lazy(() => import('./pages/CoursePurchases'));
+
+// ── Loading Fallback ───────────────────────────────────────────────────
+function PageLoader() {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh' }}>
+      <div className="loading-spinner" style={{ width: 40, height: 40, border: '3px solid var(--border)', borderTop: '3px solid var(--primary)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+    </div>
+  );
+}
 
 interface PrivateRouteProps {
   children: React.ReactNode;
@@ -53,6 +63,7 @@ function App() {
           <ToastProvider>
             <UserProvider>
               <AuthProvider>
+                <Suspense fallback={<PageLoader />}>
                 <Routes>
                   <Route path="/login" element={<Login />} />
                   <Route path="/reset-password" element={<ResetPassword />} />
@@ -82,6 +93,7 @@ function App() {
                   <Route path="/profile/:id" element={<Navigate to="/progress" replace />} />
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
+                </Suspense>
               </AuthProvider>
             </UserProvider>
           </ToastProvider>

@@ -30,8 +30,19 @@ export const examService = {
   },
 
   async createExam(data: Omit<Exam, 'id' | 'createdAt'>): Promise<Exam> {
+    const answers = data.questions.map(q => ({
+      questionId: q.id || `q_${Math.random().toString(36).substr(2, 9)}`,
+      correctAnswerIndex: q.correctAnswerIndex
+    }));
+    
+    const questionsWithoutAnswers = data.questions.map((q, idx) => {
+      const { correctAnswerIndex, explanation, ...rest } = q;
+      return { ...rest, id: answers[idx].questionId };
+    });
+
     const docData: DocumentData = {
       ...data,
+      questions: questionsWithoutAnswers,
       duration: Number(data.duration),
       totalMarks: Number(data.totalMarks),
       scheduledDate: Timestamp.fromDate(new Date(data.scheduledDate as unknown as string)),
@@ -39,6 +50,13 @@ export const examService = {
     };
 
     const docRef = await addDoc(collection(db, COLLECTIONS.EXAMS), docData);
+    
+    // Save answers
+    const { setDoc } = await import('firebase/firestore');
+    await setDoc(doc(db, 'exam_answers', docRef.id), {
+      answers,
+      explanations: data.questions.map((q, idx) => ({ questionId: answers[idx].questionId, explanation: q.explanation || '' }))
+    });
     
     return {
       id: docRef.id,
@@ -53,6 +71,24 @@ export const examService = {
     const docRef = doc(db, COLLECTIONS.EXAMS, id);
     const updateData: Record<string, unknown> = { ...data };
     
+    if (data.questions) {
+      const answers = data.questions.map(q => ({
+        questionId: q.id || `q_${Math.random().toString(36).substr(2, 9)}`,
+        correctAnswerIndex: q.correctAnswerIndex
+      }));
+      
+      updateData.questions = data.questions.map((q, idx) => {
+        const { correctAnswerIndex, explanation, ...rest } = q;
+        return { ...rest, id: answers[idx].questionId };
+      });
+
+      const { setDoc } = await import('firebase/firestore');
+      await setDoc(doc(db, 'exam_answers', id), {
+        answers,
+        explanations: data.questions.map((q, idx) => ({ questionId: answers[idx].questionId, explanation: q.explanation || '' }))
+      });
+    }
+
     if (data.scheduledDate) {
       updateData.scheduledDate = Timestamp.fromDate(new Date(data.scheduledDate as unknown as string));
     }
@@ -66,5 +102,11 @@ export const examService = {
   async deleteExam(id: string): Promise<void> {
     const docRef = doc(db, COLLECTIONS.EXAMS, id);
     await deleteDoc(docRef);
+    try {
+      const { deleteDoc, doc } = await import('firebase/firestore');
+      await deleteDoc(doc(db, 'exam_answers', id));
+    } catch (e) {
+      // Ignored if exam_answers doesn't exist
+    }
   }
 };
