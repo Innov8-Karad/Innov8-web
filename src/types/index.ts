@@ -224,12 +224,7 @@ export interface CourseModule {
     resources: CourseResource[];
 }
 
-export interface ModuleType {
-    id: string;
-    title: string;
-    progress: number;
-    completed: boolean;
-}
+
 
 export interface NoteType {
     id: string;
@@ -422,9 +417,6 @@ export interface StudentProgress {
     attendance?: number;
     attendancePercentage?: number;   // Web alias
     overallScore?: number;
-    currentModule?: string;
-    completedModules?: string[];     // Legacy
-    completedModuleIds?: string[];   // Reactive implementation (mobile)
     completedVideoIds?: string[];    // Tracks completed video resource IDs
     completedNoteIds?: string[];     // Tracks completed note/link resource IDs
     completedAssignmentIds?: string[]; // Tracks completed assignment IDs

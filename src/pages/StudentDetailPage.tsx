@@ -8,7 +8,7 @@ import {
     CheckCircle2, 
     Circle,
     User,
-    Layers
+    Activity
 } from 'lucide-react';
 import { progressService } from '../services/progressService';
 import type { StudentProgress } from '../types';
@@ -81,7 +81,6 @@ export default function StudentDetailPage() {
     if (loading) return <LoadingState message="Loading student details..." />;
     if (!student) return null;
 
-    const completionPct = Math.min(100, Math.round(((student.completedModules ?? []).length / 10) * 100));
 
     return (
         <div className="std-container">
@@ -153,14 +152,14 @@ export default function StudentDetailPage() {
                     <div className="std-metric-bar std-bar-green" />
                 </div>
 
-                {/* Modules Done */}
+                {/* Goal Progress */}
                 <div className="std-metric-card">
                     <div className="std-metric-body">
-                        <span className="std-metric-label">Modules Done</span>
-                        <span className="std-metric-value">{(student.completedModules ?? []).length}</span>
+                        <span className="std-metric-label">Goal Progress</span>
+                        <span className="std-metric-value">{student.overallProgress || 0}%</span>
                     </div>
                     <div className="std-metric-icon std-color-amber">
-                        <Layers size={24} />
+                        <Activity size={24} />
                     </div>
                     <div className="std-metric-bar std-bar-amber" />
                 </div>
@@ -176,56 +175,108 @@ export default function StudentDetailPage() {
                     </h3>
 
                     <div className="std-status-row">
-                        <span className="std-status-label">Current Module</span>
-                        <span className="std-status-val">{student.currentModule || 'None'}</span>
+                        <span className="std-status-label">Primary Course</span>
+                        <span className="std-status-val">Full Stack Development</span>
                     </div>
 
-                    <div className="std-progress-container">
+                    <div className="std-progress-container" style={{ margin: '20px 0' }}>
                         <div className="std-progress-info">
-                            <span className="std-progress-label">Completion Rate</span>
-                            <span className="std-progress-pct">{completionPct}%</span>
+                            <span className="std-progress-label">Integrated Progress</span>
+                            <span className="std-progress-pct">{student.overallProgress || 0}%</span>
                         </div>
                         <div className="std-progress-track">
                             <div
                                 className="std-progress-fill"
-                                style={{ width: `${completionPct}%` }}
+                                style={{ width: `${student.overallProgress || 0}%` }}
                             />
+                        </div>
+                        <div className="flex justify-between items-center mt-2 text-[10px] text-muted uppercase tracking-wider font-bold">
+                            <span>Real-time Sync</span>
+                            <span>{student.completedItems || 0} / {student.totalItems || 0} ITEMS</span>
                         </div>
                     </div>
 
-                    <div className="std-card-footer">
-                        <span>Based on 10 core modules</span>
-                        <span>Updated: {formatUpdatedDate(student.updatedAt)}</span>
+                    <div className="space-y-3 mt-6 pt-4 border-t border-divider">
+                        <div className="flex justify-between items-center">
+                            <div className="flex items-center gap-2 text-sm text-secondary">
+                                <Activity size={14} className="text-primary" />
+                                <span>Videos Watched</span>
+                            </div>
+                            <span className="text-sm font-bold text-main">{(student.completedVideoIds || []).length}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                            <div className="flex items-center gap-2 text-sm text-secondary">
+                                <Activity size={14} className="text-success" />
+                                <span>Notes Read</span>
+                            </div>
+                            <span className="text-sm font-bold text-main">{(student.completedNoteIds || []).length}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                            <div className="flex items-center gap-2 text-sm text-secondary">
+                                <Activity size={14} className="text-amber-500" />
+                                <span>Assignments Done</span>
+                            </div>
+                            <span className="text-sm font-bold text-main">{(student.completedAssignmentIds || []).length}</span>
+                        </div>
+                    </div>
+
+                    <div className="std-card-footer mt-4 pt-4 border-t border-divider">
+                        <span>Synced from mobile</span>
+                        <span>Active: {formatUpdatedDate(student.lastAccessed || student.updatedAt)}</span>
                     </div>
                 </div>
 
-                {/* Completed Modules Card */}
+                {/* Activity Breakdown Card */}
                 <div className="std-detail-card">
                     <h3 className="std-card-title">
                         <CheckCircle2 size={20} style={{ color: '#10b981' }} />
-                        Completed Modules
+                        Learning Breakdown
                     </h3>
 
                     <div className="std-modules-list">
-                        {(student.completedModules ?? []).map((m, i) => (
-                            <div key={i} className="std-module-item">
-                                <div className="std-module-left">
-                                    <div className="std-module-check">
-                                        <CheckCircle2 size={14} />
-                                    </div>
-                                    <span className="std-module-name">{m}</span>
+                        <div className="std-module-item">
+                            <div className="std-module-left">
+                                <div className="std-module-check" style={{ background: 'var(--primary-light)', color: 'var(--primary)' }}>
+                                    <Activity size={14} />
                                 </div>
-                                <span className="std-module-index">Module {i + 1}</span>
+                                <span className="std-module-name">Video Completion</span>
                             </div>
-                        ))}
+                            <span className="std-module-index" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>
+                                {Math.round(((student.completedVideoIds || []).length / (student.totalItems || 1)) * 100)}%
+                            </span>
+                        </div>
 
-                        {(student.completedModules ?? []).length === 0 && (
+                        <div className="std-module-item">
+                            <div className="std-module-left">
+                                <div className="std-module-check" style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
+                                    <Activity size={14} />
+                                </div>
+                                <span className="std-module-name">Attendance Rate</span>
+                            </div>
+                            <span className="std-module-index" style={{ color: '#10b981', fontWeight: 'bold' }}>
+                                {student.attendancePercentage}%
+                            </span>
+                        </div>
+
+                        <div className="std-module-item">
+                            <div className="std-module-left">
+                                <div className="std-module-check" style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#F59E0B' }}>
+                                    <Activity size={14} />
+                                </div>
+                                <span className="std-module-name">Assignment Score</span>
+                            </div>
+                            <span className="std-module-index" style={{ color: '#F59E0B', fontWeight: 'bold' }}>
+                                {student.overallScore} Pts
+                            </span>
+                        </div>
+
+                        {(student.totalItems || 0) === 0 && (
                             <div className="std-empty-state">
                                 <div className="std-empty-icon">
                                     <Circle size={28} />
                                 </div>
-                                <p className="std-empty-title">No modules completed yet</p>
-                                <p className="std-empty-sub">Modules will appear here once marked as complete.</p>
+                                <p className="std-empty-title">No activity tracked yet</p>
+                                <p className="std-empty-sub">Progress will sync automatically from the mobile app.</p>
                             </div>
                         )}
                     </div>

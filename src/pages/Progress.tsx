@@ -7,7 +7,10 @@ import {
     Users, 
     CheckCircle2, 
     ExternalLink,
-    TrendingUp
+    TrendingUp,
+    Clock,
+    PlayCircle,
+    Activity
 } from 'lucide-react';
 import { 
     BarChart, 
@@ -33,6 +36,22 @@ import CustomSelect from '../components/CustomSelect';
 import { useToast } from '../hooks/useToast';
 import { useNavigate } from 'react-router-dom';
 
+/** Relative time formatter (e.g. "2h ago", "3d ago") */
+function timeAgo(date: Date | null | undefined): string {
+    if (!date) return '—';
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 30) return `${diffDays}d ago`;
+    const diffMonths = Math.floor(diffDays / 30);
+    return `${diffMonths}mo ago`;
+}
+
 export default function ProgressPage() {
     const navigate = useNavigate();
     const { showToast } = useToast();
@@ -49,8 +68,6 @@ export default function ProgressPage() {
     const [editForm, setEditForm] = useState({
         attendancePercentage: 0,
         overallScore: 0,
-        currentModule: '',
-        completedModules: [] as string[]
     });
 
     const fetchData = useCallback(async () => {
@@ -61,8 +78,6 @@ export default function ProgressPage() {
                 progressService.getBatchProgress()
             ]);
             
-            // For Phase 1, we also fetch all attendance records to calculate real-time percentage
-            // This is slightly inefficient but matches the Phase 1 requirement for real-time %
             const allAttendance = await attendanceService.fetchAll();
             setAttendanceRecords(allAttendance);
             
@@ -86,8 +101,6 @@ export default function ProgressPage() {
         setEditForm({
             attendancePercentage: student.attendancePercentage ?? 0,
             overallScore: student.overallScore ?? 0,
-            currentModule: student.currentModule ?? '',
-            completedModules: student.completedModules ?? []
         });
         setShowEditModal(true);
     };
@@ -126,7 +139,6 @@ export default function ProgressPage() {
 
     const filteredData = useMemo(() => {
         return progressData.map(p => {
-            // Calculate real-time attendance for each student
             const studentAttendance = attendanceRecords.filter(r => r.studentId === p.studentId);
             const present = studentAttendance.filter(r => r.status === 'present').length;
             const late = studentAttendance.filter(r => r.status === 'late').length;
@@ -135,7 +147,7 @@ export default function ProgressPage() {
             const totalClasses = present + late + absent;
             const realTimePercentage = totalClasses > 0 
                 ? Math.round(((present + late) / totalClasses) * 100) 
-                : p.attendancePercentage; // Fallback to saved percentage
+                : p.attendancePercentage;
                 
             return { ...p, attendancePercentage: realTimePercentage };
         }).filter(p => {
@@ -143,8 +155,7 @@ export default function ProgressPage() {
             const matchesSearch = 
                 (p.studentName || '').toLowerCase().includes(searchLower) ||
                 (p.email && p.email.toLowerCase().includes(searchLower)) ||
-                (p.batch || '').toLowerCase().includes(searchLower) ||
-                (p.currentModule || '').toLowerCase().includes(searchLower);
+                (p.batch || '').toLowerCase().includes(searchLower);
 
             const matchesBatch = selectedBatch === 'All' || p.batch === selectedBatch;
             return matchesSearch && matchesBatch;
@@ -156,6 +167,25 @@ export default function ProgressPage() {
         return ['All', ...unique];
     }, [progressData]);
 
+    // Summary stats derived from filtered data
+    const summaryStats = useMemo(() => {
+        const total = filteredData.length;
+        const avgCompletion = total > 0 
+            ? Math.round(filteredData.reduce((sum, s) => sum + (s.overallProgress || 0), 0) / total) 
+            : 0;
+        const avgAttendance = total > 0 
+            ? Math.round(filteredData.reduce((sum, s) => sum + (s.attendancePercentage || 0), 0) / total) 
+            : 0;
+        const now = new Date();
+        const activeToday = filteredData.filter(s => {
+            const lastActive = s.lastAccessed || s.updatedAt;
+            if (!lastActive) return false;
+            const d = lastActive instanceof Date ? lastActive : new Date();
+            return (now.getTime() - d.getTime()) < 86400000; // 24h
+        }).length;
+        return { total, avgCompletion, avgAttendance, activeToday };
+    }, [filteredData]);
+
     if (loading && progressData.length === 0) return <LoadingState message={UI_STRINGS.PROGRESS.LOADING} />;
 
     const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
@@ -166,6 +196,39 @@ export default function ProgressPage() {
                 title={UI_STRINGS.PROGRESS.TITLE}
                 subtitle={UI_STRINGS.PROGRESS.SUBTITLE}
             />
+
+            {/* Summary Stat Cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                {[
+                    { label: 'Total Students', value: summaryStats.total, icon: <Users size={20} />, color: 'var(--primary)', bg: 'rgba(99, 102, 241, 0.08)' },
+                    { label: 'Avg Completion', value: `${summaryStats.avgCompletion}%`, icon: <CheckCircle2 size={20} />, color: '#10B981', bg: 'rgba(16, 185, 129, 0.08)' },
+                    { label: 'Avg Attendance', value: `${summaryStats.avgAttendance}%`, icon: <Activity size={20} />, color: '#F59E0B', bg: 'rgba(245, 158, 11, 0.08)' },
+                    { label: 'Active Today', value: summaryStats.activeToday, icon: <Clock size={20} />, color: '#6366F1', bg: 'rgba(99, 102, 241, 0.08)' },
+                ].map((stat, i) => (
+                    <div key={i} className="card" style={{
+                        background: 'var(--bg-card)',
+                        border: '1px solid var(--border-subtle)',
+                        borderRadius: '16px',
+                        padding: '20px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '16px',
+                    }}>
+                        <div style={{
+                            width: 44, height: 44, borderRadius: 12,
+                            background: stat.bg,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            color: stat.color, flexShrink: 0
+                        }}>
+                            {stat.icon}
+                        </div>
+                        <div>
+                            <div className="text-xs text-muted font-medium" style={{ marginBottom: 2 }}>{stat.label}</div>
+                            <div className="text-xl font-bold text-main">{stat.value}</div>
+                        </div>
+                    </div>
+                ))}
+            </div>
 
             {/* Analytics Dashboard */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
@@ -349,10 +412,10 @@ export default function ProgressPage() {
                             <tr>
                                 <th className="px-6 py-4" style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>Student</th>
                                 <th className="px-6 py-4" style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>Batch</th>
-                                <th className="px-6 py-4" style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>Course Completion (%)</th>
+                                <th className="px-6 py-4" style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>Integrated Progress</th>
                                 <th className="px-6 py-4" style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>Score</th>
-                                <th className="px-6 py-4" style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>Current Module</th>
-                                <th className="px-6 py-4" style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>Progress</th>
+                                <th className="px-6 py-4" style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>Items Done</th>
+                                <th className="px-6 py-4" style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>Last Active</th>
                                 <th className="px-6 py-4 text-right" style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>Actions</th>
                             </tr>
                         </thead>
@@ -388,10 +451,18 @@ export default function ProgressPage() {
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 font-semibold">{student.overallScore}</td>
-                                    <td className="px-6 py-4 text-sm">{student.currentModule}</td>
                                     <td className="px-6 py-4 text-sm">
-                                        <span className="flex items-center gap-1 text-success font-medium">
-                                            <CheckCircle2 size={14} /> {(student.completedModules ?? []).length} Modules
+                                        <div className="flex items-center gap-1">
+                                            <PlayCircle size={14} className="text-primary" />
+                                            <span>
+                                                {student.completedItems ?? 0}
+                                                {student.totalItems ? ` / ${student.totalItems}` : ''}
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4 text-sm">
+                                        <span className="flex items-center gap-1 text-muted">
+                                            <Clock size={14} /> {timeAgo(student.lastAccessed instanceof Date ? student.lastAccessed : (student.updatedAt instanceof Date ? student.updatedAt : null))}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 text-right">
@@ -462,22 +533,7 @@ export default function ProgressPage() {
                         </FormField>
                     </FormRow>
                     
-                    <FormField label="Current Module">
-                        <input 
-                            type="text" 
-                            value={editForm.currentModule} 
-                            onChange={(e) => setEditForm({...editForm, currentModule: e.target.value})}
-                            required
-                        />
-                    </FormField>
 
-                    <FormField label="Completed Modules (Comma separated)">
-                        <textarea 
-                            rows={3} 
-                            value={editForm.completedModules.join(', ')} 
-                            onChange={(e) => setEditForm({...editForm, completedModules: e.target.value.split(',').map(s => s.trim()).filter(s => s)})}
-                        />
-                    </FormField>
 
                     <FormActions>
                         <button type="button" className="btn btn-secondary" onClick={() => setShowEditModal(false)}>Cancel</button>
@@ -489,4 +545,4 @@ export default function ProgressPage() {
             </Modal>
         </div>
     );
-}
+}
