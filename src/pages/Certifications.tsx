@@ -288,13 +288,13 @@ export default function CertificationsPage() {
     const list: EligiblePair[] = [];
     
     users.forEach(user => {
-      // 1. MUST NOT BE IN BATCH (Regular batch students are excluded)
-      const hasBatch = user.batchId || (user.batch && user.batch !== 'Unassigned');
-      if (hasBatch) return;
-      if (user.role !== 'student') return;
-
       // 2. Filter purchases for this student
       const userPurchases = purchases.filter(p => p.userId === user.id);
+
+      // 1. MUST NOT BE IN BATCH (Regular batch students are excluded unless they bought external courses)
+      const hasBatch = user.batchId || (user.batch && user.batch !== 'Unassigned');
+      if (hasBatch && userPurchases.length === 0) return;
+      if (user.role !== 'student') return;
       
       userPurchases.forEach(purchase => {
         const course = courses.find(c => c.id === purchase.courseId);
