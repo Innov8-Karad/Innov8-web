@@ -8,8 +8,6 @@ import {
     setDoc,
     getDoc,
     writeBatch,
-    arrayUnion,
-    arrayRemove,
     deleteDoc,
     Timestamp,
 } from 'firebase/firestore';
@@ -27,12 +25,13 @@ export interface PurchaseRequest {
     userPhone?: string;
     screenshotUrl?: string;
     amount: number;
-    purchasedAt: Timestamp;
-    status: 'pending' | 'approved' | 'rejected';
     paymentMethod: string;
     transactionId?: string;
+    status: 'pending' | 'approved' | 'rejected';
     rejectionReason?: string;
-    updatedAt?: Timestamp;
+    purchasedAt?: Date | { seconds: number; nanoseconds: number } | Timestamp;
+    createdAt: Date | { seconds: number; nanoseconds: number };
+    updatedAt?: Date | { seconds: number; nanoseconds: number };
 }
 
 export interface PaymentSettings {
@@ -42,36 +41,38 @@ export interface PaymentSettings {
 }
 
 /**
- * Subscribe to all course purchase requests in real-time.
+ * Fetch all purchase requests, ordered by creation time descending.
  */
 export function subscribeToPurchaseRequests(
     callback: (requests: PurchaseRequest[]) => void
 ): Unsubscribe {
     const q = query(
         collection(db, COLLECTIONS.COURSE_PURCHASES),
-        orderBy('purchasedAt', 'desc')
+        orderBy('createdAt', 'desc')
     );
 
     return onSnapshot(q, (snapshot) => {
-        const requests = snapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-        })) as PurchaseRequest[];
+        const requests: PurchaseRequest[] = [];
+        snapshot.forEach((docSnap) => {
+            const data = docSnap.data();
+            requests.push({
+                id: docSnap.id,
+                ...data,
+                purchasedAt: data.purchasedAt instanceof Timestamp ? data.purchasedAt.toDate() : data.purchasedAt,
+                createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : data.createdAt,
+                updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toDate() : data.updatedAt,
+            } as PurchaseRequest);
+        });
         callback(requests);
-    }, (error) => {
-        console.error("Error subscribing to purchase requests:", error);
-        callback([]);
     });
 }
 
 /**
  * Approve a course purchase request.
- * Sets the request status to 'approved' and adds the userId to the course's purchasedBy array.
+ * Sets status to 'approved' and grants the course to the user.
  */
 export async function approvePurchaseRequest(
-    requestId: string,
-    courseId: string,
-    userId: string
+    requestId: string
 ): Promise<void> {
     const batch = writeBatch(db);
 
@@ -91,8 +92,6 @@ export async function approvePurchaseRequest(
  */
 export async function rejectPurchaseRequest(
     requestId: string,
-    courseId: string,
-    userId: string,
     reason?: string
 ): Promise<void> {
     const batch = writeBatch(db);

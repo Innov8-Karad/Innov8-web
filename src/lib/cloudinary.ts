@@ -83,7 +83,7 @@ export function uploadToCloudinary(
     const generateSignature = httpsCallable(functions, 'generateCloudinarySignature');
     
     generateSignature({ folder, timestamp, public_id: options?.publicId }).then((signatureResponse) => {
-      const signatureData: any = signatureResponse.data;
+      const signatureData = signatureResponse.data as { signature: string; apiKey: string };
 
       const formData = new FormData();
       formData.append('file', file);

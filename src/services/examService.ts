@@ -36,8 +36,10 @@ export const examService = {
     }));
     
     const questionsWithoutAnswers = data.questions.map((q, idx) => {
-      const { correctAnswerIndex, explanation, ...rest } = q;
-      return { ...rest, id: answers[idx].questionId };
+      const qCopy = { ...q };
+      delete qCopy.correctAnswerIndex;
+      delete qCopy.explanation;
+      return { ...qCopy, id: answers[idx].questionId };
     });
 
     const docData: DocumentData = {
@@ -78,8 +80,10 @@ export const examService = {
       }));
       
       updateData.questions = data.questions.map((q, idx) => {
-        const { correctAnswerIndex, explanation, ...rest } = q;
-        return { ...rest, id: answers[idx].questionId };
+        const qCopy = { ...q };
+        delete qCopy.correctAnswerIndex;
+        delete qCopy.explanation;
+        return { ...qCopy, id: answers[idx].questionId };
       });
 
       const { setDoc } = await import('firebase/firestore');
@@ -105,7 +109,7 @@ export const examService = {
     try {
       const { deleteDoc, doc } = await import('firebase/firestore');
       await deleteDoc(doc(db, 'exam_answers', id));
-    } catch (e) {
+    } catch {
       // Ignored if exam_answers doesn't exist
     }
   }

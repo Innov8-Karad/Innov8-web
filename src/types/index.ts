@@ -141,6 +141,7 @@ export interface Course {
     price: number;
     isFree: boolean;
     purchasedBy?: string[];           // Array of user IDs who purchased this course
+    purchaseCount?: number;           // Track total number of purchases (replaces purchasedBy list at scale)
     duration: string;
     instructor: string;
     thumbnail?: string;

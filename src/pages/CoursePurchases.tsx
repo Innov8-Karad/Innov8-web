@@ -154,7 +154,7 @@ export default function CoursePurchasesPage() {
     // Approve handler
     const handleApprove = async (request: PurchaseRequest) => {
         try {
-            await approvePurchaseRequest(request.id, request.courseId, request.userId);
+            await approvePurchaseRequest(request.id);
             showToast(`Purchase approved for ${request.userName}`, 'success');
         } catch (err) {
             console.error('Approval error:', err);
@@ -177,8 +177,6 @@ export default function CoursePurchasesPage() {
         try {
             await rejectPurchaseRequest(
                 rejectingRequestId,
-                rejectingRequestCourseId,
-                rejectingRequestUserId,
                 rejectionReason
             );
             showToast('Purchase request rejected.', 'success');
@@ -214,11 +212,14 @@ export default function CoursePurchasesPage() {
     };
 
     // Format timestamp
-    const formatDate = (ts: Timestamp | Date | string | number | null | undefined) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const formatDate = (ts: any) => {
         if (!ts) return 'N/A';
         let date: Date;
         if (ts instanceof Timestamp) {
             date = ts.toDate();
+        } else if (ts && typeof ts === 'object' && 'seconds' in ts) {
+            date = new Date(ts.seconds * 1000);
         } else if (ts instanceof Date) {
             date = ts;
         } else {
