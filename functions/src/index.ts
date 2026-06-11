@@ -13,3 +13,5 @@ export { onSendNotification } from "./triggers/onSendNotification";
 export { deleteCloudinaryAsset } from "./utils/deleteCloudinaryAsset";
 export { sendSignupOTP } from "./triggers/sendSignupOTP";
 export { verifySignupOTP } from "./triggers/verifySignupOTP";
+export { submitExam } from "./callable/submitExam";
+export { generateCloudinarySignature } from "./callable/generateCloudinarySignature";

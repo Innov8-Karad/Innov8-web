@@ -7,8 +7,9 @@
 // ── Configuration ─────────────────────────────────────────────────────────────
 
 const CLOUD_NAME = (import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || '').trim();
-const DEFAULT_PRESET = (import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || '').trim();
 const UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}`;
+import { httpsCallable } from 'firebase/functions';
+import { functions } from './firebase';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -60,7 +61,7 @@ export interface UploadOptions {
  */
 export function uploadToCloudinary(
   file: File,
-  preset: string = DEFAULT_PRESET,
+  preset?: string,
   folder: string = 'innov8/uploads',
   options?: { publicId?: string; onProgress?: (pct: number) => void }
 ): Promise<CloudinaryUploadResult> {
@@ -78,17 +79,25 @@ export function uploadToCloudinary(
 
     const url = `${UPLOAD_URL}/${resourceType}/upload`;
 
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('upload_preset', preset);
-    formData.append('folder', folder);
+    const timestamp = Math.round((new Date).getTime() / 1000);
+    const generateSignature = httpsCallable(functions, 'generateCloudinarySignature');
+    
+    generateSignature({ folder, timestamp, public_id: options?.publicId }).then((signatureResponse) => {
+      const signatureData = signatureResponse.data as { signature: string; apiKey: string };
 
-    if (options?.publicId) {
-      formData.append('public_id', options.publicId);
-    }
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('api_key', signatureData.apiKey);
+      formData.append('timestamp', timestamp.toString());
+      formData.append('signature', signatureData.signature);
+      formData.append('folder', folder);
 
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', url);
+      if (options?.publicId) {
+        formData.append('public_id', options.publicId);
+      }
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', url);
 
     // Track upload progress
     if (options?.onProgress) {
@@ -133,11 +142,15 @@ export function uploadToCloudinary(
       reject(new Error('Network error during Cloudinary upload'));
     });
 
-    xhr.addEventListener('abort', () => {
-      reject(new Error('Upload was cancelled'));
-    });
+      xhr.addEventListener('abort', () => {
+        reject(new Error('Upload was cancelled'));
+      });
 
-    xhr.send(formData);
+      xhr.send(formData);
+    }).catch((err) => {
+      console.error('Error generating Cloudinary signature:', err);
+      reject(new Error('Failed to generate secure upload signature.'));
+    });
   });
 }
 
@@ -166,10 +179,10 @@ export async function uploadWithFallback(
   file: File,
   options: UploadOptions = {}
 ): Promise<CloudinaryUploadResult> {
-  const { preset = DEFAULT_PRESET, folder = 'innov8/uploads', publicId, onProgress } = options;
+  const { preset = 'Innov8_unsigned', folder = 'innov8/uploads', publicId, onProgress } = options;
 
-  if (!CLOUD_NAME || !preset) {
-    throw new Error('Cloudinary is not properly configured. Check VITE_CLOUDINARY_CLOUD_NAME and VITE_CLOUDINARY_UPLOAD_PRESET in .env');
+  if (!CLOUD_NAME) {
+    throw new Error('Cloudinary is not properly configured. Check VITE_CLOUDINARY_CLOUD_NAME in .env');
   }
 
   return await uploadToCloudinary(file, preset, folder, { publicId, onProgress });

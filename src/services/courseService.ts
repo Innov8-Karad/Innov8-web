@@ -9,8 +9,8 @@ import {
   query,
   orderBy,
   Timestamp,
-  arrayUnion,
-  arrayRemove,
+  setDoc,
+  increment,
   type DocumentData 
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -211,18 +211,29 @@ export const courseService = {
   // ── Admin Course Access Management ──
 
   async grantCourseAccess(courseId: string, userId: string): Promise<void> {
+    const purchaseId = `${userId}_${courseId}`;
+    const purchaseRef = doc(db, COLLECTIONS.COURSE_PURCHASES, purchaseId);
+    await setDoc(purchaseRef, {
+        userId,
+        courseId,
+        amount: 0,
+        purchasedAt: Timestamp.now(),
+        status: 'approved',
+        paymentMethod: 'manual_grant',
+        transactionId: `TXN_${Date.now()}_ADMIN`,
+        updatedAt: Timestamp.now()
+    }, { merge: true });
+
     const courseRef = doc(db, COLLECTIONS.COURSES, courseId);
-    await updateDoc(courseRef, {
-      purchasedBy: arrayUnion(userId),
-      updatedAt: Timestamp.now()
-    });
+    await updateDoc(courseRef, { purchaseCount: increment(1) });
   },
 
   async revokeCourseAccess(courseId: string, userId: string): Promise<void> {
+    const purchaseId = `${userId}_${courseId}`;
+    const purchaseRef = doc(db, COLLECTIONS.COURSE_PURCHASES, purchaseId);
+    await deleteDoc(purchaseRef);
+
     const courseRef = doc(db, COLLECTIONS.COURSES, courseId);
-    await updateDoc(courseRef, {
-      purchasedBy: arrayRemove(userId),
-      updatedAt: Timestamp.now()
-    });
+    await updateDoc(courseRef, { purchaseCount: increment(-1) });
   }
 };
