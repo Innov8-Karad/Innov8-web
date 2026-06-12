@@ -30,6 +30,8 @@ interface EligiblePair {
   certificate: Certificate | undefined;
   isEligibleForCert: boolean;
 }
+import directorSignature from '../assets/director-signature.jpg';
+import certificateTemplate from '../assets/certificate-template.png';
 import PageHeader from '../components/PageHeader';
 import LoadingState from '../components/LoadingState';
 import ErrorAlert from '../components/ErrorAlert';
@@ -922,47 +924,50 @@ export default function CertificationsPage() {
 
             <div className="cert-preview-body">
               <div className="certificate-print-area">
-                <div className="certificate-inner-border">
-                  <div className="cert-logo-container">
-                    <span style={{ fontSize: '24px', fontWeight: '900', color: '#ffffff', letterSpacing: '2px' }}>INNOV8</span>
+                {/* Background template image */}
+                <img src={certificateTemplate} className="cert-bg-template-img" alt="Certificate Background" />
+
+                {/* Overlays */}
+                <div className="cert-overlay-container">
+                  {/* Student Name */}
+                  <div className="cert-overlay-name-box">
+                    <span className="cert-overlay-name-text">
+                      {selectedCert.studentFullName || selectedCert.userName}
+                    </span>
+                    <div className="cert-overlay-name-line"></div>
                   </div>
 
-                  <div>
-                    <h2 className="cert-title-primary">Certificate of Excellence</h2>
-                    <p className="cert-subtitle-primary">This credential honors the accomplishment of</p>
+                  {/* Course Duration */}
+                  <div className="cert-overlay-duration-box">
+                    <span className="cert-overlay-duration-text">
+                      You are currently undergoing a {courses.find(c => c.id === selectedCert.courseId)?.duration || '6 months'} training course
+                    </span>
                   </div>
 
-                  <div>
-                    <div className="cert-recipient-name">{selectedCert.studentFullName || selectedCert.userName}</div>
-                    <p className="cert-statement">for successfully meeting all academic requirements and passing the examination for</p>
-                    <p className="cert-course-statement">
-                      <span className="cert-course-name">{selectedCert.courseName || selectedCert.courseTitle}</span>
-                    </p>
+                  {/* Course Title */}
+                  <div className="cert-overlay-course-box">
+                    <span className="cert-overlay-course-text">
+                      {selectedCert.courseName || selectedCert.courseTitle}
+                    </span>
                   </div>
 
-                  <div className="cert-badge-seal">
-                    <div className="cert-seal-star">★</div>
+                  {/* Issued Date */}
+                  <div className="cert-overlay-date-box">
+                    <span className="cert-overlay-date-text">
+                      {(() => {
+                        if (!selectedCert.issuedAt) return 'N/A';
+                        const d = new Date(selectedCert.issuedAt);
+                        const day = d.getDate();
+                        const suffix = [1,21,31].includes(day) ? 'st' : [2,22].includes(day) ? 'nd' : [3,23].includes(day) ? 'rd' : 'th';
+                        const month = d.toLocaleString('en-US', { month: 'long' });
+                        return `${day}${suffix} -${month}-${d.getFullYear()}`;
+                      })()}
+                    </span>
                   </div>
 
-                  <div className="cert-footer-row">
-                    <div className="cert-footer-item">
-                      <div className="cert-signature-line"></div>
-                      <span className="cert-footer-label">DIRECTOR SIGNATURE</span>
-                    </div>
-
-                    <div className="cert-footer-item">
-                      <span className="cert-footer-label">CERTIFICATE NO</span>
-                      <span className="cert-footer-value" style={{ fontFamily: 'monospace' }}>
-                        {selectedCert.certificateNumber}
-                      </span>
-                    </div>
-
-                    <div className="cert-footer-item">
-                      <span className="cert-footer-label">DATE OF ISSUANCE</span>
-                      <span className="cert-footer-value">
-                        {selectedCert.issuedAt ? new Date(selectedCert.issuedAt).toLocaleDateString() : 'N/A'}
-                      </span>
-                    </div>
+                  {/* Signature */}
+                  <div className="cert-overlay-sig-box">
+                    <img src={directorSignature} className="cert-overlay-sig-img" alt="Director Signature" />
                   </div>
                 </div>
               </div>
