@@ -112,6 +112,8 @@ export interface Exam {
     duration: number;
     totalMarks: number;
     scheduledDate: Date;
+    startTime?: Date | { seconds: number; nanoseconds: number } | string;
+    endTime?: Date | { seconds: number; nanoseconds: number } | string;
     category: string;
     difficulty: 'easy' | 'medium' | 'hard';
     questions: Question[];
