@@ -23,6 +23,8 @@ import {
     Eye,
     Download,
     FileText,
+    ChevronLeft,
+    ChevronRight,
 } from 'lucide-react';
 import { useToast } from '../hooks/useToast';
 import {
@@ -52,6 +54,13 @@ export default function CoursePurchasesPage() {
     // Navigation and filtering
     const [activeMainTab, setActiveMainTab] = useState<MainTab>('requests');
     const [filter, setFilter] = useState<FilterTab>('pending');
+    const [currentPage, setCurrentPage] = useState(1);
+    const pageSize = 10;
+
+    // Reset current page when filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [filter, activeMainTab]);
 
     // Requests state
     const [requests, setRequests] = useState<PurchaseRequest[]>([]);
@@ -145,6 +154,14 @@ export default function CoursePurchasesPage() {
     const filteredRequests = filter === 'all'
         ? requests
         : requests.filter((r) => r.status === filter);
+
+    // Pagination logic
+    const totalItems = filteredRequests.length;
+    const totalPages = Math.ceil(totalItems / pageSize);
+    const paginatedRequests = filteredRequests.slice(
+        (currentPage - 1) * pageSize,
+        currentPage * pageSize
+    );
 
     // Count states
     const pendingCount = requests.filter((r) => r.status === 'pending').length;
@@ -378,7 +395,7 @@ export default function CoursePurchasesPage() {
                                 <p style={{ color: 'var(--text-secondary)', margin: 0 }}>No purchase requests found for this status.</p>
                             </div>
                         ) : (
-                            filteredRequests.map((request) => {
+                            paginatedRequests.map((request) => {
                                 const statusBadgeClass =
                                     request.status === 'approved'
                                         ? 'badge-success'
@@ -660,6 +677,49 @@ export default function CoursePurchasesPage() {
                             })
                         )}
                     </div>
+
+                    {totalPages > 1 && (
+                        <div className="pagination-container" style={{ marginTop: '24px', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                            <div className="text-sm text-muted">
+                                Showing <span className="text-main">{(currentPage - 1) * pageSize + 1}</span> to <span className="text-main">{Math.min(currentPage * pageSize, totalItems)}</span> of <span className="text-main">{totalItems}</span> results
+                            </div>
+                            <div className="pagination-controls">
+                                <button 
+                                    className="pagination-btn"
+                                    disabled={currentPage === 1}
+                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                >
+                                    <ChevronLeft size={16} /> Prev
+                                </button>
+                                
+                                <div className="flex items-center gap-1 mx-2">
+                                    {Array.from({ length: totalPages }, (_, i) => i + 1)
+                                        .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+                                        .map((p, i, arr) => (
+                                            <React.Fragment key={p}>
+                                                {i > 0 && arr[i-1] !== p - 1 && <span className="text-muted">...</span>}
+                                                <button 
+                                                    className={`page-indicator ${currentPage === p ? 'active' : ''}`}
+                                                    onClick={() => setCurrentPage(p)}
+                                                    type="button"
+                                                >
+                                                    {p}
+                                                </button>
+                                            </React.Fragment>
+                                        ))
+                                    }
+                                </div>
+
+                                <button 
+                                    className="pagination-btn"
+                                    disabled={currentPage === totalPages}
+                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                >
+                                    Next <ChevronRight size={16} />
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </>
             )}
 
