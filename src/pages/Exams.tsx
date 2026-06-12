@@ -32,11 +32,13 @@ export default function ExamsPage() {
     const initialExamState = {
         title: '',
         description: '',
-        duration: '',
-        totalMarks: '',
+        duration: '60',
+        totalMarks: '100',
         category: '',
         difficulty: 'medium' as 'easy' | 'medium' | 'hard',
         scheduledDate: '',
+        startTime: '',
+        endTime: '',
         batchId: 'all',
         batchName: 'All Batches',
         questions: [] as Question[]
@@ -80,6 +82,26 @@ export default function ExamsPage() {
 
     const handleOpenEdit = (exam: Exam) => {
         setEditingExamId(exam.id);
+        
+        // Helper to get local ISO string for form values
+        const toLocalISO = (dateVal: Date | string | { seconds: number; nanoseconds: number } | { toDate?: () => Date } | null | undefined) => {
+            if (!dateVal) return '';
+            let d: Date;
+            if (typeof dateVal === 'object' && dateVal !== null) {
+                if ('toDate' in dateVal && typeof dateVal.toDate === 'function') {
+                    d = dateVal.toDate();
+                } else if ('seconds' in dateVal && typeof (dateVal as { seconds: number }).seconds === 'number') {
+                    d = new Date((dateVal as { seconds: number }).seconds * 1000);
+                } else {
+                    d = new Date(dateVal as string | number | Date);
+                }
+            } else {
+                d = new Date(dateVal as string | number | Date);
+            }
+            if (isNaN(d.getTime())) return '';
+            return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+        };
+
         setFormData({
             title: exam.title,
             description: exam.description,
@@ -87,7 +109,9 @@ export default function ExamsPage() {
             totalMarks: String(exam.totalMarks),
             category: exam.category,
             difficulty: exam.difficulty,
-            scheduledDate: exam.scheduledDate ? new Date(exam.scheduledDate).toISOString().slice(0, 16) : '',
+            scheduledDate: toLocalISO(exam.scheduledDate),
+            startTime: toLocalISO(exam.startTime),
+            endTime: toLocalISO(exam.endTime),
             batchId: exam.batchId || 'all',
             batchName: exam.batchName || 'All Batches',
             questions: exam.questions || []
@@ -132,11 +156,20 @@ export default function ExamsPage() {
 
         try {
             setLoading(true);
+            const examData = {
+                ...formData,
+                duration: Number(formData.duration),
+                totalMarks: Number(formData.totalMarks),
+                scheduledDate: new Date(formData.scheduledDate),
+                startTime: formData.startTime ? new Date(formData.startTime) : new Date(formData.scheduledDate),
+                endTime: formData.endTime ? new Date(formData.endTime) : new Date(new Date(formData.scheduledDate).getTime() + Number(formData.duration) * 60000)
+            };
+
             if (editingExamId) {
-                await examService.updateExam(editingExamId, formData as unknown as Partial<Exam>);
+                await examService.updateExam(editingExamId, (examData as unknown) as Partial<Exam>);
                 showToast("Exam updated successfully");
             } else {
-                const created = await examService.createExam(formData as unknown as Omit<Exam, 'id' | 'createdAt'>);
+                const created = await examService.createExam((examData as unknown) as Omit<Exam, 'id'>);
                 showToast("Exam published successfully");
                 setExams([created, ...exams]);
             }
@@ -320,17 +353,17 @@ export default function ExamsPage() {
                                     <input type="number" required value={formData.totalMarks} onChange={e => setFormData({ ...formData, totalMarks: e.target.value })} />
                                 </FormField>
                             </FormRow>
-                            <FormField label={UI_STRINGS.EXAMS.FORM_SCHEDULED_DATE}>
+                            <FormField label="Start Time (Session Opens)">
                                 <div className="att-date-time-grid">
                                     <div className="att-date-time-inputs">
                                         <div className="att-date-input-wrapper">
                                             <CustomDatePicker 
                                                 required 
-                                                value={formData.scheduledDate.split('T')[0] || ''} 
+                                                value={formData.startTime.split('T')[0] || formData.scheduledDate.split('T')[0] || ''} 
                                                 onChange={e => {
                                                     const date = e.target.value;
-                                                    const time = formData.scheduledDate.split('T')[1] || '09:00';
-                                                    setFormData({ ...formData, scheduledDate: `${date}T${time}` });
+                                                    const time = formData.startTime.split('T')[1] || formData.scheduledDate.split('T')[1] || '09:00';
+                                                    setFormData({ ...formData, startTime: `${date}T${time}`, scheduledDate: `${date}T${time}` });
                                                 }} 
                                             />
                                         </div>
@@ -338,11 +371,11 @@ export default function ExamsPage() {
                                             <input 
                                                 type="time" 
                                                 required 
-                                                value={formData.scheduledDate.split('T')[1] || ''} 
+                                                value={formData.startTime.split('T')[1] || formData.scheduledDate.split('T')[1] || ''} 
                                                 onChange={e => {
                                                     const time = e.target.value;
-                                                    const date = formData.scheduledDate.split('T')[0] || new Date().toISOString().split('T')[0];
-                                                    setFormData({ ...formData, scheduledDate: `${date}T${time}` });
+                                                    const date = formData.startTime.split('T')[0] || formData.scheduledDate.split('T')[0] || new Date().toISOString().split('T')[0];
+                                                    setFormData({ ...formData, startTime: `${date}T${time}`, scheduledDate: `${date}T${time}` });
                                                 }} 
                                             />
                                         </div>
@@ -350,22 +383,92 @@ export default function ExamsPage() {
                                     <div className="att-quick-options">
                                         <button 
                                             type="button" 
-                                            className={`btn-quick-date ${formData.scheduledDate.startsWith(new Date().toISOString().split('T')[0]) ? 'active' : ''}`}
+                                            className={`btn-quick-date ${(formData.startTime.split('T')[0] || formData.scheduledDate.split('T')[0]) === new Date().toISOString().split('T')[0] ? 'active' : ''}`}
                                             onClick={() => {
                                                 const date = new Date().toISOString().split('T')[0];
-                                                const time = formData.scheduledDate.split('T')[1] || '09:00';
-                                                setFormData({ ...formData, scheduledDate: `${date}T${time}` });
+                                                const time = formData.startTime.split('T')[1] || formData.scheduledDate.split('T')[1] || '09:00';
+                                                setFormData({ ...formData, startTime: `${date}T${time}`, scheduledDate: `${date}T${time}` });
                                             }}
                                         >
                                             Today
                                         </button>
                                         <button 
                                             type="button" 
-                                            className={`btn-quick-date ${formData.scheduledDate.startsWith(new Date(Date.now() + 86400000).toISOString().split('T')[0]) ? 'active' : ''}`}
+                                            className={`btn-quick-date ${(formData.startTime.split('T')[0] || formData.scheduledDate.split('T')[0]) === new Date(Date.now() + 86400000).toISOString().split('T')[0] ? 'active' : ''}`}
                                             onClick={() => {
                                                 const date = new Date(Date.now() + 86400000).toISOString().split('T')[0];
-                                                const time = formData.scheduledDate.split('T')[1] || '09:00';
-                                                setFormData({ ...formData, scheduledDate: `${date}T${time}` });
+                                                const time = formData.startTime.split('T')[1] || formData.scheduledDate.split('T')[1] || '09:00';
+                                                setFormData({ ...formData, startTime: `${date}T${time}`, scheduledDate: `${date}T${time}` });
+                                            }}
+                                        >
+                                            Tomorrow
+                                        </button>
+                                    </div>
+                                </div>
+                            </FormField>
+
+                            <FormField label="End Time (Auto-Submit)">
+                                <div className="att-date-time-grid">
+                                    <div className="att-date-time-inputs">
+                                        <div className="att-date-input-wrapper">
+                                            <CustomDatePicker 
+                                                required 
+                                                value={formData.endTime.split('T')[0] || ''} 
+                                                onChange={e => {
+                                                    const date = e.target.value;
+                                                    const time = formData.endTime.split('T')[1] || '10:00';
+                                                    setFormData({ ...formData, endTime: `${date}T${time}` });
+                                                }} 
+                                            />
+                                        </div>
+                                        <div className="att-time-input-wrapper">
+                                            <input 
+                                                type="time" 
+                                                required 
+                                                value={formData.endTime.split('T')[1] || ''} 
+                                                onChange={e => {
+                                                    const time = e.target.value;
+                                                    const date = formData.endTime.split('T')[0] || (formData.startTime.split('T')[0] || new Date().toISOString().split('T')[0]);
+                                                    setFormData({ ...formData, endTime: `${date}T${time}` });
+                                                }} 
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="att-quick-options">
+                                        <button 
+                                            type="button" 
+                                            className="btn-quick-date"
+                                            onClick={() => {
+                                                const start = formData.startTime || formData.scheduledDate;
+                                                if (start) {
+                                                    const startDate = new Date(start);
+                                                    const endDate = new Date(startDate.getTime() + Number(formData.duration) * 60000);
+                                                    // Helper to get local ISO string without timezone shift issues
+                                                    const localISO = new Date(endDate.getTime() - endDate.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+                                                    setFormData({ ...formData, endTime: localISO });
+                                                }
+                                            }}
+                                        >
+                                            Calculate from Duration
+                                        </button>
+                                        <button 
+                                            type="button" 
+                                            className={`btn-quick-date ${(formData.endTime.split('T')[0] || '') === new Date().toISOString().split('T')[0] ? 'active' : ''}`}
+                                            onClick={() => {
+                                                const date = new Date().toISOString().split('T')[0];
+                                                const time = formData.endTime.split('T')[1] || '10:00';
+                                                setFormData({ ...formData, endTime: `${date}T${time}` });
+                                            }}
+                                        >
+                                            Today
+                                        </button>
+                                        <button 
+                                            type="button" 
+                                            className={`btn-quick-date ${(formData.endTime.split('T')[0] || '') === new Date(Date.now() + 86400000).toISOString().split('T')[0] ? 'active' : ''}`}
+                                            onClick={() => {
+                                                const date = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+                                                const time = formData.endTime.split('T')[1] || '10:00';
+                                                setFormData({ ...formData, endTime: `${date}T${time}` });
                                             }}
                                         >
                                             Tomorrow
