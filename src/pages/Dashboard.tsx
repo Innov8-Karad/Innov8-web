@@ -178,7 +178,7 @@ Growth Trends
 
 <div style={{ flex: 1, minHeight: 300, position: 'relative' }}>
 {isMounted && (
-<ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={300} debounce={100}>
+<ResponsiveContainer width="100%" height={300}>
 <AreaChart data={trends}>
 <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
 <XAxis dataKey="month" stroke="var(--chart-axis)" fontSize={12} tickLine={false} axisLine={false} />
@@ -206,7 +206,7 @@ Revenue Trend
 
 <div style={{ flex: 1, minHeight: 300, position: 'relative' }}>
 {isMounted && (
-<ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={300} debounce={100}>
+<ResponsiveContainer width="100%" height={300}>
 <BarChart data={trends}>
 <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
 <XAxis dataKey="month" stroke="var(--chart-axis)" fontSize={12} tickLine={false} axisLine={false} />

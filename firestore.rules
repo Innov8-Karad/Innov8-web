@@ -4,7 +4,7 @@ rules_version = '2';
 // Innov8 Unified Firestore Security Rules
 // Firebase Project: innov8-karad
 // Covers: Innov8-web (Admin Portal) + Innov8-mobile (Student App)
-// Last Updated: 2026-04-04
+// Last Updated: 2026-05-24 (Synced Batch & Course Submissions Rules)
 // ═══════════════════════════════════════════════════════════════════════════
 
 service cloud.firestore {
@@ -164,6 +164,10 @@ service cloud.firestore {
     match /exams/{examId} {
       allow read: if isAuthenticated();
       allow create, update, delete: if isAdmin();
+    }
+
+    match /exam_answers/{examId} {
+      allow read, write: if isAdmin();
     }
 
 
@@ -439,11 +443,28 @@ service cloud.firestore {
     // 19. COURSE PURCHASES
     // ═════════════════════════════════════════════════════════════════════
     match /course_purchases/{purchaseId} {
-      allow read: if isAdmin() 
-                  || (isAuthenticated() && resource.data.userId == request.auth.uid);
-      allow create: if isAuthenticated() 
+      // Allow reading if Admin OR if document is the user's own purchase record.
+      // `resource == null` guard handles the case where the document doesn't exist yet
+      // (onSnapshot fires immediately with null before any data is written).
+      allow read: if isAdmin()
+                  || (isAuthenticated()
+                      && (resource == null
+                          || resource.data.userId == request.auth.uid
+                          || purchaseId.matches("^" + request.auth.uid + "(_.*)?$")));
+      allow create: if isAuthenticated()
                     && request.resource.data.userId == request.auth.uid;
       allow update, delete: if isAdmin();
+    }
+
+    // ═════════════════════════════════════════════════════════════════════
+    // 20. PAYMENT SETTINGS
+    // ─────────────────────────────────────────────────────────────────────
+    // Web Admin:  Full CRUD (configure UPI ID, QR code URL, instructions)
+    // Mobile:     Read-only (display payment instructions to students)
+    // ═════════════════════════════════════════════════════════════════════
+    match /payment_settings/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
     // ═════════════════════════════════════════════════════════════════════
@@ -493,7 +514,7 @@ service cloud.firestore {
     }
 
     // ═════════════════════════════════════════════════════════════════════
-    // 23. CERTIFICATION SYSTEM
+    // 18. CERTIFICATION SYSTEM
     // ═════════════════════════════════════════════════════════════════════
     match /certification_exams/{examId} {
       allow read: if isAuthenticated();
@@ -513,12 +534,11 @@ service cloud.firestore {
     }
 
     // ═════════════════════════════════════════════════════════════════════
-    // 24. OTP VERIFICATIONS
+    // 19. OTP VERIFICATIONS
     // ═════════════════════════════════════════════════════════════════════
     // Only accessible via Cloud Functions (Admin SDK)
     match /otp_verifications/{docId} {
       allow read, write: if false;
     }
-
   }
 }
