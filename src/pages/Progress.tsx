@@ -1,24 +1,24 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { 
-    Download, 
-    Edit2, 
-    Search, 
-    BarChart3, 
-    Users, 
-    CheckCircle2, 
+import {
+    Download,
+    Edit2,
+    Search,
+    BarChart3,
+    Users,
+    CheckCircle2,
     ExternalLink,
     TrendingUp,
     Clock,
     PlayCircle,
     Activity
 } from 'lucide-react';
-import { 
-    BarChart, 
-    Bar, 
-    XAxis, 
-    YAxis, 
-    CartesianGrid, 
-    Tooltip, 
+import {
+    BarChart,
+    Bar,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
     ResponsiveContainer,
     Legend,
     Cell
@@ -62,7 +62,7 @@ export default function ProgressPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedBatch, setSelectedBatch] = useState('All');
     const [isMounted, setIsMounted] = useState(false);
-    
+
     const [showEditModal, setShowEditModal] = useState(false);
     const [editingProgress, setEditingProgress] = useState<StudentProgress | null>(null);
     const [editForm, setEditForm] = useState({
@@ -77,10 +77,10 @@ export default function ProgressPage() {
                 progressService.fetchProgress(),
                 progressService.getBatchProgress()
             ]);
-            
+
             const allAttendance = await attendanceService.fetchAll();
             setAttendanceRecords(allAttendance);
-            
+
             setProgressData(data);
             setBatchStats(stats);
         } catch (err) {
@@ -143,16 +143,16 @@ export default function ProgressPage() {
             const present = studentAttendance.filter(r => r.status === 'present').length;
             const late = studentAttendance.filter(r => r.status === 'late').length;
             const absent = studentAttendance.filter(r => r.status === 'absent').length;
-            
+
             const totalClasses = present + late + absent;
-            const realTimePercentage = totalClasses > 0 
-                ? Math.round(((present + late) / totalClasses) * 100) 
+            const realTimePercentage = totalClasses > 0
+                ? Math.round(((present + late) / totalClasses) * 100)
                 : p.attendancePercentage;
-                
+
             return { ...p, attendancePercentage: realTimePercentage };
         }).filter(p => {
             const searchLower = searchTerm.toLowerCase();
-            const matchesSearch = 
+            const matchesSearch =
                 (p.studentName || '').toLowerCase().includes(searchLower) ||
                 (p.email && p.email.toLowerCase().includes(searchLower)) ||
                 (p.batch || '').toLowerCase().includes(searchLower);
@@ -170,11 +170,11 @@ export default function ProgressPage() {
     // Summary stats derived from filtered data
     const summaryStats = useMemo(() => {
         const total = filteredData.length;
-        const avgCompletion = total > 0 
-            ? Math.round(filteredData.reduce((sum, s) => sum + (s.overallProgress || 0), 0) / total) 
+        const avgCompletion = total > 0
+            ? Math.round(filteredData.reduce((sum, s) => sum + (s.overallProgress || 0), 0) / total)
             : 0;
-        const avgAttendance = total > 0 
-            ? Math.round(filteredData.reduce((sum, s) => sum + (s.attendancePercentage || 0), 0) / total) 
+        const avgAttendance = total > 0
+            ? Math.round(filteredData.reduce((sum, s) => sum + (s.attendancePercentage || 0), 0) / total)
             : 0;
         const now = new Date();
         const activeToday = filteredData.filter(s => {
@@ -246,46 +246,46 @@ export default function ProgressPage() {
                     </div>
                     <div style={{ width: '100%', height: 350, display: 'flex', flexDirection: 'column' }}>
                         <div style={{ height: '300px', minHeight: '300px', position: 'relative' }}>
-                          {isMounted && (
-                            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={300} debounce={100}>
-                            <BarChart 
-                                data={batchStats}
-                                margin={{
-                                    top: 20,
-                                    right: 30,
-                                    left: 20,
-                                    bottom: 50
-                                }}
-                            >
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--chart-grid)" />
-                                <XAxis 
-                                    dataKey="name" 
-                                    axisLine={false} 
-                                    tickLine={false}
-                                    stroke="var(--chart-axis)"
-                                    fontSize={12}
-                                />
-                                <YAxis axisLine={false} tickLine={false} stroke="var(--chart-axis)" fontSize={12} />
-                                <Tooltip 
-                                    contentStyle={{ 
-                                        backgroundColor: 'var(--bg-card)', 
-                                        borderRadius: '12px', 
-                                        border: '1px solid var(--border-subtle)', 
-                                        boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
-                                        padding: '12px',
-                                        color: 'var(--text-main)'
-                                    }}
-                                />
-                                <Bar dataKey="avgScore" name="Avg Score" radius={[6, 6, 0, 0]} barSize={40}>
-                                    {batchStats.map((_, index) => (
-                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                    ))}
-                                </Bar>
-                            </BarChart>
-                        </ResponsiveContainer>
-                          )}
-                      </div>
-                      {batchStats.length === 0 && (
+                            {isMounted && (
+                                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={300} debounce={100}>
+                                    <BarChart
+                                        data={batchStats}
+                                        margin={{
+                                            top: 20,
+                                            right: 30,
+                                            left: 20,
+                                            bottom: 50
+                                        }}
+                                    >
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--chart-grid)" />
+                                        <XAxis
+                                            dataKey="name"
+                                            axisLine={false}
+                                            tickLine={false}
+                                            stroke="var(--chart-axis)"
+                                            fontSize={12}
+                                        />
+                                        <YAxis axisLine={false} tickLine={false} stroke="var(--chart-axis)" fontSize={12} />
+                                        <Tooltip
+                                            contentStyle={{
+                                                backgroundColor: 'var(--bg-card)',
+                                                borderRadius: '12px',
+                                                border: '1px solid var(--border-subtle)',
+                                                boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+                                                padding: '12px',
+                                                color: 'var(--text-main)'
+                                            }}
+                                        />
+                                        <Bar dataKey="avgScore" name="Avg Score" radius={[6, 6, 0, 0]} barSize={40}>
+                                            {batchStats.map((_, index) => (
+                                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                            ))}
+                                        </Bar>
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            )}
+                        </div>
+                        {batchStats.length === 0 && (
                             <div className="flex items-center justify-center h-full text-muted italic">
                                 No Progress Data Available
                             </div>
@@ -308,43 +308,43 @@ export default function ProgressPage() {
                     <div style={{ width: '100%', height: 350, display: 'flex', flexDirection: 'column' }}>
                         <div style={{ height: '300px', minHeight: '300px', position: 'relative' }}>
                             {isMounted && (
-                              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={300} debounce={100}>
-                                <BarChart 
-                                    data={batchStats} 
-                                    layout="vertical"
-                                    margin={{
-                                        top: 20,
-                                        right: 30,
-                                        left: 40,
-                                        bottom: 20
-                                    }}
-                                >
-                                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--chart-grid)" />
-                                    <XAxis type="number" hide />
-                                    <YAxis 
-                                        dataKey="name" 
-                                        type="category" 
-                                        axisLine={false} 
-                                        tickLine={false} 
-                                        width={80}
-                                        stroke="var(--chart-axis)"
-                                        fontSize={12}
-                                    />
-                                    <Tooltip 
-                                        contentStyle={{ 
-                                            backgroundColor: 'var(--bg-card)',
-                                            borderRadius: '12px', 
-                                            border: '1px solid var(--border-subtle)', 
-                                            boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
-                                            padding: '12px',
-                                            color: 'var(--text-main)'
+                                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={300} debounce={100}>
+                                    <BarChart
+                                        data={batchStats}
+                                        layout="vertical"
+                                        margin={{
+                                            top: 20,
+                                            right: 30,
+                                            left: 40,
+                                            bottom: 20
                                         }}
-                                    />
-                                    <Legend wrapperStyle={{ paddingTop: '20px' }} />
-                                    <Bar dataKey="avgAttendance" name="Attendance" fill="var(--primary)" radius={[0, 4, 4, 0]} barSize={20} />
-                                    <Bar dataKey="avgCompletion" name="Completion Rate" fill="#10B981" radius={[0, 4, 4, 0]} barSize={20} />
-                                </BarChart>
-                            </ResponsiveContainer>
+                                    >
+                                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--chart-grid)" />
+                                        <XAxis type="number" hide />
+                                        <YAxis
+                                            dataKey="name"
+                                            type="category"
+                                            axisLine={false}
+                                            tickLine={false}
+                                            width={80}
+                                            stroke="var(--chart-axis)"
+                                            fontSize={12}
+                                        />
+                                        <Tooltip
+                                            contentStyle={{
+                                                backgroundColor: 'var(--bg-card)',
+                                                borderRadius: '12px',
+                                                border: '1px solid var(--border-subtle)',
+                                                boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+                                                padding: '12px',
+                                                color: 'var(--text-main)'
+                                            }}
+                                        />
+                                        <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                                        <Bar dataKey="avgAttendance" name="Attendance" fill="var(--primary)" radius={[0, 4, 4, 0]} barSize={20} />
+                                        <Bar dataKey="avgCompletion" name="Completion Rate" fill="#10B981" radius={[0, 4, 4, 0]} barSize={20} />
+                                    </BarChart>
+                                </ResponsiveContainer>
                             )}
                         </div>
                         {batchStats.length === 0 && (
@@ -365,20 +365,20 @@ export default function ProgressPage() {
                 <div className="p-6" style={{ borderBottom: '1px solid var(--border-subtle)', background: 'var(--bg-card-accent)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '16px', width: '100%' }}>
                         <div style={{ position: 'relative', flex: 1 }}>
-                            <Search 
-                                style={{ 
-                                    position: 'absolute', 
-                                    left: '12px', 
-                                    top: '50%', 
+                            <Search
+                                style={{
+                                    position: 'absolute',
+                                    left: '12px',
+                                    top: '50%',
                                     transform: 'translateY(-50%)',
                                     color: 'var(--text-secondary)'
-                                }} 
-                                size={18} 
-                             />
-                            <input 
-                                type="text" 
-                                style={{ 
-                                    paddingLeft: '40px', 
+                                }}
+                                size={18}
+                            />
+                            <input
+                                type="text"
+                                style={{
+                                    paddingLeft: '40px',
                                     width: '100%',
                                     background: 'var(--input-bg)',
                                     border: '1px solid var(--border-subtle)',
@@ -424,10 +424,10 @@ export default function ProgressPage() {
                                 <tr key={student.id} className="transition-colors" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center">
-                                            <Avatar 
-                                                src={student.profilePhoto} 
-                                                fallback={(student.studentName || '?').charAt(0)} 
-                                                size="sm" 
+                                            <Avatar
+                                                src={student.profilePhoto}
+                                                fallback={(student.studentName || '?').charAt(0)}
+                                                size="sm"
                                             />
                                             <div style={{ marginLeft: '12px' }}>
                                                 <div className="font-medium text-sm">{student.studentName}</div>
@@ -467,21 +467,21 @@ export default function ProgressPage() {
                                     </td>
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex justify-end gap-1">
-                                            <button 
+                                            <button
                                                 className="icon-btn"
                                                 title="View Details"
                                                 onClick={() => navigate(`/progress/${student.studentId}`)}
                                             >
                                                 <ExternalLink size={16} />
                                             </button>
-                                            <button 
+                                            <button
                                                 className="icon-btn"
                                                 title="Export PDF"
                                                 onClick={() => handleExport(student)}
                                             >
                                                 <Download size={16} />
                                             </button>
-                                            <button 
+                                            <button
                                                 className="icon-btn"
                                                 title="Edit Progress"
                                                 onClick={() => handleEdit(student)}
@@ -495,7 +495,7 @@ export default function ProgressPage() {
                         </tbody>
                     </table>
                 </div>
-                
+
                 {filteredData.length === 0 && (
                     <div className="py-20 text-center">
                         <div className="bg-light/30 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border border-divider">
@@ -511,28 +511,28 @@ export default function ProgressPage() {
             <Modal isOpen={showEditModal} onClose={() => setShowEditModal(false)} title="Update Student Progress" maxWidth="500px">
                 <form onSubmit={handleSave} className="form-layout p-2">
                     <p className="text-sm text-muted mb-4">Updating progress for <span className="text-text font-bold">{editingProgress?.studentName}</span></p>
-                    
+
                     <FormRow>
                         <FormField label="Attendance (%)">
-                            <input 
-                                type="number" 
-                                min="0" max="100" 
-                                value={editForm.attendancePercentage} 
-                                onChange={(e) => setEditForm({...editForm, attendancePercentage: Number(e.target.value)})}
+                            <input
+                                type="number"
+                                min="0" max="100"
+                                value={editForm.attendancePercentage}
+                                onChange={(e) => setEditForm({ ...editForm, attendancePercentage: Number(e.target.value) })}
                                 required
                             />
                         </FormField>
                         <FormField label="Overall Score">
-                            <input 
-                                type="number" 
-                                min="0" 
-                                value={editForm.overallScore} 
-                                onChange={(e) => setEditForm({...editForm, overallScore: Number(e.target.value)})}
+                            <input
+                                type="number"
+                                min="0"
+                                value={editForm.overallScore}
+                                onChange={(e) => setEditForm({ ...editForm, overallScore: Number(e.target.value) })}
                                 required
                             />
                         </FormField>
                     </FormRow>
-                    
+
 
 
                     <FormActions>

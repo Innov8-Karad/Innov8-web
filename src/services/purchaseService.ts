@@ -30,7 +30,7 @@ export interface PurchaseRequest {
     status: 'pending' | 'approved' | 'rejected';
     rejectionReason?: string;
     purchasedAt?: Date | { seconds: number; nanoseconds: number } | Timestamp;
-    createdAt: Date | { seconds: number; nanoseconds: number };
+    createdAt?: Date | { seconds: number; nanoseconds: number };
     updatedAt?: Date | { seconds: number; nanoseconds: number };
 }
 
@@ -48,19 +48,22 @@ export function subscribeToPurchaseRequests(
 ): Unsubscribe {
     const q = query(
         collection(db, COLLECTIONS.COURSE_PURCHASES),
-        orderBy('createdAt', 'desc')
+        orderBy('purchasedAt', 'desc')
     );
 
     return onSnapshot(q, (snapshot) => {
         const requests: PurchaseRequest[] = [];
         snapshot.forEach((docSnap) => {
             const data = docSnap.data();
+            const purchasedAtVal = data.purchasedAt instanceof Timestamp ? data.purchasedAt.toDate() : data.purchasedAt;
+            const createdAtVal = data.createdAt instanceof Timestamp ? data.createdAt.toDate() : (data.createdAt ? data.createdAt : purchasedAtVal);
+            const updatedAtVal = data.updatedAt instanceof Timestamp ? data.updatedAt.toDate() : data.updatedAt;
             requests.push({
                 id: docSnap.id,
                 ...data,
-                purchasedAt: data.purchasedAt instanceof Timestamp ? data.purchasedAt.toDate() : data.purchasedAt,
-                createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : data.createdAt,
-                updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toDate() : data.updatedAt,
+                purchasedAt: purchasedAtVal,
+                createdAt: createdAtVal,
+                updatedAt: updatedAtVal,
             } as PurchaseRequest);
         });
         callback(requests);

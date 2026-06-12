@@ -1,19 +1,19 @@
 import { useState, useEffect, useMemo } from 'react';
-import { 
+import {
   Award,
   TrendingUp,
-  CheckCircle, 
-  XCircle, 
+  CheckCircle,
+  XCircle,
   Clock,
   BookOpen
 } from 'lucide-react';
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
   PieChart,
   Pie,
@@ -41,7 +41,7 @@ export default function ExamResultsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isMounted, setIsMounted] = useState(false);
-  
+
   // Filters
   const [selectedExamId, setSelectedExamId] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -77,7 +77,7 @@ export default function ExamResultsPage() {
   // Memoized filtered data
   const filteredResults = useMemo(() => {
     let filtered = results;
-    
+
     // Exam dropdown filter
     if (selectedExamId !== 'all') {
       filtered = filtered.filter(r => r.examId === selectedExamId);
@@ -86,7 +86,7 @@ export default function ExamResultsPage() {
     // Search filter
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(r => 
+      filtered = filtered.filter(r =>
         r.studentName.toLowerCase().includes(term) ||
         r.studentEmail.toLowerCase().includes(term) ||
         r.examTitle.toLowerCase().includes(term)
@@ -105,7 +105,7 @@ export default function ExamResultsPage() {
     const avgScore = filteredResults.reduce((acc, r) => acc + r.percentage, 0) / total;
     const passed = filteredResults.filter(r => r.percentage >= passThreshold).length;
     const topScore = Math.max(...filteredResults.map(r => r.percentage));
-    
+
     return {
       total,
       avgScore: avgScore.toFixed(1),
@@ -193,9 +193,9 @@ export default function ExamResultsPage() {
   return (
     <div className="animate-in">
       <ErrorAlert message={error} />
-      
-      <PageHeader 
-        title={UI_STRINGS.EXAM_RESULTS.TITLE} 
+
+      <PageHeader
+        title={UI_STRINGS.EXAM_RESULTS.TITLE}
         subtitle={UI_STRINGS.EXAM_RESULTS.SUBTITLE}
         actionLabel={UI_STRINGS.EXAM_RESULTS.EXPORT_CSV}
         onAction={handleExportCSV}
@@ -233,7 +233,7 @@ export default function ExamResultsPage() {
       {/* Filters & Tabs */}
       <div className="card mb-xl p-md">
         <div className="flex flex-col md:flex-row gap-lg justify-between items-start md:items-center">
-          
+
           <div className="flex flex-1 items-center gap-md w-full">
             <div style={{ flex: '1 1 auto', maxWidth: '300px' }}>
               <CustomSelect
@@ -246,10 +246,10 @@ export default function ExamResultsPage() {
               />
             </div>
             <div style={{ flex: '2 1 auto' }}>
-              <SearchInput 
-                placeholder={UI_STRINGS.EXAM_RESULTS.SEARCH_PLACEHOLDER} 
-                value={searchTerm} 
-                onChange={setSearchTerm} 
+              <SearchInput
+                placeholder={UI_STRINGS.EXAM_RESULTS.SEARCH_PLACEHOLDER}
+                value={searchTerm}
+                onChange={setSearchTerm}
               />
             </div>
           </div>
@@ -259,11 +259,11 @@ export default function ExamResultsPage() {
               <span>{UI_STRINGS.EXAM_RESULTS.PASS_THRESHOLD}</span>
               <span className="text-primary">{passThreshold}%</span>
             </label>
-            <input 
-              type="range" 
-              min="0" 
-              max="100" 
-              value={passThreshold} 
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={passThreshold}
               onChange={(e) => setPassThreshold(Number(e.target.value))}
               className="w-full"
             />
@@ -282,23 +282,23 @@ export default function ExamResultsPage() {
               <div style={{ height: '300px', minHeight: '300px', position: 'relative' }}>
                 {isMounted && (
                   <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={300} debounce={100}>
-                  <BarChart data={scoreDistribution} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
-                    <XAxis dataKey="range" stroke="var(--chart-axis)" fontSize={12} tickLine={false} axisLine={false} />
-                    <YAxis stroke="var(--chart-axis)" fontSize={12} tickLine={false} axisLine={false} />
-                    <Tooltip 
-                      contentStyle={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: '8px', color: 'var(--text-main)' }}
-                      itemStyle={{ color: 'var(--primary)' }}
-                    />
-                    <Bar dataKey="count" fill="var(--primary)" radius={[4, 4, 0, 0]} barSize={40} />
-                  </BarChart>
-                </ResponsiveContainer>
+                    <BarChart data={scoreDistribution} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
+                      <XAxis dataKey="range" stroke="var(--chart-axis)" fontSize={12} tickLine={false} axisLine={false} />
+                      <YAxis stroke="var(--chart-axis)" fontSize={12} tickLine={false} axisLine={false} />
+                      <Tooltip
+                        contentStyle={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: '8px', color: 'var(--text-main)' }}
+                        itemStyle={{ color: 'var(--primary)' }}
+                      />
+                      <Bar dataKey="count" fill="var(--primary)" radius={[4, 4, 0, 0]} barSize={40} />
+                    </BarChart>
+                  </ResponsiveContainer>
                 )}
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="card p-lg">
+          <div className="card p-lg">
             <h3 className="section-title mb-md">{UI_STRINGS.EXAM_RESULTS.CHART_PASS_FAIL}</h3>
             <div style={{ width: '100%', height: 300, display: 'flex', flexDirection: 'column' }}>
               {isMounted && (
@@ -318,7 +318,7 @@ export default function ExamResultsPage() {
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip 
+                    <Tooltip
                       contentStyle={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '8px', color: 'var(--text-main)' }}
                       itemStyle={{ color: 'var(--text-main)' }}
                     />

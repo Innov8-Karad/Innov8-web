@@ -218,6 +218,7 @@ export const courseService = {
         courseId,
         amount: 0,
         purchasedAt: Timestamp.now(),
+        createdAt: Timestamp.now(),
         status: 'approved',
         paymentMethod: 'manual_grant',
         transactionId: `TXN_${Date.now()}_ADMIN`,
