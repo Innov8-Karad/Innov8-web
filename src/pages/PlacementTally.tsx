@@ -1,5 +1,5 @@
-import { useState, useEffect, useContext, useRef } from 'react';
-import { Users, Pencil, Trash2, Plus, Book, Clock, ChevronDown, ChevronUp, Download, FileSpreadsheet } from 'lucide-react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
+import { Users, Pencil, Trash2, Plus, Book, Clock, ChevronDown, ChevronUp, Download, FileSpreadsheet, ChevronLeft, ChevronRight } from 'lucide-react';
 import { placementTallyService, type PlacementTallyStudent, type PaymentRecord } from '../services/placementTallyService';
 import { ToastContext } from '../contexts/ToastContext';
 import PageHeader from '../components/PageHeader';
@@ -28,6 +28,14 @@ export default function PlacementTallyPage() {
     const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
     const [exportingAll, setExportingAll] = useState(false);
     const [exportingStudentId, setExportingStudentId] = useState<string | null>(null);
+
+    const [currentPage, setCurrentPage] = useState(1);
+    const pageSize = 8;
+
+    // Reset current page when database results list size changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [students.length]);
 
     const toggleCardExpand = (studentId: string) => {
         setExpandedCards(prev => {
@@ -380,6 +388,14 @@ export default function PlacementTallyPage() {
 
     if (loading) return <LoadingState message="Loading placement tally records..." />;
 
+    // Pagination logic
+    const totalItems = students.length;
+    const totalPages = Math.ceil(totalItems / pageSize);
+    const paginatedStudents = students.slice(
+        (currentPage - 1) * pageSize,
+        currentPage * pageSize
+    );
+
     return (
         <div className="pb-xl">
             {error && <ErrorAlert message={error} />}
@@ -414,8 +430,9 @@ export default function PlacementTallyPage() {
             {students.length === 0 ? (
                 <div className="card text-center py-xl text-muted">No students found. Add a new student to get started.</div>
             ) : (
+                <>
                 <div className="grid-cards">
-                    {students.map(student => (
+                    {paginatedStudents.map(student => (
                         <div key={student.id} className="card flex flex-col gap-4 relative group" style={{ padding: 'var(--space-lg)' }}>
                             {/* Header: User Info & Actions */}
                             <div className="flex justify-between items-start">
@@ -607,6 +624,50 @@ export default function PlacementTallyPage() {
                         </div>
                     ))}
                 </div>
+
+                {totalPages > 1 && (
+                    <div className="pagination-container" style={{ marginTop: '24px', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                        <div className="text-sm text-muted">
+                            Showing <span className="text-main">{(currentPage - 1) * pageSize + 1}</span> to <span className="text-main">{Math.min(currentPage * pageSize, totalItems)}</span> of <span className="text-main">{totalItems}</span> results
+                        </div>
+                        <div className="pagination-controls">
+                            <button 
+                                className="pagination-btn"
+                                disabled={currentPage === 1}
+                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            >
+                                <ChevronLeft size={16} /> Prev
+                            </button>
+                            
+                            <div className="flex items-center gap-1 mx-2">
+                                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                                    .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+                                    .map((p, i, arr) => (
+                                        <React.Fragment key={p}>
+                                            {i > 0 && arr[i-1] !== p - 1 && <span className="text-muted">...</span>}
+                                            <button 
+                                                className={`page-indicator ${currentPage === p ? 'active' : ''}`}
+                                                onClick={() => setCurrentPage(p)}
+                                                type="button"
+                                            >
+                                                {p}
+                                            </button>
+                                        </React.Fragment>
+                                    ))
+                                }
+                            </div>
+
+                            <button 
+                                className="pagination-btn"
+                                disabled={currentPage === totalPages}
+                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                            >
+                                Next <ChevronRight size={16} />
+                            </button>
+                        </div>
+                    </div>
+                )}
+                </>
             )}
 
             {/* Modal: Add/Edit Student */}
