@@ -194,4 +194,31 @@ export const feeService = {
     });
   },
 
+  async createBulkFees(feesData: Record<string, unknown>[]): Promise<void> {
+    const { writeBatch } = await import('firebase/firestore');
+    const batch = writeBatch(db);
+    const feesRef = collection(db, COLLECTIONS.FEES);
+
+    feesData.forEach((data) => {
+      const amount = num(data.amount);
+      const newFeeRef = doc(feesRef);
+      const docData = {
+        userId: data.userId || '',
+        studentId: data.studentId || data.userId || '',
+        studentName: data.studentName || '',
+        email: data.email || '',
+        course: data.course || '',
+        description: data.description || '',
+        amount,
+        totalPaid: 0,
+        status: FEE_STATUS.PENDING,
+        dueDate: Timestamp.fromDate(new Date(data.dueDate as string)),
+        createdAt: Timestamp.now(),
+      };
+      batch.set(newFeeRef, docData);
+    });
+
+    await batch.commit();
+  },
+
 };

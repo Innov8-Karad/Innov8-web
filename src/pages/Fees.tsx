@@ -3,8 +3,9 @@ import './Fees.css';
 import { IndianRupee, AlertTriangle, Clock, ChevronDown, ChevronUp } from 'lucide-react';
 import { feeService } from '../services/feeService';
 import { userService } from '../services/userService';
+import { batchService } from '../services/batchService';
 import { announcementService } from '../services/announcementService';
-import type { Fee, User, InstallmentPayment } from '../types';
+import type { Fee, User, InstallmentPayment, Batch } from '../types';
 import { UI_STRINGS, FEE_STATUS, ADMIN_USER_ID, PAYMENT_METHODS } from '../constants';
 import LoadingState from '../components/LoadingState';
 import ErrorAlert from '../components/ErrorAlert';
@@ -45,6 +46,7 @@ export default function FeesPage() {
     const [error, setError] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [viewMode, setViewMode] = useState<'students' | 'all_fees'>('all_fees');
+    const [batches, setBatches] = useState<Batch[]>([]);
 
     // ── Modals ────────────────────────────────────────────────────────────────
     const [showCreateModal, setShowCreateModal] = useState(false);
@@ -56,7 +58,7 @@ export default function FeesPage() {
     const [viewingStudent, setViewingStudent] = useState<StudentSummary | null>(null);
 
     // ── Form state ────────────────────────────────────────────────────────────
-    const [newFee, setNewFee] = useState({ userId: '', amount: '', dueDate: '', description: '' });
+    const [newFee, setNewFee] = useState({ userId: '', amount: '', dueDate: '', description: '', creationMode: 'single' as 'single' | 'batch', batchId: '' });
     const [editForm, setEditForm] = useState({ amount: '', dueDate: '', description: '' });
     const [newInstallment, setNewInstallment] = useState({
         amount: '',
@@ -97,12 +99,14 @@ export default function FeesPage() {
             try {
                 setLoading(true);
                 setError(null);
-                const [feesData, usersData] = await Promise.all([
+                const [feesData, usersData, batchesData] = await Promise.all([
                     feeService.fetchFees(),
                     userService.fetchUsers(),
+                    batchService.fetchBatches(),
                 ]);
                 setFees(feesData);
                 setUsers(usersData);
+                setBatches(batchesData);
             } catch (err) {
                 console.error('Error fetching data:', err);
                 setError(UI_STRINGS.FEES.ERROR_LOAD);
@@ -141,21 +145,47 @@ export default function FeesPage() {
         e.preventDefault();
         try {
             setError(null);
-            const selectedUser = users.find(u => u.id === newFee.userId);
-            await feeService.createFee({
-                userId: newFee.userId,
-                studentId: newFee.userId,
-                studentName: selectedUser?.name || '',
-                email: selectedUser?.email || '',
-                course: selectedUser?.course || '',
-                description: newFee.description,
-                amount: newFee.amount,
-                dueDate: newFee.dueDate,
-            });
+            
+            if (newFee.creationMode === 'single') {
+                const selectedUser = users.find(u => u.id === newFee.userId);
+                await feeService.createFee({
+                    userId: newFee.userId,
+                    studentId: newFee.userId,
+                    studentName: selectedUser?.name || '',
+                    email: selectedUser?.email || '',
+                    course: selectedUser?.course || '',
+                    description: newFee.description,
+                    amount: newFee.amount,
+                    dueDate: newFee.dueDate,
+                });
+            } else {
+                if (!newFee.batchId) {
+                    showToast('Please select a batch', 'error');
+                    return;
+                }
+                const batchStudents = await userService.fetchUsersByBatch(newFee.batchId);
+                if (batchStudents.length === 0) {
+                    showToast('No students found in this batch', 'error');
+                    return;
+                }
+                
+                const feesToCreate = batchStudents.map(student => ({
+                    userId: student.id,
+                    studentName: student.name,
+                    email: student.email,
+                    course: student.course || '',
+                    description: newFee.description,
+                    amount: newFee.amount,
+                    dueDate: newFee.dueDate,
+                }));
+                
+                await feeService.createBulkFees(feesToCreate);
+            }
+
             await refreshFees();
             setShowCreateModal(false);
-            setNewFee({ userId: '', amount: '', dueDate: '', description: '' });
-            showToast('Fee added successfully', 'success');
+            setNewFee({ userId: '', amount: '', dueDate: '', description: '', creationMode: 'single', batchId: '' });
+            showToast(newFee.creationMode === 'single' ? 'Fee added successfully' : 'Batch fees created successfully', 'success');
         } catch (err) {
             console.error('Error adding fee:', err);
             setError(UI_STRINGS.FEES.ERROR_CREATE);
@@ -410,8 +440,8 @@ export default function FeesPage() {
         });
 
     const filteredSummaries = studentSummaries.filter(s =>
-        s.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        s.course.toLowerCase().includes(searchTerm.toLowerCase()),
+        (s.userName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (s.course || '').toLowerCase().includes(searchTerm.toLowerCase()),
     );
 
     const filteredAllFees = fees.filter(f =>
@@ -719,14 +749,38 @@ export default function FeesPage() {
             {/* ═══ CREATE FEE MODAL ═══ */}
             <Modal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} title={UI_STRINGS.FEES.MODAL_TITLE}>
                 <form onSubmit={handleAddFee} className="form-layout">
-                    <FormField label={UI_STRINGS.FEES.FORM_SELECT_STUDENT}>
-                        <CustomSelect
-                            options={users.map(u => ({ value: u.id, label: `${u.name} (${u.email})` }))}
-                            value={newFee.userId}
-                            onChange={(val) => setNewFee({ ...newFee, userId: val })}
-                            placeholder={UI_STRINGS.FEES.FORM_SELECT_STUDENT_PLACEHOLDER}
-                        />
-                    </FormField>
+                    <div className="flex gap-4 mb-4">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" checked={newFee.creationMode === 'single'} onChange={() => setNewFee({ ...newFee, creationMode: 'single' })} />
+                            <span>Single Student</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" checked={newFee.creationMode === 'batch'} onChange={() => setNewFee({ ...newFee, creationMode: 'batch' })} />
+                            <span>Batch Wise</span>
+                        </label>
+                    </div>
+
+                    {newFee.creationMode === 'single' ? (
+                        <FormField label={UI_STRINGS.FEES.FORM_SELECT_STUDENT}>
+                            <CustomSelect
+                                searchable
+                                options={users.map(u => ({ value: u.id, label: `${u.name} (${u.email})` }))}
+                                value={newFee.userId}
+                                onChange={(val) => setNewFee({ ...newFee, userId: val })}
+                                placeholder={UI_STRINGS.FEES.FORM_SELECT_STUDENT_PLACEHOLDER}
+                            />
+                        </FormField>
+                    ) : (
+                        <FormField label="Select Batch">
+                            <CustomSelect
+                                searchable
+                                options={batches.map(b => ({ value: b.id, label: b.name }))}
+                                value={newFee.batchId}
+                                onChange={(val) => setNewFee({ ...newFee, batchId: val })}
+                                placeholder="-- Choose a batch --"
+                            />
+                        </FormField>
+                    )}
                     <FormRow>
                         <FormField label={UI_STRINGS.FEES.FORM_AMOUNT}>
                             <input type="number" required min="1" value={newFee.amount} onChange={e => setNewFee({ ...newFee, amount: e.target.value })} placeholder="0" />
