@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Send, Clock, Users, Radio, X } from 'lucide-react';
+import { Send, Clock, Users, Radio, X, Trash2 } from 'lucide-react';
 import { userService } from '../services/userService';
 import { announcementService } from '../services/announcementService';
 import {
     sendNotification,
     fetchNotificationHistory,
+    deleteNotification,
     type NotificationRecord,
     type SendNotificationPayload,
 } from '../services/notificationService';
@@ -14,6 +15,7 @@ import PageHeader from '../components/PageHeader';
 import LoadingState from '../components/LoadingState';
 import ErrorAlert from '../components/ErrorAlert';
 import { FormField } from '../components/FormField';
+import ConfirmModal from '../components/ConfirmModal';
 import { useToast } from '../hooks/useToast';
 
 export default function NotificationsPage() {
@@ -34,6 +36,10 @@ export default function NotificationsPage() {
     const [uniqueBatches, setUniqueBatches] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+
+    // ── Delete State ──
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deleteId, setDeleteId] = useState<string | null>(null);
 
     // ── Load initial data ──
     useEffect(() => {
@@ -98,6 +104,28 @@ export default function NotificationsPage() {
             showToast(UI_STRINGS.NOTIFICATIONS.ERROR_SEND, 'error');
         } finally {
             setSending(false);
+        }
+    };
+
+    const handleOpenDelete = (id: string) => {
+        setDeleteId(id);
+        setShowDeleteModal(true);
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteId) return;
+        try {
+            setError(null);
+            await deleteNotification(deleteId);
+            setHistory(prev => prev.filter(item => item.id !== deleteId));
+            showToast('Notification deleted successfully', 'success');
+        } catch (err) {
+            console.error('Error deleting notification:', err);
+            setError('Failed to delete notification.');
+            showToast('Failed to delete notification.', 'error');
+        } finally {
+            setDeleteId(null);
+            setShowDeleteModal(false);
         }
     };
 
@@ -363,6 +391,18 @@ export default function NotificationsPage() {
                                                 </span>
                                             </div>
                                         </div>
+                                        <button
+                                            type="button"
+                                            className="icon-btn text-error"
+                                            title="Delete Notification"
+                                            onClick={() => handleOpenDelete(record.id)}
+                                            style={{
+                                                marginLeft: 'var(--space-md)',
+                                                padding: '4px',
+                                            }}
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
                                     </div>
                                 </div>
                             ))}
@@ -370,6 +410,19 @@ export default function NotificationsPage() {
                     )}
                 </div>
             </div>
+            <ConfirmModal
+                isOpen={showDeleteModal}
+                onClose={() => {
+                    setShowDeleteModal(false);
+                    setDeleteId(null);
+                }}
+                onConfirm={confirmDelete}
+                title="Delete Notification History"
+                message="Are you sure you want to delete this notification record from the audit history? This action cannot be undone."
+                confirmText="Delete"
+                cancelText="Cancel"
+                type="danger"
+            />
         </div>
     );
 }
