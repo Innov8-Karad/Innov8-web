@@ -13,7 +13,7 @@ import {
   type DocumentData 
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { uploadWithFallback } from '../lib/cloudinary';
+import { uploadWithFallback, deleteFromCloudinary } from '../lib/cloudinary';
 import { COLLECTIONS } from '../constants';
 import type { User } from '../types';
 
@@ -170,6 +170,11 @@ export const userService = {
 
   async deleteUser(id: string, batchId?: string): Promise<void> {
     const userRef = doc(db, COLLECTIONS.USERS, id);
+
+    // Read user data before deletion to get Cloudinary publicId for cleanup
+    const userSnap = await getDoc(userRef);
+    const profilePhotoPublicId = userSnap.data()?.profilePhotoPublicId;
+
     const batchRef = batchId ? doc(db, COLLECTIONS.BATCHES, batchId) : null;
 
     await runTransaction(db, async (transaction) => {
@@ -185,6 +190,11 @@ export const userService = {
         }
       }
     });
+
+    // Best-effort: delete profile photo from Cloudinary after transaction succeeds
+    if (profilePhotoPublicId) {
+      deleteFromCloudinary(profilePhotoPublicId);
+    }
   },
 
   async blockUser(id: string, reason?: string): Promise<User> {
@@ -288,19 +298,33 @@ export const userService = {
   },
 
   /**
-   * Upload a profile photo using Cloudinary (with Firebase Storage fallback).
+   * Upload a profile photo using Cloudinary.
+   * Deletes the previous photo from Cloudinary if an oldPublicId is provided.
    * @param file - The image file to upload
+   * @param userId - Optional user ID for folder organization
    * @param onProgress - Optional callback for upload progress (0-100)
-   * @returns The uploaded image URL
+   * @param oldPublicId - Optional publicId of the previous photo to delete
+   * @returns Object with the uploaded image URL and publicId
    */
-  async uploadProfilePhoto(file: File, userId?: string, onProgress?: (pct: number) => void): Promise<string> {
+  async uploadProfilePhoto(
+    file: File,
+    userId?: string,
+    onProgress?: (pct: number) => void,
+    oldPublicId?: string
+  ): Promise<{ url: string; publicId: string }> {
     const folderPath = userId ? `innov8/profile-photos/${userId}` : 'innov8/profile-photos';
     const result = await uploadWithFallback(file, {
       preset: import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET,
       folder: folderPath,
       onProgress,
     });
-    return result.url;
+
+    // Best-effort: delete old photo after successful upload
+    if (oldPublicId) {
+      deleteFromCloudinary(oldPublicId);
+    }
+
+    return { url: result.url, publicId: result.publicId };
   },
 
   async findUserByEmail(email: string): Promise<User | null> {

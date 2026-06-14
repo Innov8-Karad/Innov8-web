@@ -1,6 +1,7 @@
 import {
   collection,
   getDocs,
+  getDoc,
   addDoc,
   updateDoc,
   deleteDoc,
@@ -12,7 +13,7 @@ import {
   type DocumentData
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { uploadWithFallback, getOptimizedUrl } from '../lib/cloudinary';
+import { uploadWithFallback, getOptimizedUrl, deleteFromCloudinary, extractPublicIdFromUrl } from '../lib/cloudinary';
 import { COLLECTIONS } from '../constants';
 import type { SuccessStory, PlacementStats } from '../types';
 
@@ -84,7 +85,20 @@ export const placementService = {
 
   async deleteSuccessStory(id: string): Promise<void> {
     const docRef = doc(db, COLLECTIONS.PLACEMENTS, id);
+
+    // Read doc before deleting to get photo URL for Cloudinary cleanup
+    const docSnap = await getDoc(docRef);
+    const studentPhoto = docSnap.data()?.studentPhoto as string | undefined;
+
     await deleteDoc(docRef);
+
+    // Best-effort: delete student photo from Cloudinary
+    if (studentPhoto) {
+      const publicId = extractPublicIdFromUrl(studentPhoto);
+      if (publicId) {
+        deleteFromCloudinary(publicId);
+      }
+    }
   },
 
   // 4. Statistics Update

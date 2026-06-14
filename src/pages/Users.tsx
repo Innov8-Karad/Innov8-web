@@ -31,6 +31,7 @@ export default function UsersPage() {
 
     // Photo upload states
     const [uploadedPhotoUrl, setUploadedPhotoUrl] = useState<string | null>(null);
+    const [uploadedPhotoPublicId, setUploadedPhotoPublicId] = useState<string | null>(null);
     const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
     // Block/Unblock states
@@ -172,7 +173,8 @@ export default function UsersPage() {
                     course: studentCourseName,
                     courseId: studentCourseId,
                     skills: parsedSkills,
-                    profilePhoto: photoUrl
+                    profilePhoto: photoUrl,
+                    profilePhotoPublicId: uploadedPhotoPublicId || editingUser.profilePhotoPublicId || undefined,
                 }, editingUser.batchId);
                 showToast("Student updated successfully", "success");
             } else {
@@ -183,6 +185,7 @@ export default function UsersPage() {
                     course: studentCourseName,
                     courseId: studentCourseId,
                     profilePhoto: photoUrl,
+                    profilePhotoPublicId: uploadedPhotoPublicId || undefined,
                     skills: parsedSkills,
                     status: 'active',
                     isBlocked: false
@@ -204,6 +207,7 @@ export default function UsersPage() {
     const resetForm = () => {
         setEditingUser(null);
         setUploadedPhotoUrl(null);
+        setUploadedPhotoPublicId(null);
         setNewUser({ name: '', email: '', phone: '', batch: '', batchId: '', course: '', courseId: '', skills: '', profilePhoto: '' });
     };
 
@@ -625,6 +629,7 @@ export default function UsersPage() {
                         existingUrl={newUser.profilePhoto || undefined}
                         onUploadComplete={(result) => {
                             setUploadedPhotoUrl(result.url);
+                            setUploadedPhotoPublicId(result.publicId);
                         }}
                         onError={(msg) => showToast(msg, 'error')}
                     />

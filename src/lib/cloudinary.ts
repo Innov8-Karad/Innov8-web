@@ -154,20 +154,46 @@ export function uploadToCloudinary(
   });
 }
 
-// ── Delete (Stubbed — requires server-side api_secret) ────────────────────────
+// ── Delete (via deleteCloudinaryAsset Cloud Function) ─────────────────────────
 
 /**
  * Delete an asset from Cloudinary by publicId.
- *
- * ⚠️  STUB: Client-side deletion requires the `api_secret`, which must NOT
- * be exposed in frontend code. This function logs a warning and resolves.
+ * Calls the `deleteCloudinaryAsset` Cloud Function which holds the api_secret.
+ * Best-effort: failures are logged but never thrown to avoid blocking user flows.
  */
-export async function deleteFromCloudinary(publicId: string): Promise<void> {
-  console.warn(
-    `[Cloudinary] deleteFromCloudinary("${publicId}") — STUB. ` +
-    `Server-side deletion via Cloud Function is required for production. ` +
-    `The asset remains in Cloudinary storage.`
+export async function deleteFromCloudinary(publicId: string, resourceType: string = 'image'): Promise<void> {
+  if (!publicId) {
+    console.warn('[Cloudinary] deleteFromCloudinary called with empty publicId — skipping.');
+    return;
+  }
+  try {
+    const deleteAsset = httpsCallable(functions, 'deleteCloudinaryAsset');
+    await deleteAsset({ publicId, resourceType });
+    console.log(`[Cloudinary] Deleted asset: ${publicId}`);
+  } catch (error) {
+    // Log but don't throw — deletion failure should not block the user flow
+    console.error(`[Cloudinary] Failed to delete asset "${publicId}":`, error);
+  }
+}
+
+/**
+ * Extract the Cloudinary publicId from a full Cloudinary URL.
+ * e.g. "https://res.cloudinary.com/xxx/image/upload/q_auto,f_auto/v123/innov8/photos/abc.jpg"
+ *      → "innov8/photos/abc"
+ */
+export function extractPublicIdFromUrl(url: string): string | null {
+  if (!url || !isCloudinaryUrl(url)) return null;
+  const uploadIndex = url.indexOf('/upload/');
+  if (uploadIndex === -1) return null;
+  const path = url.substring(uploadIndex + '/upload/'.length);
+  // Skip transformation segments (contain commas or '=') and version segments (v12345)
+  const segments = path.split('/');
+  const cleanSegments = segments.filter(seg =>
+    !seg.includes(',') && !seg.includes('=') && !/^v\d+$/.test(seg)
   );
+  const publicId = cleanSegments.join('/');
+  // Remove file extension
+  return publicId.replace(/\.[^/.]+$/, '') || null;
 }
 
 // ── Cloudinary Upload Wrapper ───────────────────────────────────────────────────

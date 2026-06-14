@@ -1,6 +1,7 @@
 import { 
   collection, 
   getDocs, 
+  getDoc,
   addDoc, 
   updateDoc,
   deleteDoc,
@@ -15,6 +16,7 @@ import {
   type DocumentData 
 } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
+import { deleteFromCloudinary } from '../lib/cloudinary';
 import { COLLECTIONS } from '../constants';
 import type { Batch, EnrollmentRequest, CourseModule, CourseResource, AssignmentType, AssignmentSubmission } from '../types';
 
@@ -336,7 +338,19 @@ export const batchService = {
 
   async deleteResource(batchId: string, resourceId: string): Promise<void> {
     const docRef = doc(db, COLLECTIONS.BATCHES, batchId, 'resources', resourceId);
+
+    // Read doc before deleting to get Cloudinary publicId for cleanup
+    const docSnap = await getDoc(docRef);
+    const resourceData = docSnap.data();
+    const cloudinaryPublicId = resourceData?.cloudinaryPublicId as string | undefined;
+
     await deleteDoc(docRef);
+
+    // Best-effort: delete Cloudinary asset
+    if (cloudinaryPublicId) {
+      const resourceType = resourceData?.type === 'pdf' ? 'raw' : resourceData?.type === 'video' ? 'video' : 'image';
+      deleteFromCloudinary(cloudinaryPublicId, resourceType);
+    }
   },
 
   async cloneBatchCurriculum(sourceBatchId: string, targetBatchId: string): Promise<void> {
@@ -414,6 +428,20 @@ export const batchService = {
   },
 
   async deleteAssignment(batchId: string, assignmentId: string): Promise<void> {
+    // 1. Clean up all submission files from Cloudinary
+    const submissionsSnap = await getDocs(
+      collection(db, COLLECTIONS.BATCHES, batchId, 'assignments', assignmentId, 'submissions')
+    );
+    for (const submissionDoc of submissionsSnap.docs) {
+      const subData = submissionDoc.data();
+      if (subData.cloudinaryPublicId) {
+        const resType = subData.fileType === 'pdf' ? 'raw' : 'image';
+        deleteFromCloudinary(subData.cloudinaryPublicId, resType);
+      }
+      await deleteDoc(submissionDoc.ref);
+    }
+
+    // 2. Delete the assignment document itself
     const docRef = doc(db, COLLECTIONS.BATCHES, batchId, 'assignments', assignmentId);
     await deleteDoc(docRef);
   },
