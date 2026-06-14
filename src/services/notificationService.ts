@@ -15,6 +15,8 @@ import {
     Timestamp,
     where,
     writeBatch,
+    doc,
+    deleteDoc,
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
@@ -121,4 +123,12 @@ export async function cleanupExpiredNotifications(): Promise<void> {
 
     await batch.commit();
     console.log(`Auto-cleaned ${snap.size} expired notifications.`);
+}
+
+/**
+ * Delete a notification record from history by ID.
+ */
+export async function deleteNotification(id: string): Promise<void> {
+    const docRef = doc(db, 'notifications', id);
+    await deleteDoc(docRef);
 }
