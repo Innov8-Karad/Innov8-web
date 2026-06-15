@@ -12,7 +12,7 @@ import {
     Award,
     Bell,
     BellRing,
-    ClipboardCheck,
+
     LogOut,
     Menu,
     ClipboardList,
@@ -85,7 +85,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         { icon: GraduationCap, label: UI_STRINGS.NAV.CERTIFICATIONS, path: '/certifications' },
         { icon: TrendingUp, label: 'Placement Tally', path: '/placement-tally' },
         { icon: Briefcase, label: UI_STRINGS.NAV.PLACEMENTS, path: '/placements' },
-        { icon: ClipboardCheck, label: UI_STRINGS.NAV.ATTENDANCE, path: '/attendance' },
+
         { icon: Award, label: UI_STRINGS.NAV.PROGRESS, path: '/progress' },
         { icon: Bell, label: UI_STRINGS.NAV.ANNOUNCEMENTS, path: '/announcements' },
         { icon: BellRing, label: UI_STRINGS.NAV.NOTIFICATIONS, path: '/notifications' },

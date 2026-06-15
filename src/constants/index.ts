@@ -4,7 +4,7 @@ export const COLLECTIONS = {
   FEES: 'fees',
   PAYMENT_HISTORY: 'paymentHistory',
   COURSES: 'courses',
-  ATTENDANCE: 'attendance',
+
   EXAMS: 'exams',
   PLACEMENTS: 'placements',
   PLACEMENT_STATS: 'placementStats',
@@ -38,12 +38,7 @@ export const PAYMENT_METHODS = [
   { id: 'Manual', label: 'Manual Entry' },
 ] as const;
 
-export const ATTENDANCE_STATUS = {
-  PRESENT: 'present',
-  ABSENT: 'absent',
-  LATE: 'late',
-  EXCUSED: 'excused',
-} as const;
+
 
 export const ADMIN_USER_ID = 'admin';
 
@@ -281,35 +276,7 @@ export const UI_STRINGS = {
     STATUS_PARTIAL: 'Partial',
     NO_RECORDS: 'No Records',
   },
-  ATTENDANCE: {
-    TITLE: 'Attendance',
-    SUBTITLE: 'Track and manage daily class attendance',
-    LOADING: 'Loading attendance...',
-    ERROR_LOAD: 'Failed to load attendance records.',
-    ERROR_SAVE: 'Failed to save attendance.',
-    SUCCESS_SAVE: 'Attendance saved successfully.',
-    MARK_ATTENDANCE: 'Mark Attendance',
-    CALENDAR_VIEW: 'Calendar View',
-    REPORTS: 'Reports',
-    SELECT_COURSE: 'Select Course',
-    SELECT_BATCH: 'Select Batch',
-    SELECT_DATE: 'Select Date',
-    MARK_ALL_PRESENT: 'Mark All Present',
-    MARK_ALL_ABSENT: 'Mark All Absent',
-    SUBMIT: 'Submit Attendance',
-    TH_STUDENT: 'Student',
-    TH_STATUS: 'Status',
-    TH_BATCH: 'Batch',
-    TH_PRESENT: 'Present',
-    TH_ABSENT: 'Absent',
-    TH_LATE: 'Late',
-    TH_EXCUSED: 'Excused',
-    TH_PERCENTAGE: '%',
-    EMPTY: 'No students found for this selection.',
-    EMPTY_CALENDAR: 'No attendance records found for this month.',
-    STAT_COURSE_AVG: 'Course Average',
-    STAT_STUDENTS: 'Total Students',
-  },
+
   PLACEMENTS: {
     TITLE: 'Success Stories',
     SUBTITLE: 'Track student placement records and success stories',
@@ -417,7 +384,7 @@ export const UI_STRINGS = {
     DASHBOARD: 'Dashboard',
     STUDENTS: 'Students',
     FEES: 'Fees',
-    ATTENDANCE: 'Attendance',
+
     EXAMS: 'Exams',
     PLACEMENTS: 'Success Stories',
     JOBS: 'Job Management',
@@ -491,7 +458,7 @@ export const UI_STRINGS = {
   },
   PROGRESS: {
     TITLE: 'Student Progress',
-    SUBTITLE: 'Monitor academic performance and attendance across all batches',
+    SUBTITLE: 'Monitor academic performance across all batches',
     LOADING: 'Loading progress data...',
     EMPTY: 'No progress records found. Update student performance to see data here.',
     VIEW_REPORT: 'View Full Report',

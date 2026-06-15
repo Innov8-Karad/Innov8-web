@@ -9,8 +9,7 @@ import {
     ExternalLink,
     TrendingUp,
     Clock,
-    PlayCircle,
-    Activity
+    PlayCircle
 } from 'lucide-react';
 import {
     BarChart,
@@ -25,8 +24,8 @@ import {
 } from 'recharts';
 import { UI_STRINGS } from '../constants';
 import { progressService } from '../services/progressService';
-import { attendanceService } from '../services/attendanceService';
-import type { StudentProgress, AttendanceRecord } from '../types';
+
+import type { StudentProgress } from '../types';
 import LoadingState from '../components/LoadingState';
 import Avatar from '../components/Avatar';
 import PageHeader from '../components/PageHeader';
@@ -56,8 +55,7 @@ export default function ProgressPage() {
     const navigate = useNavigate();
     const { showToast } = useToast();
     const [progressData, setProgressData] = useState<StudentProgress[]>([]);
-    const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
-    const [batchStats, setBatchStats] = useState<{ name: string; avgScore: number; avgAttendance: number; avgCompletion: number }[]>([]);
+    const [batchStats, setBatchStats] = useState<{ name: string; avgScore: number; avgCompletion: number }[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedBatch, setSelectedBatch] = useState('All');
@@ -66,7 +64,6 @@ export default function ProgressPage() {
     const [showEditModal, setShowEditModal] = useState(false);
     const [editingProgress, setEditingProgress] = useState<StudentProgress | null>(null);
     const [editForm, setEditForm] = useState({
-        attendancePercentage: 0,
         overallScore: 0,
     });
 
@@ -78,8 +75,7 @@ export default function ProgressPage() {
                 progressService.getBatchProgress()
             ]);
 
-            const allAttendance = await attendanceService.fetchAll();
-            setAttendanceRecords(allAttendance);
+
 
             setProgressData(data);
             setBatchStats(stats);
@@ -99,7 +95,6 @@ export default function ProgressPage() {
     const handleEdit = (student: StudentProgress) => {
         setEditingProgress(student);
         setEditForm({
-            attendancePercentage: student.attendancePercentage ?? 0,
             overallScore: student.overallScore ?? 0,
         });
         setShowEditModal(true);
@@ -138,19 +133,7 @@ export default function ProgressPage() {
     };
 
     const filteredData = useMemo(() => {
-        return progressData.map(p => {
-            const studentAttendance = attendanceRecords.filter(r => r.studentId === p.studentId);
-            const present = studentAttendance.filter(r => r.status === 'present').length;
-            const late = studentAttendance.filter(r => r.status === 'late').length;
-            const absent = studentAttendance.filter(r => r.status === 'absent').length;
-
-            const totalClasses = present + late + absent;
-            const realTimePercentage = totalClasses > 0
-                ? Math.round(((present + late) / totalClasses) * 100)
-                : p.attendancePercentage;
-
-            return { ...p, attendancePercentage: realTimePercentage };
-        }).filter(p => {
+        return progressData.filter(p => {
             const searchLower = searchTerm.toLowerCase();
             const matchesSearch =
                 (p.studentName || '').toLowerCase().includes(searchLower) ||
@@ -160,7 +143,7 @@ export default function ProgressPage() {
             const matchesBatch = selectedBatch === 'All' || p.batch === selectedBatch;
             return matchesSearch && matchesBatch;
         });
-    }, [progressData, attendanceRecords, searchTerm, selectedBatch]);
+    }, [progressData, searchTerm, selectedBatch]);
 
     const batchesList = useMemo(() => {
         const unique = Array.from(new Set(progressData.map(p => p.batch).filter((b): b is string => !!b)));
@@ -173,9 +156,7 @@ export default function ProgressPage() {
         const avgCompletion = total > 0
             ? Math.round(filteredData.reduce((sum, s) => sum + (s.overallProgress || 0), 0) / total)
             : 0;
-        const avgAttendance = total > 0
-            ? Math.round(filteredData.reduce((sum, s) => sum + (s.attendancePercentage || 0), 0) / total)
-            : 0;
+
         const now = new Date();
         const activeToday = filteredData.filter(s => {
             const lastActive = s.lastAccessed || s.updatedAt;
@@ -183,7 +164,7 @@ export default function ProgressPage() {
             const d = lastActive instanceof Date ? lastActive : new Date();
             return (now.getTime() - d.getTime()) < 86400000; // 24h
         }).length;
-        return { total, avgCompletion, avgAttendance, activeToday };
+        return { total, avgCompletion, activeToday };
     }, [filteredData]);
 
     if (loading && progressData.length === 0) return <LoadingState message={UI_STRINGS.PROGRESS.LOADING} />;
@@ -202,7 +183,7 @@ export default function ProgressPage() {
                 {[
                     { label: 'Total Students', value: summaryStats.total, icon: <Users size={20} />, color: 'var(--primary)', bg: 'rgba(99, 102, 241, 0.08)' },
                     { label: 'Avg Completion', value: `${summaryStats.avgCompletion}%`, icon: <CheckCircle2 size={20} />, color: '#10B981', bg: 'rgba(16, 185, 129, 0.08)' },
-                    { label: 'Avg Attendance', value: `${summaryStats.avgAttendance}%`, icon: <Activity size={20} />, color: '#F59E0B', bg: 'rgba(245, 158, 11, 0.08)' },
+
                     { label: 'Active Today', value: summaryStats.activeToday, icon: <Clock size={20} />, color: '#6366F1', bg: 'rgba(99, 102, 241, 0.08)' },
                 ].map((stat, i) => (
                     <div key={i} className="card" style={{
@@ -303,7 +284,7 @@ export default function ProgressPage() {
                 }}>
                     <div className="flex items-center gap-2 mb-6">
                         <TrendingUp className="text-success" size={20} />
-                        <h3 className="text-lg font-bold text-main">Avg Attendance & Completion (%)</h3>
+                        <h3 className="text-lg font-bold text-main">Avg Completion (%)</h3>
                     </div>
                     <div style={{ width: '100%', height: 350, display: 'flex', flexDirection: 'column' }}>
                         <div style={{ height: '300px', minHeight: '300px', position: 'relative' }}>
@@ -341,7 +322,7 @@ export default function ProgressPage() {
                                             }}
                                         />
                                         <Legend wrapperStyle={{ paddingTop: '20px' }} />
-                                        <Bar dataKey="avgAttendance" name="Attendance" fill="var(--primary)" radius={[0, 4, 4, 0]} barSize={20} />
+
                                         <Bar dataKey="avgCompletion" name="Completion Rate" fill="#10B981" radius={[0, 4, 4, 0]} barSize={20} />
                                     </BarChart>
                                 </ResponsiveContainer>
@@ -513,15 +494,7 @@ export default function ProgressPage() {
                     <p className="text-sm text-muted mb-4">Updating progress for <span className="text-text font-bold">{editingProgress?.studentName}</span></p>
 
                     <FormRow>
-                        <FormField label="Attendance (%)">
-                            <input
-                                type="number"
-                                min="0" max="100"
-                                value={editForm.attendancePercentage}
-                                onChange={(e) => setEditForm({ ...editForm, attendancePercentage: Number(e.target.value) })}
-                                required
-                            />
-                        </FormField>
+
                         <FormField label="Overall Score">
                             <input
                                 type="number"
