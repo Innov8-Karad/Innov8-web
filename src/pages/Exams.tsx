@@ -16,6 +16,7 @@ import { FormField, FormRow, FormActions } from '../components/FormField';
 import { useToast } from '../hooks/useToast';
 import CustomSelect from '../components/CustomSelect';
 import CustomDatePicker from '../components/CustomDatePicker';
+import CustomTimePicker from '../components/CustomTimePicker';
 
 export default function ExamsPage() {
     const { showToast } = useToast();
@@ -368,17 +369,16 @@ export default function ExamsPage() {
                                             />
                                         </div>
                                         <div className="att-time-input-wrapper">
-                                            <input 
-                                                type="time" 
-                                                required 
-                                                value={formData.startTime.split('T')[1] || formData.scheduledDate.split('T')[1] || ''} 
-                                                onChange={e => {
-                                                    const time = e.target.value;
-                                                    const date = formData.startTime.split('T')[0] || formData.scheduledDate.split('T')[0] || new Date().toISOString().split('T')[0];
-                                                    setFormData({ ...formData, startTime: `${date}T${time}`, scheduledDate: `${date}T${time}` });
-                                                }} 
-                                            />
-                                        </div>
+                                             <CustomTimePicker 
+                                                 required 
+                                                 value={formData.startTime.split('T')[1] || formData.scheduledDate.split('T')[1] || ''} 
+                                                 onChange={e => {
+                                                     const time = e.target.value;
+                                                     const date = formData.startTime.split('T')[0] || formData.scheduledDate.split('T')[0] || new Date().toISOString().split('T')[0];
+                                                     setFormData({ ...formData, startTime: `${date}T${time}`, scheduledDate: `${date}T${time}` });
+                                                 }} 
+                                             />
+                                         </div>
                                     </div>
                                     <div className="att-quick-options">
                                         <button 
@@ -422,8 +422,7 @@ export default function ExamsPage() {
                                             />
                                         </div>
                                         <div className="att-time-input-wrapper">
-                                            <input 
-                                                type="time" 
+                                            <CustomTimePicker 
                                                 required 
                                                 value={formData.endTime.split('T')[1] || ''} 
                                                 onChange={e => {

@@ -1,13 +1,13 @@
-import { useState, useEffect, useContext, useMemo, useRef } from 'react';
+import { useState, useEffect, useContext, useMemo } from 'react';
 import { 
   Briefcase, MapPin, DollarSign, Search, Pencil, Trash2, 
   ArrowLeft, Users, Building2, Filter, Plus, Calendar, 
-  ChevronDown, ChevronRight, AlertTriangle
+  ChevronRight, AlertTriangle
 } from 'lucide-react';
 import { jobService } from '../services/jobService';
-import { batchService } from '../services/batchService';
+import { userService } from '../services/userService';
 import { ToastContext } from '../contexts/ToastContext';
-import type { Job, JobApplication, JobType, Batch } from '../types';
+import type { Job, JobApplication, JobType, User } from '../types';
 import { UI_STRINGS } from '../constants';
 import LoadingState from '../components/LoadingState';
 import ErrorAlert from '../components/ErrorAlert';
@@ -15,16 +15,24 @@ import Modal from '../components/Modal';
 import { FormField, FormRow, FormActions } from '../components/FormField';
 import CustomSelect from '../components/CustomSelect';
 import CustomDatePicker from '../components/CustomDatePicker';
+import CustomTimePicker from '../components/CustomTimePicker';
 
 type ViewMode = 'list' | 'detail';
 
 const JOB_TYPE_OPTIONS: JobType[] = ['Full-time', 'Internship'];
-function formatDate(date: unknown): string {
+function formatDate(date: unknown, includeTime = false): string {
   if (!date) return '—';
   const hasSeconds = typeof date === 'object' && date !== null && 'seconds' in date;
   const ms = hasSeconds ? (date as { seconds: number }).seconds * 1000 : (date as string | number | Date);
   const dObj = new Date(ms);
-  return !isNaN(dObj.getTime()) ? dObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
+  if (isNaN(dObj.getTime())) return '—';
+  
+  const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric', year: 'numeric' };
+  if (includeTime) {
+    options.hour = '2-digit';
+    options.minute = '2-digit';
+  }
+  return dObj.toLocaleDateString('en-US', options);
 }
 
 export default function JobsPage() {
@@ -55,10 +63,9 @@ export default function JobsPage() {
   const [editingJobId, setEditingJobId] = useState<string | null>(null);
   const [jobToDelete, setJobToDelete] = useState<string | null>(null);
 
-  // Batches state & multi-select state
-  const [availableBatches, setAvailableBatches] = useState<Batch[]>([]);
-  const [isBatchDropdownOpen, setIsBatchDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  // Student search state
+  const [allStudents, setAllStudents] = useState<User[]>([]);
+  const [studentSearchQuery, setStudentSearchQuery] = useState('');
 
   // Job form
   const [jobForm, setJobForm] = useState<{
@@ -69,7 +76,7 @@ export default function JobsPage() {
     jobType: JobType;
     requirements: string;
     description: string;
-    eligibleBatches: string[];
+    eligibleStudentIds: string[];
     applyLink: string;
     deadline: string;
     isActive: boolean;
@@ -81,29 +88,23 @@ export default function JobsPage() {
     jobType: 'Full-time',
     requirements: '',
     description: '',
-    eligibleBatches: [],
+    eligibleStudentIds: [],
     applyLink: '',
     deadline: '',
     isActive: true,
   });
 
-  // Subscribe to batches
+  // Fetch all students for targeting
   useEffect(() => {
-    const unsub = batchService.subscribeToBatches((data) => {
-      setAvailableBatches(data);
-    });
-    return unsub;
-  }, []);
-
-  // Click outside batch dropdown handler
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsBatchDropdownOpen(false);
+    const loadStudents = async () => {
+      try {
+        const users = await userService.fetchUsers();
+        setAllStudents(users.filter(u => u.role !== 'admin'));
+      } catch (err) {
+        console.error('Failed to load students:', err);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    loadStudents();
   }, []);
 
   // Subscribe to jobs
@@ -183,9 +184,9 @@ export default function JobsPage() {
     setJobForm({
       companyName: '', role: '', location: '', salary: '',
       jobType: 'Full-time', requirements: '', description: '',
-      eligibleBatches: [], applyLink: '', deadline: '', isActive: true,
+      eligibleStudentIds: [], applyLink: '', deadline: '', isActive: true,
     });
-    setIsBatchDropdownOpen(false);
+    setStudentSearchQuery('');
     setShowJobModal(true);
   };
 
@@ -195,7 +196,13 @@ export default function JobsPage() {
       const hasSeconds = typeof d === 'object' && d !== null && 'seconds' in d;
       const ms = hasSeconds ? (d as { seconds: number }).seconds * 1000 : (d as string | number | Date);
       const dateObj = new Date(ms);
-      return !isNaN(dateObj.getTime()) ? dateObj.toISOString().split('T')[0] : '';
+      if (isNaN(dateObj.getTime())) return '';
+      const year = dateObj.getFullYear();
+      const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const day = String(dateObj.getDate()).padStart(2, '0');
+      const hours = String(dateObj.getHours()).padStart(2, '0');
+      const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+      return `${year}-${month}-${day}T${hours}:${minutes}`;
     };
 
     setEditingJobId(job.id);
@@ -207,23 +214,31 @@ export default function JobsPage() {
       jobType: job.jobType,
       requirements: (job.requirements || []).join('\n'),
       description: job.description || '',
-      eligibleBatches: job.eligibleBatches || [],
+      eligibleStudentIds: job.eligibleStudentIds || [],
       applyLink: job.applyLink || '',
       deadline: getDeadlineValue(job.deadline),
       isActive: job.isActive,
     });
-    setIsBatchDropdownOpen(false);
+    setStudentSearchQuery('');
     setShowJobModal(true);
   };
 
-  const handleToggleBatch = (batchName: string) => {
+  const handleToggleStudent = (studentId: string) => {
     setJobForm(prev => {
-      const current = prev.eligibleBatches || [];
-      const updated = current.includes(batchName)
-        ? current.filter(b => b !== batchName)
-        : [...current, batchName];
-      return { ...prev, eligibleBatches: updated };
+      const current = prev.eligibleStudentIds || [];
+      const updated = current.includes(studentId)
+        ? current.filter(id => id !== studentId)
+        : [...current, studentId];
+      return { ...prev, eligibleStudentIds: updated };
     });
+  };
+
+  const isJobExpired = (job: Job): boolean => {
+    if (!job.deadline) return false;
+    const hasSeconds = typeof job.deadline === 'object' && job.deadline !== null && 'seconds' in job.deadline;
+    const ms = hasSeconds ? (job.deadline as unknown as { seconds: number }).seconds * 1000 : (job.deadline as unknown as string | number | Date);
+    const deadlineDate = new Date(ms);
+    return new Date() > deadlineDate;
   };
 
   const handleSaveJob = async (e: React.FormEvent) => {
@@ -238,7 +253,7 @@ export default function JobsPage() {
         jobType: jobForm.jobType,
         requirements: jobForm.requirements.split('\n').map(r => r.trim()).filter(Boolean),
         description: jobForm.description.trim(),
-        eligibleBatches: jobForm.eligibleBatches || [],
+        eligibleStudentIds: jobForm.eligibleStudentIds || [],
         isActive: jobForm.isActive,
         postedDate: new Date(),
       };
@@ -324,7 +339,7 @@ export default function JobsPage() {
               <div className="meta-tags">
                 <span className="meta-tag"><MapPin size={14} /> {selectedJob.location}</span>
                 <span className="meta-tag"><DollarSign size={14} /> {selectedJob.salary}</span>
-                <span className="meta-tag"><Calendar size={14} /> Deadline: {formatDate(selectedJob.deadline)}</span>
+                <span className="meta-tag"><Calendar size={14} /> Deadline: {formatDate(selectedJob.deadline, true)}</span>
               </div>
             </div>
             <div className="hero-badges">
@@ -507,14 +522,19 @@ export default function JobsPage() {
                 </div>
                 <div className="body-item">
                   <Calendar size={14} />
-                  <span>Due {formatDate(job.deadline)}</span>
+                  <span>Due {formatDate(job.deadline, true)}</span>
                 </div>
               </div>
 
               <div className="job-card-footer">
-                <span className={`tag-mini ${job.jobType === 'Full-time' ? 'full' : 'intern'}`}>
-                  {job.jobType}
-                </span>
+                <div className="flex gap-sm items-center">
+                  <span className={`tag-mini ${job.jobType === 'Full-time' ? 'full' : 'intern'}`}>
+                    {job.jobType}
+                  </span>
+                  {isJobExpired(job) && (
+                    <span className="tag-mini expired">Expired</span>
+                  )}
+                </div>
                 <div className="footer-actions">
                   <button className="btn-icon-circular delete" onClick={(e) => { e.stopPropagation(); setJobToDelete(job.id); setShowDeleteModal(true); }} title="Delete">
                     <Trash2 size={16} />
@@ -794,6 +814,7 @@ export default function JobsPage() {
         }
         .tag-mini.full { background: rgba(16, 185, 129, 0.1); color: #10B981; }
         .tag-mini.intern { background: rgba(59, 130, 246, 0.1); color: #3B82F6; }
+        .tag-mini.expired { background: rgba(239, 68, 68, 0.1); color: #EF4444; }
 
         .footer-actions { display: flex; gap: 0.5rem; }
         .btn-icon-circular {
@@ -1028,75 +1049,92 @@ export default function JobsPage() {
                 </select>
               </FormField>
               <FormField label="Application Deadline">
-                <CustomDatePicker value={jobForm.deadline} onChange={e => setJobForm({ ...jobForm, deadline: e.target.value })} />
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <div style={{ flex: 1 }}>
+                    <CustomDatePicker 
+                      value={jobForm.deadline.split('T')[0] || ''} 
+                      onChange={e => {
+                        const date = e.target.value;
+                        const time = jobForm.deadline.split('T')[1] || '23:59';
+                        setJobForm({ ...jobForm, deadline: date ? `${date}T${time}` : '' });
+                      }} 
+                    />
+                  </div>
+                  <div style={{ width: '120px' }}>
+                    <CustomTimePicker 
+                      value={jobForm.deadline.split('T')[1] || ''} 
+                      onChange={e => {
+                        const time = e.target.value;
+                        const date = jobForm.deadline.split('T')[0] || new Date().toISOString().split('T')[0];
+                        setJobForm({ ...jobForm, deadline: `${date}T${time}` });
+                      }} 
+                    />
+                  </div>
+                </div>
               </FormField>
             </FormRow>
-            <FormField label="Key Requirements (One per line)">
-              <textarea rows={3} required placeholder="React, Node.js, 8+ CGPA..." value={jobForm.requirements} onChange={e => setJobForm({ ...jobForm, requirements: e.target.value })} />
-            </FormField>
             <FormField label="Full Description">
               <textarea rows={2} placeholder="Detailed role responsibilities..." value={jobForm.description} onChange={e => setJobForm({ ...jobForm, description: e.target.value })} />
             </FormField>
             <FormRow>
-              <FormField label="Eligible Batches">
-                <div className="batch-multiselect-container" ref={dropdownRef}>
-                  <div 
-                    className={`batch-multiselect-trigger ${isBatchDropdownOpen ? 'active' : ''}`}
-                    onClick={() => setIsBatchDropdownOpen(!isBatchDropdownOpen)}
-                  >
-                    <div className="batch-multiselect-selected">
-                      {!jobForm.eligibleBatches || jobForm.eligibleBatches.length === 0 ? (
-                        <span className="placeholder">Select Batches</span>
-                      ) : (
-                        jobForm.eligibleBatches.map(batchName => (
-                          <span key={batchName} className="batch-pill">
-                            {batchName}
-                            <button
-                              type="button"
-                              className="batch-pill-remove"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleToggleBatch(batchName);
-                              }}
+              <FormField label="Target Students">
+                <div className="student-picker-container">
+                  {jobForm.eligibleStudentIds && jobForm.eligibleStudentIds.length > 0 && (
+                    <div className="selected-students-chips">
+                      {jobForm.eligibleStudentIds.map(id => {
+                        const student = allStudents.find(s => s.id === id);
+                        return (
+                          <div key={id} className="student-chip">
+                            {student ? student.name : id}
+                            <div
+                              className="student-chip-remove"
+                              onClick={(e) => { e.stopPropagation(); handleToggleStudent(id); }}
                             >
                               &times;
-                            </button>
-                          </span>
-                        ))
-                      )}
-                    </div>
-                    <ChevronDown size={16} className={`chevron ${isBatchDropdownOpen ? 'rotate' : ''}`} />
-                  </div>
-
-                  {isBatchDropdownOpen && (
-                    <div className="batch-multiselect-dropdown">
-                      {availableBatches.length === 0 ? (
-                        <div className="batch-multiselect-option empty">No batches found</div>
-                      ) : (
-                        availableBatches.map((batch) => {
-                          const isSelected = (jobForm.eligibleBatches || []).includes(batch.name);
-                          return (
-                            <div
-                              key={batch.id}
-                              className={`batch-multiselect-option ${isSelected ? 'selected' : ''}`}
-                              onClick={() => handleToggleBatch(batch.name)}
-                            >
-                              <input
-                                type="checkbox"
-                                checked={isSelected}
-                                onChange={() => {}}
-                                className="batch-option-checkbox"
-                              />
-                              <span className="batch-option-name">{batch.name}</span>
-                              {batch.batchCode && (
-                                <span className="batch-option-code">({batch.batchCode})</span>
-                              )}
                             </div>
-                          );
-                        })
-                      )}
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
+                  <input
+                    type="text"
+                    className="student-search-input"
+                    placeholder={UI_STRINGS.JOBS.FORM_STUDENT_SEARCH_PLACEHOLDER}
+                    value={studentSearchQuery}
+                    onChange={(e) => setStudentSearchQuery(e.target.value)}
+                  />
+                  <div className="student-list" style={{ maxHeight: '200px', overflowY: 'auto', marginTop: '8px' }}>
+                    {allStudents
+                      .filter(s =>
+                        s.name.toLowerCase().includes(studentSearchQuery.toLowerCase()) ||
+                        s.email.toLowerCase().includes(studentSearchQuery.toLowerCase())
+                      )
+                      .map(student => (
+                        <div
+                          key={student.id}
+                          className="student-list-item"
+                          onClick={() => handleToggleStudent(student.id)}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={(jobForm.eligibleStudentIds || []).includes(student.id)}
+                            readOnly
+                          />
+                          <div className="student-list-info" style={{ marginLeft: '8px' }}>
+                            <div className="student-list-name">{student.name}</div>
+                            <div className="student-list-meta">
+                              <span>{student.batch}</span>
+                              <span>&bull;</span>
+                              <span>{student.email}</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    {allStudents.length === 0 && (
+                      <div className="text-muted text-sm text-center py-2">No students found</div>
+                    )}
+                  </div>
                 </div>
               </FormField>
               <FormField label="External Link (Optional)">

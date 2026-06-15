@@ -67,8 +67,8 @@ export const jobSchema = z.object({
   jobType: z.enum(['Full-time', 'Internship']),
   applyLink: z.string().url('Must be a valid URL'),
   deadline: z.date().optional(),
-  eligibleBatches: z.array(z.string()).min(1, 'Select at least one eligible batch'),
-  requirements: z.string().min(10, 'Requirements are too short'),
+  eligibleStudentIds: z.array(z.string()).min(1, 'Select at least one student'),
+  requirements: z.array(z.string()).optional(),
 });
 
 export type JobFormData = z.infer<typeof jobSchema>;

@@ -127,8 +127,8 @@ describe('Zod Schemas', () => {
         salary: '10 LPA',
         jobType: 'Full-time',
         applyLink: 'https://techcorp.com/apply',
-        eligibleBatches: ['2024'],
-        requirements: 'Must know React and Node.js'
+        eligibleStudentIds: ['user123'],
+        requirements: ['Must know React and Node.js']
       };
       expect(jobSchema.safeParse(valid).success).toBe(true);
     });

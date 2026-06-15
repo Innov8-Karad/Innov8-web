@@ -380,7 +380,7 @@ export interface Job {
     requirements: string[];
     jobType: JobType;
     description?: string;
-    eligibleBatches?: string[];
+    eligibleStudentIds?: string[];
     applyLink?: string;
     postedDate: Date;
     deadline?: Date;
