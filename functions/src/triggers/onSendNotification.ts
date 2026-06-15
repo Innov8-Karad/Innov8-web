@@ -57,6 +57,39 @@ export const onSendNotification = onCall(
       );
     }
 
+    // ── Prevent Duplicate/Replay Attacks (In-Memory Validation to avoid composite index) ──
+    const recentNotifSnap = await db.collection("notifications")
+      .where("sentBy", "==", callerUid)
+      .where("title", "==", data.title)
+      .where("body", "==", data.body)
+      .limit(5)
+      .get();
+
+    if (!recentNotifSnap.empty) {
+      const nowMs = Date.now();
+      let isDuplicate = false;
+      recentNotifSnap.forEach((d) => {
+        const notifData = d.data();
+        const createdAt = notifData.createdAt;
+        const recentTime = createdAt && typeof createdAt.toMillis === "function"
+          ? createdAt.toMillis()
+          : (createdAt instanceof Date ? createdAt.getTime() : 0);
+
+        if (recentTime > 0 && (nowMs - recentTime) < 15000) {
+          isDuplicate = true;
+        }
+      });
+
+      if (isDuplicate) {
+        console.log(`[onSendNotification] Duplicate request detected from admin ${callerUid} for "${data.title}" within 15s. Ignoring.`);
+        return {
+          success: true,
+          message: "Duplicate request ignored.",
+          tokenCount: 0,
+        };
+      }
+    }
+
     // ── Fetch Tokens & Student IDs ──
     let tokens: string[] = [];
     let resolvedStudentIds: string[] = [];
