@@ -31,11 +31,12 @@ export default function CustomDatePicker({
             const rect = containerRef.current.getBoundingClientRect();
             const spaceOnRight = window.innerWidth - rect.right;
             const spaceOnLeft = rect.left;
-            if (spaceOnRight < 270 && spaceOnLeft > spaceOnRight) {
-                setAlignRight(true);
-            } else {
-                setAlignRight(false);
-            }
+            const shouldAlign = spaceOnRight < 270 && spaceOnLeft > spaceOnRight;
+            
+            const handle = requestAnimationFrame(() => {
+                setAlignRight(shouldAlign);
+            });
+            return () => cancelAnimationFrame(handle);
         }
     }, [isOpen]);
 
@@ -43,12 +44,13 @@ export default function CustomDatePicker({
     const parsedDate = value ? new Date(value) : null;
     const [viewDate, setViewDate] = useState(parsedDate ? new Date(parsedDate) : new Date());
 
-    // Update internal view date when external value changes
-    useEffect(() => {
+    const [prevValue, setPrevValue] = useState(value);
+    if (value !== prevValue) {
+        setPrevValue(value);
         if (value) {
             setViewDate(new Date(value));
         }
-    }, [value]);
+    }
 
     // Close calendar on clicking outside
     useEffect(() => {

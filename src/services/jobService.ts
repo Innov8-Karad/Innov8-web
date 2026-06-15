@@ -4,6 +4,7 @@ import {
   addDoc,
   updateDoc,
   deleteDoc,
+  getDocs,
   onSnapshot,
   query,
   orderBy,
@@ -60,10 +61,14 @@ export const jobService = {
     });
   },
 
-  /**
-   * Delete a job posting.
-   */
   async deleteJob(id: string): Promise<void> {
+    // 1. Delete all applications in subcollection
+    const appsRef = collection(db, COLLECTIONS.JOBS, id, 'applications');
+    const appsSnap = await getDocs(appsRef);
+    const deletePromises = appsSnap.docs.map(doc => deleteDoc(doc.ref));
+    await Promise.all(deletePromises);
+
+    // 2. Delete the job doc
     const docRef = doc(db, COLLECTIONS.JOBS, id);
     await deleteDoc(docRef);
   },
