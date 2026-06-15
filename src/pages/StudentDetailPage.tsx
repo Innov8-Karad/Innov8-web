@@ -7,7 +7,7 @@ import {
     BookOpen, 
     CheckCircle2, 
     Circle,
-    User,
+
     Activity
 } from 'lucide-react';
 import { progressService } from '../services/progressService';
@@ -128,17 +128,7 @@ export default function StudentDetailPage() {
 
             {/* 3-Column Metric Cards */}
             <div className="std-metrics-grid">
-                {/* Attendance */}
-                <div className="std-metric-card">
-                    <div className="std-metric-body">
-                        <span className="std-metric-label">Attendance</span>
-                        <span className="std-metric-value">{student.attendancePercentage}%</span>
-                    </div>
-                    <div className="std-metric-icon std-color-blue">
-                        <User size={24} />
-                    </div>
-                    <div className="std-metric-bar std-bar-blue" />
-                </div>
+
 
                 {/* Overall Score */}
                 <div className="std-metric-card">
@@ -246,17 +236,7 @@ export default function StudentDetailPage() {
                             </span>
                         </div>
 
-                        <div className="std-module-item">
-                            <div className="std-module-left">
-                                <div className="std-module-check" style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
-                                    <Activity size={14} />
-                                </div>
-                                <span className="std-module-name">Attendance Rate</span>
-                            </div>
-                            <span className="std-module-index" style={{ color: '#10b981', fontWeight: 'bold' }}>
-                                {student.attendancePercentage}%
-                            </span>
-                        </div>
+
 
                         <div className="std-module-item">
                             <div className="std-module-left">

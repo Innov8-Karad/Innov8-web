@@ -52,11 +52,8 @@ export const progressService = {
           ? Math.min(Math.round((completedItems / totalItems) * 100), 100) 
           : 0;
 
-        // Attendance Metric
-        const attendancePercentage = Number(progressData.attendancePercentage || progressData.attendance || 0);
-
-        // Overall Integrated Progress: (Completion + Attendance) / 2
-        const overallIntegratedProgress = Math.round((completionPercentage + attendancePercentage) / 2);
+        // Overall Integrated Progress is now just the Completion Percentage
+        const overallIntegratedProgress = completionPercentage;
 
 
 
@@ -78,7 +75,7 @@ export const progressService = {
           studentName: userData.name || 'Unknown Student',
           email: userData.email || '',
           batch: userData.batch || 'Unassigned',
-          attendancePercentage,
+
           overallScore: Number(progressData.overallScore || 0),
           completedVideoIds,
           completedNoteIds,
@@ -113,15 +110,14 @@ export const progressService = {
 
   async getBatchProgress() {
     const progress = await this.fetchProgress();
-    const batches: Record<string, { totalScore: number; totalAttendance: number; totalCompletion: number; count: number }> = {};
+    const batches: Record<string, { totalScore: number; totalCompletion: number; count: number }> = {};
 
     progress.forEach(p => {
       const b = p.batch || 'Unassigned';
       if (!batches[b]) {
-        batches[b] = { totalScore: 0, totalAttendance: 0, totalCompletion: 0, count: 0 };
+        batches[b] = { totalScore: 0, totalCompletion: 0, count: 0 };
       }
       batches[b].totalScore += p.overallScore ?? 0;
-      batches[b].totalAttendance += p.attendancePercentage ?? 0;
       batches[b].totalCompletion += p.overallProgress ?? 0;
       batches[b].count += 1;
     });
@@ -129,7 +125,6 @@ export const progressService = {
     return Object.entries(batches).map(([name, stats]) => ({
       name,
       avgScore: Math.round(stats.totalScore / stats.count),
-      avgAttendance: Math.round(stats.totalAttendance / stats.count),
       avgCompletion: Math.round(stats.totalCompletion / stats.count)
     }));
   },
@@ -153,30 +148,23 @@ export const progressService = {
     const lineSpacing = 10;
     
     doc.setFont('helvetica', 'bold');
-    doc.text(`Student Name:`, 20, startY);
-    doc.text(`Batch:`, 20, startY + lineSpacing);
-    doc.text(`Attendance:`, 20, startY + lineSpacing * 2);
-    doc.text(`Overall Score:`, 20, startY + lineSpacing * 3);
+    doc.text(`Overall Score:`, 20, startY + lineSpacing * 2);
     doc.text(student.studentName || 'Unknown', 60, startY);
     doc.text(student.batch || 'N/A', 60, startY + lineSpacing);
-    doc.text(`${student.attendancePercentage ?? 0}%`, 60, startY + lineSpacing * 2);
-    doc.text(`${student.overallScore ?? 0}`, 60, startY + lineSpacing * 3);
+    doc.text(`${student.overallScore ?? 0}`, 60, startY + lineSpacing * 2);
     
     // Additional Metrics
     doc.setFont('helvetica', 'bold');
-    doc.text(`Course Completion:`, 20, startY + lineSpacing * 4);
-    doc.text(`Integrated Progress:`, 20, startY + lineSpacing * 5);
+    doc.text(`Course Completion:`, 20, startY + lineSpacing * 3);
+    doc.text(`Integrated Progress:`, 20, startY + lineSpacing * 4);
     
     doc.setFont('helvetica', 'normal');
-    doc.text(`${student.courseCompletionPercentage ?? 0}%`, 60, startY + lineSpacing * 4);
-    doc.text(`${student.overallProgress ?? 0}%`, 60, startY + lineSpacing * 5);
+    doc.text(`${student.courseCompletionPercentage ?? 0}%`, 60, startY + lineSpacing * 3);
+    doc.text(`${student.overallProgress ?? 0}%`, 60, startY + lineSpacing * 4);
     
     // Activity Summary
     doc.setFont('helvetica', 'bold');
-    doc.text(`Learning Activity:`, 20, startY + lineSpacing * 7);
-    doc.setFont('helvetica', 'normal');
-    
-    const activityY = startY + lineSpacing * 8;
+    const activityY = startY + lineSpacing * 6;
     doc.text(`• Videos Watched: ${student.completedVideoIds?.length || 0}`, 25, activityY);
     doc.text(`• Tasks Completed: ${student.completedAssignmentIds?.length || 0}`, 25, activityY + 7);
     doc.text(`• Resources Read: ${student.completedNoteIds?.length || 0}`, 25, activityY + 14);

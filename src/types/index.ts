@@ -416,8 +416,7 @@ export interface StudentProgress {
     profilePhoto?: string;
     overallProgress?: number;
     courseCompletionPercentage?: number;
-    attendance?: number;
-    attendancePercentage?: number;   // Web alias
+
     overallScore?: number;
     completedVideoIds?: string[];    // Tracks completed video resource IDs
     completedNoteIds?: string[];     // Tracks completed note/link resource IDs
@@ -428,24 +427,9 @@ export interface StudentProgress {
     updatedAt?: { seconds: number; nanoseconds: number } | Date;
 }
 
-// ─── Attendance ──────────────────────────────────────────────────────────────
 
-export type AttendanceStatus = 'present' | 'absent' | 'late' | 'excused';
 
-export interface AttendanceRecord {
-    id: string;
-    studentId: string;
-    studentName: string;
-    studentEmail: string;
-    courseId?: string;
-    courseName?: string;
-    batchId: string;
-    date: Date;
-    status: AttendanceStatus;
-    markedBy: string;
-    markedAt: Date;
-    notes?: string;
-}
+
 
 // ─── Interviews ──────────────────────────────────────────────────────────────
 

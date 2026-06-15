@@ -21,7 +21,7 @@ const AnnouncementsPage = React.lazy(() => import('./pages/Announcements'));
 const CoursesPage = React.lazy(() => import('./pages/Courses'));
 const PlacementsPage = React.lazy(() => import('./pages/Placements'));
 const ProgressPage = React.lazy(() => import('./pages/Progress'));
-const AttendancePage = React.lazy(() => import('./pages/Attendance'));
+
 const StudentDetailPage = React.lazy(() => import('./pages/StudentDetailPage'));
 const ExamResultsPage = React.lazy(() => import('./pages/ExamResults'));
 const JobsPage = React.lazy(() => import('./pages/JobsPage'));
@@ -78,7 +78,7 @@ function App() {
                   <Route path="/courses" element={<PrivateRoute><Layout><CoursesPage /></Layout></PrivateRoute>} />
                   <Route path="/placements" element={<PrivateRoute><Layout><PlacementsPage /></Layout></PrivateRoute>} />
                   <Route path="/progress" element={<PrivateRoute><Layout><ProgressPage /></Layout></PrivateRoute>} />
-                  <Route path="/attendance" element={<PrivateRoute><Layout><AttendancePage /></Layout></PrivateRoute>} />
+
                   <Route path="/progress/:id" element={<PrivateRoute><Layout><StudentDetailPage /></Layout></PrivateRoute>} />
                   <Route path="/exam-results" element={<PrivateRoute><Layout><ExamResultsPage /></Layout></PrivateRoute>} />
                   <Route path="/jobs" element={<PrivateRoute><Layout><JobsPage /></Layout></PrivateRoute>} />
