@@ -223,8 +223,9 @@ export default function PlacementTallyPage() {
 
             const { totalFee, paidFee, remainingFee } = getStudentFees(student);
 
-            const headers = ['Initial Total Payable', 'Total Paid', 'Remaining Payable'];
+            const headers = ['Student Name', 'Initial Total Payable', 'Total Paid', 'Remaining Payable'];
             const row = [
+                escapeCSV(student.name),
                 escapeCSV(`₹${totalFee.toLocaleString()}`),
                 escapeCSV(`₹${paidFee.toLocaleString()}`),
                 escapeCSV(`₹${remainingFee.toLocaleString()}`)

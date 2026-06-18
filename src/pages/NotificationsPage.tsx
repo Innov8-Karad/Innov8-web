@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Send, Clock, Users, Radio, X, Trash2 } from 'lucide-react';
 import { userService } from '../services/userService';
 import { announcementService } from '../services/announcementService';
+import { batchService } from '../services/batchService';
 import {
     sendNotification,
     fetchNotificationHistory,
@@ -34,6 +35,7 @@ export default function NotificationsPage() {
     const [history, setHistory] = useState<NotificationRecord[]>([]);
     const [students, setStudents] = useState<User[]>([]);
     const [uniqueBatches, setUniqueBatches] = useState<string[]>([]);
+    const [batchMap, setBatchMap] = useState<Record<string, string>>({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -47,14 +49,19 @@ export default function NotificationsPage() {
             try {
                 setLoading(true);
                 setError(null);
-                const [historyData, usersData, batches] = await Promise.all([
+                const [historyData, usersData, batches, allBatches] = await Promise.all([
                     fetchNotificationHistory(),
                     userService.fetchUsers(),
                     announcementService.fetchUniqueBatches(),
+                    batchService.fetchBatches(),
                 ]);
                 setHistory(historyData);
                 setStudents(usersData.filter(u => u.role !== 'admin'));
                 setUniqueBatches(batches);
+                // Build a map of batchId -> batchName for resolving IDs in history
+                const map: Record<string, string> = {};
+                allBatches.forEach(b => { map[b.id] = b.name; });
+                setBatchMap(map);
             } catch (err) {
                 console.error('Error loading notification data:', err);
                 setError(UI_STRINGS.NOTIFICATIONS.ERROR_LOAD);
@@ -153,9 +160,11 @@ export default function NotificationsPage() {
     const getTargetLabel = (record: NotificationRecord): string => {
         if (record.targetAudience === 'all') return 'All Students';
         if (record.targetAudience === 'batch') {
-            return record.targetBatches.length
-                ? record.targetBatches.join(', ')
-                : 'All Batches';
+            if (!record.targetBatches.length) return 'All Batches';
+            // Resolve batch IDs to names using the batchMap; fall back to the raw value
+            return record.targetBatches
+                .map(b => batchMap[b] || b)
+                .join(', ');
         }
         return `${record.targetStudentIds.length} student(s)`;
     };
