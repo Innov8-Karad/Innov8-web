@@ -473,14 +473,7 @@ export default function CoursePurchasesPage() {
                                                     <strong>Requested:</strong> {formatDate(request.purchasedAt)}
                                                 </span>
                                             </div>
-                                            {request.transactionId && (
-                                                <div className="flex items-center gap-sm">
-                                                    <CreditCard size={14} style={{ color: 'var(--text-secondary)', flexShrink: 0 }} />
-                                                    <span style={{ color: 'var(--text-secondary)' }}>
-                                                        <strong>TXN ID:</strong> {request.transactionId}
-                                                    </span>
-                                                </div>
-                                            )}
+
                                         </div>
 
                                         {/* Payment Screenshot Preview */}
@@ -837,7 +830,7 @@ export default function CoursePurchasesPage() {
             >
                 <div style={{ marginTop: '16px' }}>
                     <p style={{ margin: 0, lineHeight: '1.5', color: 'var(--text-secondary)' }}>
-                        Are you sure you want to remove this purchase request record? This action will not affect course access, but it will remove the purchase history from this dashboard.
+                        Are you sure you want to remove this purchase request record? This will revoke the student's course access, but their course progress history will be preserved.
                     </p>
                     <div className="flex justify-end gap-2" style={{ marginTop: '20px' }}>
                         <button
