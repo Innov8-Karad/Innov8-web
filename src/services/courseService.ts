@@ -125,7 +125,12 @@ export const courseService = {
     const q = query(collection(db, COLLECTIONS.COURSES, courseId, 'resources'));
     return onSnapshot(q, (snapshot) => {
       const resources = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CourseResource));
-      callback(resources);
+      const sorted = [...resources].sort((a, b) => {
+        const timeA = a.createdAt?.seconds || a.createdAt?.toMillis?.() || (a.createdAt instanceof Date ? a.createdAt.getTime() : 0);
+        const timeB = b.createdAt?.seconds || b.createdAt?.toMillis?.() || (b.createdAt instanceof Date ? b.createdAt.getTime() : 0);
+        return timeA - timeB;
+      });
+      callback(sorted);
     }, (error) => {
       console.error("Error subscribing to resources:", error);
       callback([]);
