@@ -69,6 +69,8 @@ export default function CertificationsPage() {
   const [selectedCert, setSelectedCert] = useState<Certificate | null>(null);
   const [examIdToDelete, setExamIdToDelete] = useState<string | null>(null);
   const [editingExamId, setEditingExamId] = useState<string | null>(null);
+  const [certIdToDelete, setCertIdToDelete] = useState<string | null>(null);
+  const [showDeleteCertModal, setShowDeleteCertModal] = useState(false);
 
   // Form State
   const initialExamState = {
@@ -240,6 +242,24 @@ export default function CertificationsPage() {
     } catch (err) {
       console.error("Error deleting exam:", err);
       showToast("Failed to delete exam", "error");
+    }
+  };
+
+  const handleConfirmDeleteCert = (id: string) => {
+    setCertIdToDelete(id);
+    setShowDeleteCertModal(true);
+  };
+
+  const handleDeleteCert = async () => {
+    if (!certIdToDelete) return;
+    try {
+      await certificationService.deleteCertificate(certIdToDelete);
+      showToast("Certificate deleted successfully", "success");
+      setShowDeleteCertModal(false);
+      loadAllData();
+    } catch (err) {
+      console.error("Error deleting certificate:", err);
+      showToast("Failed to delete certificate", "error");
     }
   };
 
@@ -676,13 +696,21 @@ export default function CertificationsPage() {
                         <td>
                           {cert.issuedAt ? new Date(cert.issuedAt).toLocaleDateString() : 'N/A'}
                         </td>
-                        <td>
+                        <td className="flex items-center gap-2">
                           <button 
                             className="btn btn-secondary btn-sm flex items-center gap-1"
                             onClick={() => handleViewCertificate(cert)}
                           >
                             <Eye size={14} />
                             View Certificate
+                          </button>
+                          <button
+                            className="btn btn-danger-subtle btn-sm flex items-center gap-1"
+                            onClick={() => handleConfirmDeleteCert(cert.id)}
+                            style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', color: 'var(--error)', borderColor: 'rgba(239, 68, 68, 0.2)' }}
+                          >
+                            <Trash2 size={14} />
+                            Delete
                           </button>
                         </td>
                       </tr>
@@ -898,6 +926,27 @@ export default function CertificationsPage() {
                 Cancel
               </button>
               <button type="button" className="btn btn-danger" onClick={handleDeleteExam}>
+                Delete
+              </button>
+            </FormActions>
+          </div>
+        </Modal>
+      )}
+
+      {/* MODAL: Delete Certificate confirmation */}
+      {showDeleteCertModal && (
+        <Modal 
+          isOpen={showDeleteCertModal} 
+          onClose={() => setShowDeleteCertModal(false)}
+          title="Delete Issued Certificate"
+        >
+          <div className="p-4">
+            <p>Are you sure you want to delete this issued certificate? The student will lose their certificate verification record. This action cannot be undone.</p>
+            <FormActions style={{ marginTop: '24px' }}>
+              <button type="button" className="btn btn-secondary" onClick={() => setShowDeleteCertModal(false)}>
+                Cancel
+              </button>
+              <button type="button" className="btn btn-danger" onClick={handleDeleteCert}>
                 Delete
               </button>
             </FormActions>

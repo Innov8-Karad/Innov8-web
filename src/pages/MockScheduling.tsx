@@ -29,7 +29,7 @@ export default function MockSchedulingPage() {
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [scheduledDate, setScheduledDate] = useState('');
-    const [studentLimit, setStudentLimit] = useState(12);
+    const [studentLimit, setStudentLimit] = useState<number | string>(12);
     const [targetAudience, setTargetAudience] = useState<'all' | 'batch'>('all');
     const [selectedBatches, setSelectedBatches] = useState<string[]>([]);
 
@@ -101,6 +101,12 @@ export default function MockSchedulingPage() {
         e.preventDefault();
         if (!title.trim() || !scheduledDate || !studentLimit) {
             showToast('Please fill in all required fields.', 'error');
+            return;
+        }
+
+        const limitNum = Number(studentLimit);
+        if (isNaN(limitNum) || limitNum < 1) {
+            showToast('Student Limit must be a number greater than or equal to 1.', 'error');
             return;
         }
 
@@ -366,7 +372,15 @@ export default function MockSchedulingPage() {
                                     type="number"
                                     min="1"
                                     value={studentLimit}
-                                    onChange={(e) => setStudentLimit(Math.max(1, Number(e.target.value)))}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        if (val === '') {
+                                            setStudentLimit('');
+                                        } else {
+                                            const parsed = parseInt(val, 10);
+                                            setStudentLimit(isNaN(parsed) ? '' : parsed);
+                                        }
+                                    }}
                                     required
                                 />
                             </div>

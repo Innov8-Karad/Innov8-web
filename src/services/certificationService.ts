@@ -176,5 +176,10 @@ export const certificationService = {
       ...docData,
       issuedAt: new Date()
     } as unknown as Certificate;
+  },
+
+  async deleteCertificate(certId: string): Promise<void> {
+    const docRef = doc(db, COLLECTIONS.CERTIFICATES, certId);
+    await deleteDoc(docRef);
   }
 };
