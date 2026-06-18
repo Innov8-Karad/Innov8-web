@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, Fragment } from 'react';
 import {
     Download,
     Edit2,
@@ -9,7 +9,9 @@ import {
     ExternalLink,
     TrendingUp,
     Clock,
-    PlayCircle
+    PlayCircle,
+    ChevronLeft,
+    ChevronRight
 } from 'lucide-react';
 import {
     BarChart,
@@ -60,6 +62,13 @@ export default function ProgressPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedBatch, setSelectedBatch] = useState('All');
     const [isMounted, setIsMounted] = useState(false);
+
+    const [currentPage, setCurrentPage] = useState(1);
+    const pageSize = 10;
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, selectedBatch]);
 
     const [showEditModal, setShowEditModal] = useState(false);
     const [editingProgress, setEditingProgress] = useState<StudentProgress | null>(null);
@@ -144,6 +153,15 @@ export default function ProgressPage() {
             return matchesSearch && matchesBatch;
         });
     }, [progressData, searchTerm, selectedBatch]);
+
+    const totalItems = filteredData.length;
+    const totalPages = Math.ceil(totalItems / pageSize);
+    const paginatedData = useMemo(() => {
+        return filteredData.slice(
+            (currentPage - 1) * pageSize,
+            currentPage * pageSize
+        );
+    }, [filteredData, currentPage, pageSize]);
 
     const batchesList = useMemo(() => {
         const unique = Array.from(new Set(progressData.map(p => p.batch).filter((b): b is string => !!b)));
@@ -401,7 +419,7 @@ export default function ProgressPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5 text-main">
-                            {filteredData.map(student => (
+                            {paginatedData.map(student => (
                                 <tr key={student.id} className="transition-colors" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center">
@@ -484,6 +502,49 @@ export default function ProgressPage() {
                         </div>
                         <p className="text-muted font-medium">No students found</p>
                         <p className="text-xs text-muted/60 mt-1">Try adjusting your search or filters</p>
+                    </div>
+                )}
+
+                {totalItems > 0 && totalPages > 1 && (
+                    <div className="pagination-container">
+                        <div className="text-sm text-muted">
+                            Showing <span className="text-main">{(currentPage - 1) * pageSize + 1}</span> to <span className="text-main">{Math.min(currentPage * pageSize, totalItems)}</span> of <span className="text-main">{totalItems}</span> results
+                        </div>
+                        <div className="pagination-controls">
+                            <button 
+                                className="pagination-btn"
+                                disabled={currentPage === 1}
+                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            >
+                                <ChevronLeft size={16} /> Prev
+                            </button>
+                            
+                            <div className="flex items-center gap-1 mx-2">
+                                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                                    .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+                                    .map((p, i, arr) => (
+                                        <Fragment key={p}>
+                                            {i > 0 && arr[i-1] !== p - 1 && <span className="text-muted">...</span>}
+                                            <button 
+                                                className={`page-indicator ${currentPage === p ? 'active' : ''}`}
+                                                onClick={() => setCurrentPage(p)}
+                                                type="button"
+                                            >
+                                                {p}
+                                            </button>
+                                        </Fragment>
+                                    ))
+                                }
+                            </div>
+
+                            <button 
+                                className="pagination-btn"
+                                disabled={currentPage === totalPages}
+                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                            >
+                                Next <ChevronRight size={16} />
+                            </button>
+                        </div>
                     </div>
                 )}
             </div>

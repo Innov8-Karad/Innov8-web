@@ -28,10 +28,13 @@ export const progressService = {
     });
 
     const batchNameToIdMap = new Map<string, string>();
+    const existingBatchNamesMap = new Map<string, string>();
     batchesSnap.docs.forEach(doc => {
       const b = doc.data();
       if (b.name) {
-        batchNameToIdMap.set(b.name.trim().toLowerCase(), doc.id);
+        const normalized = b.name.trim().toLowerCase();
+        batchNameToIdMap.set(normalized, doc.id);
+        existingBatchNamesMap.set(normalized, b.name.trim());
       }
     });
 
@@ -55,8 +58,6 @@ export const progressService = {
         // Overall Integrated Progress is now just the Completion Percentage
         const overallIntegratedProgress = completionPercentage;
 
-
-
         // Last active timestamp
         let lastActive: Date | null = null;
         if (progressData.updatedAt) {
@@ -69,12 +70,20 @@ export const progressService = {
           }
         }
 
+        let studentBatch = userData.batch || 'Unassigned';
+        const normalizedStudentBatch = studentBatch.trim().toLowerCase();
+        if (studentBatch !== 'Unassigned' && existingBatchNamesMap.has(normalizedStudentBatch)) {
+          studentBatch = existingBatchNamesMap.get(normalizedStudentBatch)!;
+        } else if (studentBatch !== 'Unassigned') {
+          studentBatch = 'Unassigned';
+        }
+
         return {
           id: progressData.id || `${userData.id}_${userData.course || 'default'}`,
           studentId: userData.id,
           studentName: userData.name || 'Unknown Student',
           email: userData.email || '',
-          batch: userData.batch || 'Unassigned',
+          batch: studentBatch,
 
           overallScore: Number(progressData.overallScore || 0),
           completedVideoIds,
@@ -114,6 +123,9 @@ export const progressService = {
 
     progress.forEach(p => {
       const b = p.batch || 'Unassigned';
+      if (b === 'Unassigned') {
+        return;
+      }
       if (!batches[b]) {
         batches[b] = { totalScore: 0, totalCompletion: 0, count: 0 };
       }
