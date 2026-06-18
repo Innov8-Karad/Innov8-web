@@ -50,22 +50,27 @@ export const mockSchedulingService = {
     // Resolve batch IDs to batch names for announcements & notifications.
     // The Cloud Function queries users by `batch` (name), not `batchId`,
     // so we must pass human-readable names instead of Firestore document IDs.
+    // We convert batch IDs to batch names in parallel for efficiency.
     let resolvedBatchNames: string[] = data.targetBatches || [];
     if (data.targetAudience === 'batch' && resolvedBatchNames.length > 0) {
-      const names: string[] = [];
-      for (const batchId of resolvedBatchNames) {
-        try {
-          const batchSnap = await getDoc(doc(db, COLLECTIONS.BATCHES, batchId));
-          if (batchSnap.exists()) {
-            names.push(batchSnap.data().name || batchId);
-          } else {
-            names.push(batchId); // fallback to ID if doc not found
-          }
-        } catch {
-          names.push(batchId);
-        }
+      try {
+        resolvedBatchNames = await Promise.all(
+          resolvedBatchNames.map(async (batchId) => {
+            try {
+              const batchSnap = await getDoc(doc(db, COLLECTIONS.BATCHES, batchId));
+              if (batchSnap.exists()) {
+                return batchSnap.data()?.name || batchId;
+              }
+              return batchId; // fallback to ID if doc not found
+            } catch (err) {
+              console.error(`Failed to map batch ID ${batchId} to name:`, err);
+              return batchId; // fallback to ID on error
+            }
+          })
+        );
+      } catch (err) {
+        console.error('Failed to resolve batch IDs to names:', err);
       }
-      resolvedBatchNames = names;
     }
 
     // Create corresponding announcement

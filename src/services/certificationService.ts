@@ -68,13 +68,23 @@ export const certificationService = {
 
   async updateCertExam(id: string, data: Partial<CertificationExam>): Promise<void> {
     const docRef = doc(db, COLLECTIONS.CERTIFICATION_EXAMS, id);
-    const updateData: Record<string, unknown> = { ...data };
+    const updateData: Record<string, unknown> = {};
     
-    if (data.scheduledDate) {
-      updateData.scheduledDate = Timestamp.fromDate(new Date(data.scheduledDate as unknown as string));
+    // Copy only defined values (exclude undefined to prevent Firestore error)
+    Object.entries(data).forEach(([key, value]) => {
+      if (value !== undefined) {
+        updateData[key] = value;
+      }
+    });
+    
+    if (updateData.scheduledDate) {
+      updateData.scheduledDate = Timestamp.fromDate(new Date(updateData.scheduledDate as unknown as string | Date));
     }
-    if (data.endDate) {
-      updateData.endDate = Timestamp.fromDate(new Date(data.endDate as unknown as string));
+    
+    if (updateData.endDate) {
+      updateData.endDate = Timestamp.fromDate(new Date(updateData.endDate as unknown as string | Date));
+    } else if (updateData.endDate === null) {
+      // Explicitly keep null to clear the field in Firestore
     }
     
     await updateDoc(docRef, {
@@ -176,5 +186,10 @@ export const certificationService = {
       ...docData,
       issuedAt: new Date()
     } as unknown as Certificate;
+  },
+
+  async deleteCertificate(certId: string): Promise<void> {
+    const docRef = doc(db, COLLECTIONS.CERTIFICATES, certId);
+    await deleteDoc(docRef);
   }
 };
