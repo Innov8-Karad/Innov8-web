@@ -41,6 +41,8 @@ import EmptyState from '../components/EmptyState';
 import { FormField, FormRow, FormActions } from '../components/FormField';
 import { useToast } from '../hooks/useToast';
 import CustomSelect from '../components/CustomSelect';
+import CustomDatePicker from '../components/CustomDatePicker';
+import CustomTimePicker from '../components/CustomTimePicker';
 
 type ActiveTab = 'exams' | 'students' | 'issued';
 
@@ -162,6 +164,14 @@ export default function CertificationsPage() {
   // Open editing modal
   const handleOpenEditExam = (exam: CertificationExam) => {
     setEditingExamId(exam.id);
+
+    const toLocalISO = (dateVal: Date | string | null | undefined) => {
+      if (!dateVal) return '';
+      const d = new Date(dateVal);
+      if (isNaN(d.getTime())) return '';
+      return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    };
+
     setExamFormData({
       title: exam.title,
       description: exam.description || '',
@@ -172,8 +182,8 @@ export default function CertificationsPage() {
       passingPercentage: String(exam.passingPercentage),
       minVideoCompletionPercentage: String(exam.minVideoCompletionPercentage || 100),
       maxAttempts: String(exam.maxAttempts || 3),
-      scheduledDate: exam.scheduledDate ? new Date(exam.scheduledDate).toISOString().slice(0, 16) : '',
-      endDate: exam.endDate ? new Date(exam.endDate).toISOString().slice(0, 16) : '',
+      scheduledDate: toLocalISO(exam.scheduledDate),
+      endDate: toLocalISO(exam.endDate),
       isActive: exam.isActive,
       questions: exam.questions || []
     });
@@ -186,6 +196,16 @@ export default function CertificationsPage() {
 
     if (!examFormData.courseId) {
       showToast("Please select a target course", "error");
+      return;
+    }
+
+    if (!examFormData.scheduledDate) {
+      showToast("Please select a scheduled date", "error");
+      return;
+    }
+
+    if (examFormData.endDate && new Date(examFormData.endDate) <= new Date(examFormData.scheduledDate)) {
+      showToast("End date must be after scheduled date", "error");
       return;
     }
 
@@ -207,7 +227,7 @@ export default function CertificationsPage() {
       minVideoCompletionPercentage: Number(examFormData.minVideoCompletionPercentage),
       maxAttempts: Number(examFormData.maxAttempts),
       scheduledDate: new Date(examFormData.scheduledDate),
-      endDate: examFormData.endDate ? new Date(examFormData.endDate) : undefined,
+      endDate: examFormData.endDate ? new Date(examFormData.endDate) : null,
     };
 
     try {
@@ -826,16 +846,118 @@ export default function CertificationsPage() {
                   required
                 />
               </FormField>
-              <FormField label="Scheduled Date" required>
-                <input 
-                  type="datetime-local" 
-                  className="form-control"
-                  value={examFormData.scheduledDate}
-                  onChange={(e) => setExamFormData({ ...examFormData, scheduledDate: e.target.value })}
-                  required
-                />
-              </FormField>
             </FormRow>
+
+            {!editingExamId && (
+              <FormRow>
+                <FormField label="Scheduled Date" required>
+                  <div className="att-date-time-grid">
+                    <div className="att-date-time-inputs">
+                      <div className="att-date-input-wrapper">
+                        <CustomDatePicker 
+                          required 
+                          value={examFormData.scheduledDate.split('T')[0] || ''} 
+                          onChange={e => {
+                            const date = e.target.value;
+                            const time = examFormData.scheduledDate.split('T')[1] || '09:00';
+                            setExamFormData({ ...examFormData, scheduledDate: `${date}T${time}` });
+                          }} 
+                        />
+                      </div>
+                      <div className="att-time-input-wrapper">
+                        <CustomTimePicker 
+                          required 
+                          value={examFormData.scheduledDate.split('T')[1] || ''} 
+                          onChange={e => {
+                            const time = e.target.value;
+                            const date = examFormData.scheduledDate.split('T')[0] || new Date().toISOString().split('T')[0];
+                            setExamFormData({ ...examFormData, scheduledDate: `${date}T${time}` });
+                          }} 
+                        />
+                      </div>
+                    </div>
+                    <div className="att-quick-options">
+                      <button 
+                        type="button" 
+                        className={`btn-quick-date ${(examFormData.scheduledDate.split('T')[0] || '') === new Date().toISOString().split('T')[0] ? 'active' : ''}`}
+                        onClick={() => {
+                          const date = new Date().toISOString().split('T')[0];
+                          const time = examFormData.scheduledDate.split('T')[1] || '09:00';
+                          setExamFormData({ ...examFormData, scheduledDate: `${date}T${time}` });
+                        }}
+                      >
+                        Today
+                      </button>
+                      <button 
+                        type="button" 
+                        className={`btn-quick-date ${(examFormData.scheduledDate.split('T')[0] || '') === new Date(Date.now() + 86400000).toISOString().split('T')[0] ? 'active' : ''}`}
+                        onClick={() => {
+                          const date = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+                          const time = examFormData.scheduledDate.split('T')[1] || '09:00';
+                          setExamFormData({ ...examFormData, scheduledDate: `${date}T${time}` });
+                        }}
+                      >
+                        Tomorrow
+                      </button>
+                    </div>
+                  </div>
+                </FormField>
+
+                <FormField label="End Date (Optional)">
+                  <div className="att-date-time-grid">
+                    <div className="att-date-time-inputs">
+                      <div className="att-date-input-wrapper">
+                        <CustomDatePicker 
+                          value={examFormData.endDate.split('T')[0] || ''} 
+                          onChange={e => {
+                            const date = e.target.value;
+                            const time = examFormData.endDate.split('T')[1] || '17:00';
+                            setExamFormData({ ...examFormData, endDate: date ? `${date}T${time}` : '' });
+                          }} 
+                        />
+                      </div>
+                      <div className="att-time-input-wrapper">
+                        <CustomTimePicker 
+                          value={examFormData.endDate.split('T')[1] || ''} 
+                          onChange={e => {
+                            const time = e.target.value;
+                            const date = examFormData.endDate.split('T')[0] || examFormData.scheduledDate.split('T')[0] || new Date().toISOString().split('T')[0];
+                            setExamFormData({ ...examFormData, endDate: time ? `${date}T${time}` : '' });
+                          }} 
+                        />
+                      </div>
+                    </div>
+                    <div className="att-quick-options">
+                      <button 
+                        type="button" 
+                        className="btn-quick-date"
+                        onClick={() => {
+                          const start = examFormData.scheduledDate;
+                          if (start) {
+                            const startDate = new Date(start);
+                            const endDate = new Date(startDate.getTime() + Number(examFormData.duration) * 60000);
+                            const localISO = new Date(endDate.getTime() - endDate.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+                            setExamFormData({ ...examFormData, endDate: localISO });
+                          }
+                        }}
+                      >
+                        Calculate from Duration
+                      </button>
+                      {examFormData.endDate && (
+                        <button 
+                          type="button" 
+                          className="btn-quick-date"
+                          style={{ color: 'var(--error)' }}
+                          onClick={() => setExamFormData({ ...examFormData, endDate: '' })}
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </FormField>
+              </FormRow>
+            )}
 
             {/* Question Builder */}
             <div className="mb-4 mt-6">

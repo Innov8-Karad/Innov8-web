@@ -42,8 +42,9 @@ export const submitExam = onCall(
         const correctAnswers = secureAnswersData.answers; // Array of { questionId, correctAnswerIndex }
 
         // 4. Calculate Score
-        let score = 0;
-        const totalMarks = examData.totalMarks || examData.questions?.length || 0;
+        let correctCount = 0;
+        const totalQuestions = examData.questions?.length || correctAnswers.length || 1;
+        const totalMarks = examData.totalMarks || totalQuestions;
         const evaluatedAnswers: any[] = [];
 
         for (const submittedAnswer of answers) {
@@ -54,7 +55,7 @@ export const submitExam = onCall(
             const isCorrect = correctObj && correctObj.correctAnswerIndex === selectedOption;
 
             if (isCorrect) {
-                score += 1;
+                correctCount += 1;
             }
 
             evaluatedAnswers.push({
@@ -64,7 +65,8 @@ export const submitExam = onCall(
             });
         }
 
-        const percentage = totalMarks > 0 ? Math.round((score / totalMarks) * 100 * 100) / 100 : 0;
+        const score = Math.round((correctCount / totalQuestions) * totalMarks * 100) / 100;
+        const percentage = Math.round((correctCount / totalQuestions) * 100 * 100) / 100;
 
         const resultData = {
             examId,

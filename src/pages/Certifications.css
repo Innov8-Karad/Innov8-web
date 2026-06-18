@@ -578,3 +578,55 @@ input:checked + .slider:before {
     box-shadow: none;
   }
 }
+
+/* Date & Time Grid Styles for Certification Modal */
+.att-date-time-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+}
+
+.att-date-time-inputs {
+    display: flex;
+    gap: 12px;
+}
+
+.att-date-input-wrapper {
+    flex: 1.5;
+    position: relative;
+}
+
+.att-time-input-wrapper {
+    flex: 1;
+    position: relative;
+}
+
+.att-quick-options {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-quick-date {
+    background: var(--bg-card-accent);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-quick-date:hover {
+    background: rgba(var(--primary-rgb), 0.1);
+    color: var(--primary);
+    border-color: rgba(var(--primary-rgb), 0.2);
+}
+
+.btn-quick-date.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+}
