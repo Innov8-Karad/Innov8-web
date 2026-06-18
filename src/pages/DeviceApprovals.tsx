@@ -254,7 +254,7 @@ export default function DeviceApprovalsPage() {
             >
                 <div style={{ marginTop: 'var(--space-md)' }}>
                     <p style={{ lineHeight: 1.6, color: 'var(--text-secondary)' }}>
-                        Are you sure you want to delete this device record? The user will need to re-register.
+                        Are you sure you want to delete this device record?
                     </p>
                     <div className="flex justify-end gap-2" style={{ marginTop: 'var(--space-lg)' }}>
                         <button className="btn btn-secondary" onClick={() => setDeleteDeviceId(null)} disabled={isDeleting}>
