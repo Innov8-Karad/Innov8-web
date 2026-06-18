@@ -313,7 +313,12 @@ export const batchService = {
     const q = query(collection(db, COLLECTIONS.BATCHES, batchId, 'resources'));
     return onSnapshot(q, (snapshot) => {
       const resources = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CourseResource));
-      callback(resources);
+      const sorted = [...resources].sort((a, b) => {
+        const timeA = a.createdAt?.seconds || a.createdAt?.toMillis?.() || (a.createdAt instanceof Date ? a.createdAt.getTime() : 0);
+        const timeB = b.createdAt?.seconds || b.createdAt?.toMillis?.() || (b.createdAt instanceof Date ? b.createdAt.getTime() : 0);
+        return timeA - timeB;
+      });
+      callback(sorted);
     }, (error) => {
       console.error("Error subscribing to batch resources:", error);
       callback([]);
@@ -361,6 +366,13 @@ export const batchService = {
     const sourceModules = modulesSnap.docs.map(d => ({ id: d.id, ...d.data() } as CourseModule));
     const sourceResources = resourcesSnap.docs.map(d => ({ id: d.id, ...d.data() } as CourseResource));
 
+    // Sort sourceResources by createdAt ascending before cloning to preserve sequence
+    const sortedSourceResources = [...sourceResources].sort((a, b) => {
+      const timeA = a.createdAt?.seconds || a.createdAt?.toMillis?.() || (a.createdAt instanceof Date ? a.createdAt.getTime() : 0);
+      const timeB = b.createdAt?.seconds || b.createdAt?.toMillis?.() || (b.createdAt instanceof Date ? b.createdAt.getTime() : 0);
+      return timeA - timeB;
+    });
+
     const batch = writeBatch(db);
 
     // Track module ID mapping (Old ID -> New ID)
@@ -381,7 +393,7 @@ export const batchService = {
     }
 
     // 3. Clone Resources
-    for (const res of sourceResources) {
+    for (const res of sortedSourceResources) {
       if (!res.moduleId) continue;
       
       const newResRef = doc(collection(db, COLLECTIONS.BATCHES, targetBatchId, 'resources'));

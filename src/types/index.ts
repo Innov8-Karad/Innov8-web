@@ -216,6 +216,7 @@ export interface CourseResource {
     size?: string;              // e.g. "2.3 MB"
     fileFormat?: string;        // e.g. "PDF", "DOC", "DOCX"
     isDemo?: boolean;           // Whether inactive students can view this
+    createdAt?: { seconds: number; nanoseconds: number } | any;
 }
 
 export interface CourseModule {
@@ -261,6 +262,7 @@ export interface Resource {
     duration?: string;
     thumbnailUrl?: string;
     isDemo?: boolean;           // Whether inactive students can view this
+    createdAt?: { seconds: number; nanoseconds: number } | any;
 }
 
 export interface AssignmentSubmission {
