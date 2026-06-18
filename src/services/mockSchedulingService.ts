@@ -1,6 +1,7 @@
 import {
   collection,
   doc,
+  getDoc,
   getDocs,
   addDoc,
   updateDoc,
@@ -46,6 +47,27 @@ export const mockSchedulingService = {
     const docRef = await addDoc(collection(db, COLLECTIONS.MOCK_SCHEDULES), docData);
     const scheduleId = docRef.id;
 
+    // Resolve batch IDs to batch names for announcements & notifications.
+    // The Cloud Function queries users by `batch` (name), not `batchId`,
+    // so we must pass human-readable names instead of Firestore document IDs.
+    let resolvedBatchNames: string[] = data.targetBatches || [];
+    if (data.targetAudience === 'batch' && resolvedBatchNames.length > 0) {
+      const names: string[] = [];
+      for (const batchId of resolvedBatchNames) {
+        try {
+          const batchSnap = await getDoc(doc(db, COLLECTIONS.BATCHES, batchId));
+          if (batchSnap.exists()) {
+            names.push(batchSnap.data().name || batchId);
+          } else {
+            names.push(batchId); // fallback to ID if doc not found
+          }
+        } catch {
+          names.push(batchId);
+        }
+      }
+      resolvedBatchNames = names;
+    }
+
     // Create corresponding announcement
     try {
       await announcementService.createAnnouncement({
@@ -57,7 +79,7 @@ export const mockSchedulingService = {
           day: 'numeric',
         })}. Seats are limited to ${data.studentLimit}. Tap here to register!`,
         targetAudience: data.targetAudience,
-        targetBatches: data.targetBatches,
+        targetBatches: resolvedBatchNames,
         showAsPopup: false,
         mockScheduleId: scheduleId,
         priority: 'high',
@@ -72,7 +94,7 @@ export const mockSchedulingService = {
         title: 'New Mock Session Available!',
         body: `${data.title} - scheduled for ${new Date(data.scheduledDate).toLocaleDateString()}. Tap to register!`,
         targetAudience: data.targetAudience,
-        targetBatches: data.targetBatches,
+        targetBatches: resolvedBatchNames,
       });
     } catch (notifError) {
       console.error('Failed to send mock scheduling push notification:', notifError);
