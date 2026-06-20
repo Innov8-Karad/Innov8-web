@@ -159,6 +159,16 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.form-group select option {
+  background-color: #1e293b;
+  color: var(--text-main);
+}
+
+[data-theme='light'] .form-group select option {
+  background-color: #ffffff;
+  color: #000000;
+}
+
 .form-group input::placeholder,
 .form-group textarea::placeholder {
   color: var(--text-muted);
@@ -881,3 +891,74 @@
 [data-theme='light'] .registrants-table td {
   border-bottom-color: rgba(0, 0, 0, 0.03);
 }
+
+/* Result Status Select */
+.result-status-select {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.2);
+  color: var(--text-main);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.result-status-select:focus {
+  border-color: var(--primary);
+}
+
+.result-status-select.pending {
+  color: #f59e0b; /* Yellow */
+  border-color: rgba(245, 158, 11, 0.3);
+  background-color: #1c1912;
+}
+
+.result-status-select.pass {
+  color: #10b981; /* Green */
+  border-color: rgba(16, 185, 129, 0.3);
+  background-color: #0c1a16;
+}
+
+.result-status-select.failed {
+  color: #ef4444; /* Red */
+  border-color: rgba(239, 68, 68, 0.3);
+  background-color: #1f1315;
+}
+
+.result-status-select option {
+  background-color: #1e293b;
+  color: var(--text-main);
+}
+
+[data-theme='light'] .result-status-select {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.1);
+  color: #000000;
+}
+
+[data-theme='light'] .result-status-select.pending {
+  background-color: #fef3c7;
+  border-color: #f59e0b;
+  color: #d97706;
+}
+
+[data-theme='light'] .result-status-select.pass {
+  background-color: #d1fae5;
+  border-color: #10b981;
+  color: #047857;
+}
+
+[data-theme='light'] .result-status-select.failed {
+  background-color: #fee2e2;
+  border-color: #ef4444;
+  color: #b91c1c;
+}
+
+[data-theme='light'] .result-status-select option {
+  background-color: #ffffff;
+  color: #000000;
+}
+

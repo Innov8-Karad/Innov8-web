@@ -476,6 +476,7 @@ export interface MockRegistration {
     userPhone?: string;
     registeredAt: Date;
     status?: 'active' | 'blocked';
+    resultStatus?: 'pass' | 'failed' | 'pending';
 }
 
 // ─── Certification ───────────────────────────────────────────────────────────

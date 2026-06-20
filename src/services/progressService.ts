@@ -1,7 +1,7 @@
-import { 
-  collection, 
-  getDocs, 
-  doc, 
+import {
+  collection,
+  getDocs,
+  doc,
   serverTimestamp,
   setDoc,
   type DocumentData,
@@ -43,16 +43,16 @@ export const progressService = {
       .filter(user => user.role === 'student')
       .map(userData => {
         const progressData = progressMap.get(userData.id) || {};
-        
+
         // Calculate Course Completion percentage from granular items
         const completedVideoIds = progressData.completedVideoIds || [];
         const completedNoteIds = progressData.completedNoteIds || [];
         const completedAssignmentIds = progressData.completedAssignmentIds || [];
         const totalItems = Number(progressData.totalItems || 0);
         const completedItems = Number(progressData.completedItems || (completedVideoIds.length + completedNoteIds.length + completedAssignmentIds.length));
-        
-        const completionPercentage = totalItems > 0 
-          ? Math.min(Math.round((completedItems / totalItems) * 100), 100) 
+
+        const completionPercentage = totalItems > 0
+          ? Math.min(Math.round((completedItems / totalItems) * 100), 100)
           : 0;
 
         // Overall Integrated Progress is now just the Completion Percentage
@@ -143,50 +143,50 @@ export const progressService = {
 
   exportProgressReport(student: StudentProgress) {
     const doc = new jsPDF();
-    
+
     // Header
     doc.setFontSize(22);
     doc.setTextColor(33, 150, 243); // Primary color
     doc.text('Student Progress Report', 105, 20, { align: 'center' });
-    
+
     doc.setDrawColor(33, 150, 243);
     doc.line(20, 25, 190, 25);
-    
+
     // Details
     doc.setFontSize(12);
     doc.setTextColor(0, 0, 0);
-    
+
     const startY = 40;
     const lineSpacing = 10;
-    
+
     doc.setFont('helvetica', 'bold');
     doc.text(`Overall Score:`, 20, startY + lineSpacing * 2);
     doc.text(student.studentName || 'Unknown', 60, startY);
     doc.text(student.batch || 'N/A', 60, startY + lineSpacing);
     doc.text(`${student.overallScore ?? 0}`, 60, startY + lineSpacing * 2);
-    
+
     // Additional Metrics
     doc.setFont('helvetica', 'bold');
     doc.text(`Course Completion:`, 20, startY + lineSpacing * 3);
     doc.text(`Integrated Progress:`, 20, startY + lineSpacing * 4);
-    
+
     doc.setFont('helvetica', 'normal');
     doc.text(`${student.courseCompletionPercentage ?? 0}%`, 60, startY + lineSpacing * 3);
     doc.text(`${student.overallProgress ?? 0}%`, 60, startY + lineSpacing * 4);
-    
+
     // Activity Summary
     doc.setFont('helvetica', 'bold');
     const activityY = startY + lineSpacing * 6;
     doc.text(`• Videos Watched: ${student.completedVideoIds?.length || 0}`, 25, activityY);
     doc.text(`• Tasks Completed: ${student.completedAssignmentIds?.length || 0}`, 25, activityY + 7);
     doc.text(`• Resources Read: ${student.completedNoteIds?.length || 0}`, 25, activityY + 14);
-    
+
     // Footer
     const pageHeight = doc.internal.pageSize.height;
     doc.setFontSize(10);
     doc.setTextColor(150, 150, 150);
     doc.text(`Generated on ${new Date().toLocaleDateString()} | Innov8 Learning Platform`, 105, pageHeight - 10, { align: 'center' });
-    
+
     doc.save(`${(student.studentName || 'Student').replace(/\s+/g, '_')}_Progress.pdf`);
   }
 };

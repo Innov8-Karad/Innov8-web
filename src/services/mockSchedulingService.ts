@@ -178,6 +178,17 @@ export const mockSchedulingService = {
   },
 
   /**
+   * Update mock result status for a student's registration.
+   */
+  async updateMockResultStatus(scheduleId: string, userId: string, resultStatus: 'pass' | 'failed' | 'pending'): Promise<void> {
+    const docRef = doc(db, COLLECTIONS.MOCK_SCHEDULES, scheduleId, 'registrations', userId);
+    await updateDoc(docRef, {
+      resultStatus,
+      updatedAt: Timestamp.now(),
+    });
+  },
+
+  /**
    * Delete a mock schedule and all its registrations sub-collection documents.
    */
   async deleteMockSchedule(scheduleId: string): Promise<void> {
