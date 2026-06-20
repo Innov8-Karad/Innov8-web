@@ -538,3 +538,21 @@ export interface Certificate {
     certificateNumber: string;           // e.g. "INNOV8-CR-2026-00001"
 }
 
+// ─── Attendance ───────────────────────────────────────────────────────────────
+// Whole-day attendance — one record per student per day (not per-class).
+// Document ID pattern: {batchId}_{studentId}_{YYYY-MM-DD} (deterministic for upsert safety)
+
+export interface AttendanceRecord {
+    id: string;
+    studentId: string;         // User document ID (uid)
+    studentName: string;       // Denormalized for admin display
+    studentEmail: string;      // Used by mobile to query own records
+    batchId: string;           // For batch-wise filtering
+    batchName: string;         // Denormalized for display
+    date: Date | { seconds: number; nanoseconds: number };
+    status: 'present' | 'absent';
+    markedBy: string;          // Admin uid who marked
+    createdAt: Date | { seconds: number; nanoseconds: number };
+    updatedAt?: Date | { seconds: number; nanoseconds: number };
+}
+

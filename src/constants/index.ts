@@ -23,6 +23,7 @@ export const COLLECTIONS = {
   CERTIFICATES: 'certificates',
   COURSE_PURCHASES: 'course_purchases',
   PAYMENT_SETTINGS: 'payment_settings',
+  ATTENDANCE: 'attendance',
 } as const;
 
 export const FEE_STATUS = {
@@ -395,6 +396,7 @@ export const UI_STRINGS = {
     BATCHES: 'Batches',
     MOCK_SCHEDULING: 'Mock Scheduling',
     CERTIFICATIONS: 'Certifications',
+    ATTENDANCE: 'Attendance',
     LOGOUT: 'Logout',
     ADMIN: 'Admin Portal',
   },
@@ -569,5 +571,54 @@ export const UI_STRINGS = {
     SUCCESS_CLOSE: 'Registration closed successfully.',
     CONFIRM_DELETE_TITLE: 'Delete Mock Schedule',
     CONFIRM_DELETE_DESC: 'Are you sure you want to delete this schedule and all its registrations? This cannot be undone.',
+  },
+  ATTENDANCE: {
+    TITLE: 'Attendance',
+    SUBTITLE: 'Mark and track daily student attendance batch-wise',
+    LOADING: 'Loading attendance...',
+    // View toggle
+    VIEW_DAILY: 'Daily View',
+    VIEW_MONTHLY: 'Monthly Report',
+    // Filters
+    SELECT_BATCH: 'Select Batch',
+    SELECT_BATCH_PLACEHOLDER: '-- Select a batch --',
+    SEARCH: 'Search students...',
+    // Controls
+    MARK_ALL_PRESENT: 'Mark All Present',
+    MARK_ALL_ABSENT: 'Mark All Absent',
+    SAVE_ATTENDANCE: 'Save Attendance',
+    SAVING: 'Saving...',
+    SAVE_SUCCESS: 'Attendance saved successfully!',
+    ERROR_SAVE: 'Failed to save attendance. Please try again.',
+    ERROR_LOAD: 'Failed to load attendance records.',
+    // Table headers - Daily
+    TH_NO: '#',
+    TH_NAME: 'Name',
+    TH_EMAIL: 'Email',
+    TH_STATUS: 'Status',
+    TH_ACTION: 'Action',
+    // Table headers - Monthly
+    TH_PRESENT: 'Present',
+    TH_ABSENT: 'Absent',
+    TH_TOTAL: 'Total Days',
+    TH_PERCENTAGE: '%',
+    // Stat card labels - Daily
+    STAT_PRESENT: 'Present',
+    STAT_ABSENT: 'Absent',
+    STAT_RATE: 'Attendance Rate',
+    // Stat card labels - Monthly
+    STAT_TOTAL_DAYS: 'Class Days',
+    STAT_AVG_RATE: 'Avg Attendance',
+    STAT_LOW_ATTENDANCE: 'Below 75%',
+    // Status labels
+    STATUS_PRESENT: 'Present',
+    STATUS_ABSENT: 'Absent',
+    STATUS_UNMARKED: 'Unmarked',
+    // Empty states
+    EMPTY_NO_BATCH: 'Select a batch to start marking attendance.',
+    EMPTY_NO_STUDENTS: 'No students found in this batch.',
+    EMPTY_NO_RECORDS: 'No attendance records found for this period.',
+    // Month picker
+    SELECT_MONTH: 'Select Month',
   },
 } as const;
