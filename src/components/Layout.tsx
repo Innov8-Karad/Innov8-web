@@ -21,7 +21,8 @@ import {
     Layers,
     TrendingUp,
     CalendarCheck,
-    GraduationCap
+    GraduationCap,
+    ClipboardCheck
 } from 'lucide-react';
 import logo from '../assets/logo.png';
 import { ThemeToggle } from './ThemeToggle';
@@ -75,6 +76,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         { icon: LayoutDashboard, label: UI_STRINGS.NAV.DASHBOARD, path: '/' },
         { icon: Users, label: UI_STRINGS.NAV.STUDENTS, path: '/users' },
         { icon: Layers, label: UI_STRINGS.NAV.BATCHES, path: '/batches' },
+        { icon: ClipboardCheck, label: UI_STRINGS.NAV.ATTENDANCE, path: '/attendance' },
         { icon: CreditCard, label: UI_STRINGS.NAV.FEES, path: '/fees' },
         { icon: BookOpen, label: UI_STRINGS.NAV.COURSES, path: '/courses' },
         { icon: FileText, label: UI_STRINGS.NAV.EXAMS, path: '/exams' },

@@ -31,6 +31,7 @@ const NotificationsPage = React.lazy(() => import('./pages/NotificationsPage'));
 const BatchesPage = React.lazy(() => import('./pages/Batches'));
 const MockSchedulingPage = React.lazy(() => import('./pages/MockScheduling'));
 const CoursePurchasesPage = React.lazy(() => import('./pages/CoursePurchases'));
+const AttendancePage = React.lazy(() => import('./pages/Attendance'));
 
 // ── Loading Fallback ───────────────────────────────────────────────────
 function PageLoader() {
@@ -88,6 +89,7 @@ function App() {
                   <Route path="/batches" element={<PrivateRoute><Layout><BatchesPage /></Layout></PrivateRoute>} />
                   <Route path="/mock-scheduling" element={<PrivateRoute><Layout><MockSchedulingPage /></Layout></PrivateRoute>} />
                   <Route path="/course-purchases" element={<PrivateRoute><Layout><CoursePurchasesPage /></Layout></PrivateRoute>} />
+                  <Route path="/attendance" element={<PrivateRoute><Layout><AttendancePage /></Layout></PrivateRoute>} />
 
                   {/* Redirects */}
                   <Route path="/profile/:id" element={<Navigate to="/progress" replace />} />
