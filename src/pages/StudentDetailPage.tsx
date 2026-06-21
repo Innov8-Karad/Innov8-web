@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-    ArrowLeft, 
-    Download, 
-    Award, 
-    BookOpen, 
-    CheckCircle2, 
+import {
+    ArrowLeft,
+    Download,
+    Award,
+    BookOpen,
+    CheckCircle2,
     Circle,
 
     Activity
@@ -61,7 +61,7 @@ export default function StudentDetailPage() {
     const formatUpdatedDate = (updatedAt: { toDate?: () => Date; seconds?: number } | Date | string | number | null | undefined) => {
         if (!updatedAt) return 'N/A';
         if (updatedAt instanceof Date) return updatedAt.toLocaleDateString();
-        
+
         if (typeof updatedAt === 'object') {
             if ('toDate' in updatedAt && typeof updatedAt.toDate === 'function') {
                 return updatedAt.toDate().toLocaleDateString();
@@ -70,7 +70,7 @@ export default function StudentDetailPage() {
                 return new Date(updatedAt.seconds * 1000).toLocaleDateString();
             }
         }
-        
+
         try {
             return new Date(updatedAt as string | number).toLocaleDateString();
         } catch {

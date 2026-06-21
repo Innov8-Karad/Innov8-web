@@ -511,21 +511,21 @@ export default function ProgressPage() {
                             Showing <span className="text-main">{(currentPage - 1) * pageSize + 1}</span> to <span className="text-main">{Math.min(currentPage * pageSize, totalItems)}</span> of <span className="text-main">{totalItems}</span> results
                         </div>
                         <div className="pagination-controls">
-                            <button 
+                            <button
                                 className="pagination-btn"
                                 disabled={currentPage === 1}
                                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                             >
                                 <ChevronLeft size={16} /> Prev
                             </button>
-                            
+
                             <div className="flex items-center gap-1 mx-2">
                                 {Array.from({ length: totalPages }, (_, i) => i + 1)
                                     .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
                                     .map((p, i, arr) => (
                                         <Fragment key={p}>
-                                            {i > 0 && arr[i-1] !== p - 1 && <span className="text-muted">...</span>}
-                                            <button 
+                                            {i > 0 && arr[i - 1] !== p - 1 && <span className="text-muted">...</span>}
+                                            <button
                                                 className={`page-indicator ${currentPage === p ? 'active' : ''}`}
                                                 onClick={() => setCurrentPage(p)}
                                                 type="button"
@@ -537,7 +537,7 @@ export default function ProgressPage() {
                                 }
                             </div>
 
-                            <button 
+                            <button
                                 className="pagination-btn"
                                 disabled={currentPage === totalPages}
                                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}

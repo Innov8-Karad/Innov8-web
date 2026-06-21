@@ -15,6 +15,14 @@ import { useAuth } from '../contexts/AuthContext';
 import CustomDatePicker from '../components/CustomDatePicker';
 import './MockScheduling.css';
 
+const getLocalTodayString = () => {
+    const today = new Date();
+    const y = today.getFullYear();
+    const m = String(today.getMonth() + 1).padStart(2, '0');
+    const d = String(today.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+};
+
 export default function MockSchedulingPage() {
     const { showToast } = useToast();
     const authContext = useAuth();
@@ -104,6 +112,12 @@ export default function MockSchedulingPage() {
             return;
         }
 
+        const localToday = getLocalTodayString();
+        if (scheduledDate < localToday) {
+            showToast('Cannot schedule a mock interview on a past date.', 'error');
+            return;
+        }
+
         const limitNum = Number(studentLimit);
         if (isNaN(limitNum) || limitNum < 1) {
             showToast('Student Limit must be a number greater than or equal to 1.', 'error');
@@ -174,6 +188,16 @@ export default function MockSchedulingPage() {
         } catch (err: unknown) {
             console.error('Error unblocking student:', err);
             showToast(err instanceof Error ? err.message : 'Failed to unblock student.', 'error');
+        }
+    };
+
+    const handleStatusChange = async (scheduleId: string, userId: string, newStatus: 'pass' | 'failed' | 'pending') => {
+        try {
+            await mockSchedulingService.updateMockResultStatus(scheduleId, userId, newStatus);
+            showToast(`Mock result status updated to ${newStatus}.`, 'success');
+        } catch (err) {
+            console.error('Error updating mock result status:', err);
+            showToast('Failed to update result status.', 'error');
         }
     };
 
@@ -342,13 +366,16 @@ export default function MockSchedulingPage() {
                     <form onSubmit={handleCreateSchedule} className="mock-form">
                         <div className="form-group">
                             <label>{UI_STRINGS.MOCK_SCHEDULING.FORM_TITLE} *</label>
-                            <input
-                                type="text"
+                            <select
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value)}
-                                placeholder="e.g. Frontend Architecture Mock Interview"
                                 required
-                            />
+                            >
+                                <option value="" disabled>Select Schedule Title</option>
+                                <option value="SQL">SQL</option>
+                                <option value="Linux">Linux</option>
+                                <option value="Linux Admin">Linux Admin</option>
+                            </select>
                         </div>
 
                         <div className="form-row-grid">
@@ -357,6 +384,7 @@ export default function MockSchedulingPage() {
                                 <CustomDatePicker
                                     value={scheduledDate}
                                     onChange={(e) => setScheduledDate(e.target.value)}
+                                    min={getLocalTodayString()}
                                     required
                                 />
                             </div>
@@ -603,42 +631,54 @@ export default function MockSchedulingPage() {
                                                                 <div className="registrants-empty">No active registrations yet.</div>
                                                             ) : (
                                                                 <table className="registrants-table">
-                                                                    <thead>
-                                                                        <tr>
-                                                                            <th>#</th>
-                                                                            <th>Student Name</th>
-                                                                            <th>Batch</th>
-                                                                            <th>Mobile Number</th>
-                                                                            <th>Registered At</th>
-                                                                            <th>Actions</th>
-                                                                        </tr>
-                                                                    </thead>
-                                                                    <tbody>
-                                                                        {activeRegs.map((reg, index) => (
-                                                                            <tr key={reg.id}>
-                                                                                <td>{index + 1}</td>
-                                                                                <td className="name-cell">
-                                                                                    {reg.userName}
-                                                                                    <span className="status-badge-inline active">Active</span>
-                                                                                </td>
-                                                                                <td className="batch-cell">{reg.userBatch}</td>
-                                                                                <td className="email-cell">{reg.userPhone || 'N/A'}</td>
-                                                                                <td className="time-cell">
-                                                                                    {reg.registeredAt.toLocaleDateString()} {reg.registeredAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                                                </td>
-                                                                                <td className="actions-cell">
-                                                                                    <button 
-                                                                                        className="block-student-btn"
-                                                                                        onClick={() => handleBlockStudentGlobally(reg)}
-                                                                                        title="Block this student globally"
-                                                                                    >
-                                                                                        <Ban size={14} /> Block
-                                                                                    </button>
-                                                                                </td>
-                                                                            </tr>
-                                                                        ))}
-                                                                    </tbody>
-                                                                </table>
+                                                                     <thead>
+                                                                         <tr>
+                                                                             <th>#</th>
+                                                                             <th>Student Name</th>
+                                                                             <th>Batch</th>
+                                                                             <th>Mobile Number</th>
+                                                                             <th>Registered At</th>
+                                                                             <th>Result Status</th>
+                                                                             <th>Actions</th>
+                                                                         </tr>
+                                                                     </thead>
+                                                                     <tbody>
+                                                                         {activeRegs.map((reg, index) => (
+                                                                             <tr key={reg.id}>
+                                                                                 <td>{index + 1}</td>
+                                                                                 <td className="name-cell">
+                                                                                     {reg.userName}
+                                                                                     <span className="status-badge-inline active">Active</span>
+                                                                                 </td>
+                                                                                 <td className="batch-cell">{reg.userBatch}</td>
+                                                                                 <td className="email-cell">{reg.userPhone || 'N/A'}</td>
+                                                                                 <td className="time-cell">
+                                                                                     {reg.registeredAt.toLocaleDateString()} {reg.registeredAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                                                 </td>
+                                                                                 <td className="result-cell">
+                                                                                     <select
+                                                                                         value={reg.resultStatus || 'pending'}
+                                                                                         onChange={(e) => handleStatusChange(schedule.id, reg.userId || reg.id, e.target.value as 'pass' | 'failed' | 'pending')}
+                                                                                         className={`result-status-select ${reg.resultStatus || 'pending'}`}
+                                                                                     >
+                                                                                         <option value="pending">Pending</option>
+                                                                                         <option value="pass">Pass</option>
+                                                                                         <option value="failed">Failed</option>
+                                                                                     </select>
+                                                                                 </td>
+                                                                                 <td className="actions-cell">
+                                                                                     <button 
+                                                                                         className="block-student-btn"
+                                                                                         onClick={() => handleBlockStudentGlobally(reg)}
+                                                                                         title="Block this student globally"
+                                                                                     >
+                                                                                         <Ban size={14} /> Block
+                                                                                     </button>
+                                                                                 </td>
+                                                                             </tr>
+                                                                         ))}
+                                                                     </tbody>
+                                                                 </table>
                                                             )}
                                                         </div>
 
