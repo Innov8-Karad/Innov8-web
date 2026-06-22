@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import type { User, Batch, Course } from '../types';
-import { Edit2, Trash2, Ban, ShieldCheck, ShieldOff, AlertTriangle, CheckCircle, BookOpen } from 'lucide-react';
+import { Edit2, Trash2, Ban, ShieldCheck, ShieldOff, AlertTriangle, CheckCircle, BookOpen, Lock } from 'lucide-react';
 import { userService } from '../services/userService';
 import { batchService } from '../services/batchService';
 import { courseService } from '../services/courseService';
@@ -26,6 +26,7 @@ export default function UsersPage() {
     const [showModal, setShowModal] = useState(false);
     const [viewingUser, setViewingUser] = useState<User | null>(null);
     const [deletingUser, setDeletingUser] = useState<User | null>(null);
+    const [deleteLoading, setDeleteLoading] = useState(false);
     const [activeTab, setActiveTab] = useState<'active' | 'blocked'>('active');
     const [classificationFilter, setClassificationFilter] = useState<'classroom' | 'non-classroom'>('classroom');
 
@@ -263,13 +264,18 @@ export default function UsersPage() {
     };
 
     const confirmDelete = async () => {
-        if (!deletingUser) return;
+        if (!deletingUser || deleteLoading) return;
+        setDeleteLoading(true);
         try {
-            await userService.deleteUser(deletingUser.id, deletingUser.batchId);
-            showToast("Student deleted successfully", "success");
+            await userService.deleteUser(deletingUser.id);
+            showToast("Student deleted successfully from database and Firebase Authentication.", "success");
             setDeletingUser(null);
-        } catch {
-            showToast("Failed to delete student", "error");
+        } catch (err: unknown) {
+            console.error("Failed to delete student:", err);
+            const error = err as Error;
+            showToast(error.message || "Failed to delete student", "error");
+        } finally {
+            setDeleteLoading(false);
         }
     };
 
@@ -633,25 +639,60 @@ export default function UsersPage() {
                         }}
                         onError={(msg) => showToast(msg, 'error')}
                     />
+                    {editingUser && (
+                        <div className="readonly-fields-notice" style={{
+                            display: 'flex', alignItems: 'center', gap: '8px',
+                            padding: '10px 14px', borderRadius: 'var(--radius-md)',
+                            background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)',
+                            marginBottom: '4px', fontSize: '0.82rem', color: 'var(--text-secondary)'
+                        }}>
+                            <Lock size={14} style={{ flexShrink: 0, color: 'var(--accent-amber, #f59e0b)' }} />
+                            <span>Full Name, Email, and Phone Number are primary account details and cannot be edited.</span>
+                        </div>
+                    )}
                     <FormRow>
-                        <FormField label={UI_STRINGS.USERS.FORM_FULL_NAME}>
-                            <input type="text" required value={newUser.name} onChange={e => setNewUser({ ...newUser, name: e.target.value })} />
+                        <FormField label={<span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>{UI_STRINGS.USERS.FORM_FULL_NAME}{editingUser && <Lock size={12} style={{ color: 'var(--text-muted, #888)' }} />}</span>}>
+                            <input
+                                type="text"
+                                required
+                                value={newUser.name}
+                                onChange={e => !editingUser && setNewUser({ ...newUser, name: e.target.value })}
+                                readOnly={!!editingUser}
+                                disabled={!!editingUser}
+                                title={editingUser ? 'Full Name cannot be edited' : ''}
+                                style={editingUser ? { background: 'var(--bg-tertiary)', opacity: 0.7, cursor: 'not-allowed' } : {}}
+                            />
                         </FormField>
-                        <FormField label={UI_STRINGS.USERS.FORM_EMAIL}>
-                            <input type="email" required value={newUser.email} onChange={e => setNewUser({ ...newUser, email: e.target.value })} />
+                        <FormField label={<span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>{UI_STRINGS.USERS.FORM_EMAIL}{editingUser && <Lock size={12} style={{ color: 'var(--text-muted, #888)' }} />}</span>}>
+                            <input
+                                type="email"
+                                required
+                                value={newUser.email}
+                                onChange={e => !editingUser && setNewUser({ ...newUser, email: e.target.value })}
+                                readOnly={!!editingUser}
+                                disabled={!!editingUser}
+                                title={editingUser ? 'Email cannot be edited' : ''}
+                                style={editingUser ? { background: 'var(--bg-tertiary)', opacity: 0.7, cursor: 'not-allowed' } : {}}
+                            />
                         </FormField>
                     </FormRow>
                     <FormRow>
-                        <FormField label={UI_STRINGS.USERS.FORM_PHONE}>
+                        <FormField label={<span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>{UI_STRINGS.USERS.FORM_PHONE}{editingUser && <Lock size={12} style={{ color: 'var(--text-muted, #888)' }} />}</span>}>
                             <input
                                 type="tel"
                                 required
                                 maxLength={10}
                                 value={newUser.phone}
                                 onChange={e => {
-                                    const val = e.target.value.replace(/\D/g, '');
-                                    setNewUser({ ...newUser, phone: val });
+                                    if (!editingUser) {
+                                        const val = e.target.value.replace(/\D/g, '');
+                                        setNewUser({ ...newUser, phone: val });
+                                    }
                                 }}
+                                readOnly={!!editingUser}
+                                disabled={!!editingUser}
+                                title={editingUser ? 'Phone Number cannot be edited' : ''}
+                                style={editingUser ? { background: 'var(--bg-tertiary)', opacity: 0.7, cursor: 'not-allowed' } : {}}
                             />
                         </FormField>
                         <FormField label={UI_STRINGS.USERS.FORM_BATCH}>
@@ -762,17 +803,17 @@ export default function UsersPage() {
             </Modal>
 
             {/* Delete Confirmation Modal */}
-            <Modal isOpen={!!deletingUser} onClose={() => setDeletingUser(null)} title="Confirm Deletion" maxWidth="400px">
+            <Modal isOpen={!!deletingUser} onClose={() => !deleteLoading && setDeletingUser(null)} title="Delete Student" maxWidth="400px">
                 <div className="p-4" style={{ paddingTop: '16px', paddingBottom: '16px' }}>
                     <p style={{ marginBottom: '24px', color: 'var(--text-secondary)' }}>
-                        Are you sure you want to delete <strong>{deletingUser?.name}</strong>? This action cannot be undone.
+                        This student is assigned to batches and related records. All associated references will also be removed permanently. This action cannot be undone.
                     </p>
                     <div className="flex justify-end gap-3 mt-6">
-                        <button className="btn btn-secondary" onClick={() => setDeletingUser(null)}>
+                        <button className="btn btn-secondary" onClick={() => setDeletingUser(null)} disabled={deleteLoading}>
                             {UI_STRINGS.COMMON.CANCEL}
                         </button>
-                        <button className="btn btn-primary" style={{ backgroundColor: 'var(--error)', borderColor: 'var(--error)' }} onClick={confirmDelete}>
-                            Delete
+                        <button className="btn btn-primary" style={{ backgroundColor: 'var(--error)', borderColor: 'var(--error)' }} onClick={confirmDelete} disabled={deleteLoading}>
+                            {deleteLoading ? "Deleting..." : "Delete"}
                         </button>
                     </div>
                 </div>

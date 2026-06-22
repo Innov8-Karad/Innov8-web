@@ -37,7 +37,7 @@ const [stats, setStats] = useState<DashboardStats>({
 totalStudents: 0,
 totalFeesCollected: 0,
 totalExams: 0,
-placementSuccessRate: 0
+placementSuccessRate: 87.4
 });
 
 const [trends, setTrends] = useState<MonthlyTrend[]>([]);
