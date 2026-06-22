@@ -9,6 +9,7 @@ import {
   deleteDoc,
   doc,
   Timestamp,
+  onSnapshot,
   type DocumentData,
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -158,7 +159,7 @@ export const feeService = {
     const newTotalPaid = num(feeData.totalPaid) + instAmount;
 
     // 3. Update parent fee
-    const feeUpdate: Record<string, unknown> = { totalPaid: newTotalPaid };
+    const feeUpdate: Record<string, unknown> = { totalPaid: newTotalPaid, updatedAt: Timestamp.now() };
     if (newTotalPaid >= feeAmount) {
       feeUpdate.status = FEE_STATUS.PAID;
       feeUpdate.paidDate = Timestamp.now();
@@ -219,6 +220,18 @@ export const feeService = {
     });
 
     await batch.commit();
+  },
+
+  // ─── REAL-TIME SUBSCRIPTION ─────────────────────────────────────────────────
+  subscribeFees(callback: (fees: Fee[]) => void): () => void {
+    const q = query(collection(db, COLLECTIONS.FEES), orderBy('dueDate', 'desc'));
+    const unsubscribe = onSnapshot(q, (snap) => {
+      const fees = snap.docs.map((d) => docToFee(d.data(), d.id));
+      callback(fees);
+    }, (error) => {
+      console.error('Error in fees real-time listener:', error);
+    });
+    return unsubscribe;
   },
 
 };

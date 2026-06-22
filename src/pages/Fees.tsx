@@ -75,46 +75,50 @@ export default function FeesPage() {
     const [isBulkSending, setIsBulkSending] = useState(false);
 
     // ═════════════════════════════════════════════════════════════════════════
-    // DATA LOADING — single source of truth refresh
+    // DATA LOADING — real-time fees, one-time users & batches
     // ═════════════════════════════════════════════════════════════════════════
     const refreshFees = useCallback(async () => {
-        try {
-            const data = await feeService.fetchFees();
-            setFees(data);
-            // Also refresh the viewingStudent if one is open
-            if (viewingStudent) {
-                const studentFees = data.filter(f => (f.studentId || f.userId) === viewingStudent.userId);
-                const total = studentFees.reduce((a, f) => a + f.amount, 0);
-                const paid = studentFees.filter(f => f.status === FEE_STATUS.PAID).reduce((a, f) => a + f.amount, 0);
-                const pending = total - paid;
-                setViewingStudent(prev => prev ? { ...prev, records: studentFees, total, paid, pending } : null);
-            }
-        } catch (err) {
-            console.error('Error refreshing fees:', err);
-        }
-    }, [viewingStudent]);
+        // No-op: fees are now updated in real-time via onSnapshot.
+        // Retained for backward compatibility with mutation handlers.
+    }, []);
 
+    // Real-time fees listener
     useEffect(() => {
-        async function fetchData() {
+        const unsubscribe = feeService.subscribeFees((updatedFees) => {
+            setFees(updatedFees);
+            setLoading(false);
+        });
+        return () => unsubscribe();
+    }, []);
+
+    // Keep viewingStudent in sync when fees change
+    useEffect(() => {
+        if (viewingStudent) {
+            const studentFees = fees.filter(f => (f.studentId || f.userId) === viewingStudent.userId);
+            const total = studentFees.reduce((a, f) => a + f.amount, 0);
+            const paid = studentFees.filter(f => f.status === FEE_STATUS.PAID).reduce((a, f) => a + f.amount, 0);
+            const pending = total - paid;
+            setViewingStudent(prev => prev ? { ...prev, records: studentFees, total, paid, pending } : null);
+        }
+    }, [fees]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    // One-time fetch for users and batches (rarely change)
+    useEffect(() => {
+        async function fetchStaticData() {
             try {
-                setLoading(true);
                 setError(null);
-                const [feesData, usersData, batchesData] = await Promise.all([
-                    feeService.fetchFees(),
+                const [usersData, batchesData] = await Promise.all([
                     userService.fetchUsers(),
                     batchService.fetchBatches(),
                 ]);
-                setFees(feesData);
                 setUsers(usersData);
                 setBatches(batchesData);
             } catch (err) {
                 console.error('Error fetching data:', err);
                 setError(UI_STRINGS.FEES.ERROR_LOAD);
-            } finally {
-                setLoading(false);
             }
         }
-        fetchData();
+        fetchStaticData();
     }, []);
 
     // ═════════════════════════════════════════════════════════════════════════
@@ -255,7 +259,7 @@ export default function FeesPage() {
             await refreshFees();
             // Clear cached installments so they re-fetch
             setInstallmentsMap(prev => { const m = { ...prev }; delete m[fee.id]; return m; });
-            showToast('Fee marked as fully paid', 'success');
+            showToast('Fee collected successfully. Dashboard updated in real time.', 'success');
         } catch (err) {
             console.error('Error marking fee paid:', err);
             setError('Failed to mark fee as paid.');
@@ -306,7 +310,7 @@ export default function FeesPage() {
             setShowInstallmentModal(false);
             setInstallmentFee(null);
             setNewInstallment({ amount: '', paidDate: new Date().toISOString().split('T')[0], method: 'Cash', notes: '' });
-            showToast('Installment recorded successfully', 'success');
+            showToast('Fee collected successfully. Dashboard updated in real time.', 'success');
         } catch (err) {
             console.error('Error adding installment:', err);
             setError('Failed to add installment.');

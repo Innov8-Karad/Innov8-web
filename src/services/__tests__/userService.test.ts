@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { userService } from '../userService';
 import { db } from '../../lib/firebase';
 import { collection, doc, runTransaction } from 'firebase/firestore';
+import { httpsCallable } from 'firebase/functions';
 
 // Mock Firebase
 vi.mock('../../lib/firebase', () => ({
@@ -12,6 +13,11 @@ vi.mock('../../lib/firebase', () => ({
   auth: {
     currentUser: { uid: 'admin-123' }
   }
+}));
+
+vi.mock('firebase/functions', () => ({
+  getFunctions: vi.fn(() => ({})),
+  httpsCallable: vi.fn(),
 }));
 
 vi.mock('firebase/firestore', () => {
@@ -104,11 +110,15 @@ describe('userService', () => {
   });
 
   describe('deleteUser', () => {
-        it('should delete a user document by ID', async () => {
+        it('should call the deleteStudent cloud function', async () => {
+            const mockCallable = vi.fn().mockResolvedValue({ data: { success: true } });
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            vi.mocked(httpsCallable).mockReturnValue(mockCallable as any);
+
             await userService.deleteUser('user-to-delete');
 
-            expect(doc).toHaveBeenCalledWith(db, 'users', 'user-to-delete');
-            expect(runTransaction).toHaveBeenCalled();
+            expect(httpsCallable).toHaveBeenCalledWith(expect.anything(), 'deleteStudent');
+            expect(mockCallable).toHaveBeenCalledWith({ studentId: 'user-to-delete' });
         });
   });
 });

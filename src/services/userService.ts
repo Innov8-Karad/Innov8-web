@@ -12,10 +12,12 @@ import {
   runTransaction,
   type DocumentData 
 } from 'firebase/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '../lib/firebase';
 import { uploadWithFallback, deleteFromCloudinary } from '../lib/cloudinary';
 import { COLLECTIONS } from '../constants';
 import type { User } from '../types';
+
 
 export function getUserDisplayName(user: { name?: string; firstName?: string; middleName?: string; surname?: string }): string {
   if (user.firstName || user.surname) {
@@ -128,6 +130,12 @@ export const userService = {
     const cleanedData = Object.fromEntries(
         Object.entries(data).filter((entry) => entry[1] !== undefined)
     );
+
+    // Protect primary account fields — these cannot be changed after creation
+    delete cleanedData.name;
+    delete cleanedData.email;
+    delete cleanedData.phone;
+
     if (typeof cleanedData.email === 'string') {
       cleanedData.email = cleanedData.email.toLowerCase().trim();
     }
@@ -168,33 +176,10 @@ export const userService = {
     });
   },
 
-  async deleteUser(id: string, batchId?: string): Promise<void> {
-    const userRef = doc(db, COLLECTIONS.USERS, id);
-
-    // Read user data before deletion to get Cloudinary publicId for cleanup
-    const userSnap = await getDoc(userRef);
-    const profilePhotoPublicId = userSnap.data()?.profilePhotoPublicId;
-
-    const batchRef = batchId ? doc(db, COLLECTIONS.BATCHES, batchId) : null;
-
-    await runTransaction(db, async (transaction) => {
-      // 1. Delete student document
-      transaction.delete(userRef);
-
-      // 2. Decrement studentCount on batch if assigned
-      if (batchRef) {
-        const batchSnap = await transaction.get(batchRef);
-        if (batchSnap.exists()) {
-          const currentCount = batchSnap.data()?.studentCount || 0;
-          transaction.update(batchRef, { studentCount: Math.max(0, currentCount - 1) });
-        }
-      }
-    });
-
-    // Best-effort: delete profile photo from Cloudinary after transaction succeeds
-    if (profilePhotoPublicId) {
-      deleteFromCloudinary(profilePhotoPublicId);
-    }
+  async deleteUser(id: string): Promise<void> {
+    const functions = getFunctions(undefined, 'asia-south1');
+    const deleteStudentFn = httpsCallable<{ studentId: string }, { success: boolean }>(functions, 'deleteStudent');
+    await deleteStudentFn({ studentId: id });
   },
 
   async blockUser(id: string, reason?: string): Promise<User> {
