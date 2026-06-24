@@ -15,6 +15,7 @@ import CloudinaryUpload from './CloudinaryUpload';
 import { FormField, FormActions } from './FormField';
 import { detectPlatform, validateVideoUrl, getEmbedUrl, getThumbnailUrl, getPlatformLabel, getPlatformColor } from '../lib/videoUtils';
 import type { VideoPlatform } from '../lib/videoUtils';
+import CustomSelect from './CustomSelect';
 
 interface CurriculumBuilderProps {
     targetId: string;
@@ -76,6 +77,11 @@ export default function CurriculumBuilder({ targetId, targetType, courseThumbnai
     const [searchQuery, setSearchQuery] = useState('');
     const [sortBy, setSortBy] = useState('recent');
     const [showImportModal, setShowImportModal] = useState(false);
+
+    const sortOptions = useMemo(() => [
+        { value: 'recent', label: 'Recently Added' },
+        { value: 'oldest', label: 'Archive (Oldest)' }
+    ], []);
 
     // Confirmation Modal State
     const [confirmState, setConfirmState] = useState<{
@@ -351,13 +357,14 @@ export default function CurriculumBuilder({ targetId, targetType, courseThumbnai
                             />
                         </div>
                         <div className="toolbar-actions">
-                            <div className="dropdown-select">
-                                <SortDesc size={16} />
-                                <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-                                    <option value="recent">Recently Added</option>
-                                    <option value="oldest">Archive (Oldest)</option>
-                                </select>
-                                <ChevronDown size={14} className="select-arrow" />
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <SortDesc size={18} style={{ color: 'var(--text-secondary)', flexShrink: 0 }} />
+                                <CustomSelect
+                                    options={sortOptions}
+                                    value={sortBy}
+                                    onChange={(val) => setSortBy(val)}
+                                    style={{ minWidth: '160px' }}
+                                />
                             </div>
                             <div className="dropdown-select">
                                 <Filter size={16} />

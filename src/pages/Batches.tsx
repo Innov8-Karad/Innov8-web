@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { 
     Layers, Plus, Edit2, Trash2, CheckCircle2, XCircle, Clock, 
     FileText, MoreVertical, Search, Users, ArrowLeft, X, 
-    Video, UserPlus
+    Video, UserPlus, BookOpen
 } from 'lucide-react';
 import { batchService } from '../services/batchService';
 import { courseService } from '../services/courseService';
@@ -16,8 +16,10 @@ import Modal from '../components/Modal';
 import { FormField, FormRow, FormActions } from '../components/FormField';
 import CurriculumBuilder from '../components/CurriculumBuilder';
 import AssignmentBuilder from '../components/AssignmentBuilder';
+import NotesBuilder from '../components/NotesBuilder';
 import { useToast } from '../hooks/useToast';
 import CustomDatePicker from '../components/CustomDatePicker';
+import CustomSelect from '../components/CustomSelect';
 import './Batches.css';
 
 export default function BatchesPage() {
@@ -41,7 +43,7 @@ export default function BatchesPage() {
     
     // Students states
     const [expandedBatchId, setExpandedBatchId] = useState<string | null>(null);
-    const [drawerTab, setDrawerTab] = useState<'students' | 'content' | 'assignments'>('students');
+    const [drawerTab, setDrawerTab] = useState<'students' | 'content' | 'assignments' | 'notes'>('students');
     const [batchStudents, setBatchStudents] = useState<User[]>([]);
     const [loadingStudents, setLoadingStudents] = useState(false);
     const [studentSearchQuery, setStudentSearchQuery] = useState('');
@@ -294,15 +296,15 @@ export default function BatchesPage() {
                 </div>
                 <div className="filter-group">
                     <div className="filter-select-wrapper">
-                        <select 
-                            className="filter-select"
+                        <CustomSelect 
                             value={filterActive}
-                            onChange={(e) => setFilterActive(e.target.value as 'all' | 'active' | 'inactive')}
-                        >
-                            <option value="all">All Status</option>
-                            <option value="active">Active Only</option>
-                            <option value="inactive">Inactive Only</option>
-                        </select>
+                            onChange={(val) => setFilterActive(val as 'all' | 'active' | 'inactive')}
+                            options={[
+                                { value: 'all', label: 'All Status' },
+                                { value: 'active', label: 'Active Only' },
+                                { value: 'inactive', label: 'Inactive Only' }
+                            ]}
+                        />
                     </div>
 
                     <div className="tab-actions">
@@ -568,6 +570,12 @@ export default function BatchesPage() {
                                 >
                                     <FileText size={16} /> Assignments
                                 </button>
+                                <button 
+                                    className={`tab-pill ${drawerTab === 'notes' ? 'active' : ''}`}
+                                    onClick={() => setDrawerTab('notes')}
+                                >
+                                    <BookOpen size={16} /> Notes
+                                </button>
                             </div>
                         </div>
                         
@@ -651,8 +659,10 @@ export default function BatchesPage() {
                                 </>
                             ) : drawerTab === 'content' ? (
                                 <CurriculumBuilder targetId={expandedBatchId} targetType="batch" />
-                            ) : (
+                            ) : drawerTab === 'assignments' ? (
                                 <AssignmentBuilder targetId={expandedBatchId} targetType="batch" />
+                            ) : (
+                                <NotesBuilder targetId={expandedBatchId} targetType="batch" />
                             )}
                         </div>
                     </div>

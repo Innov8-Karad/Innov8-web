@@ -147,6 +147,23 @@ export const userService = {
     }
 
     await runTransaction(db, async (transaction) => {
+      // ── PHASE 1: All reads first (Firestore requirement) ──
+      let oldBatchSnap = null;
+      let newBatchSnap = null;
+      const batchChanged = oldBatchId !== undefined && newBatchId !== undefined && oldBatchId !== newBatchId;
+
+      if (batchChanged) {
+        if (oldBatchId) {
+          const oldBatchRef = doc(db, COLLECTIONS.BATCHES, oldBatchId);
+          oldBatchSnap = await transaction.get(oldBatchRef);
+        }
+        if (newBatchId) {
+          const newBatchRef = doc(db, COLLECTIONS.BATCHES, newBatchId);
+          newBatchSnap = await transaction.get(newBatchRef);
+        }
+      }
+
+      // ── PHASE 2: All writes after reads ──
       // 1. Update the student document
       transaction.update(userRef, {
         ...cleanedData,
@@ -154,23 +171,17 @@ export const userService = {
         updatedAt: Timestamp.now()
       });
 
-      // 2. Handle batch count changes if batchId is updated
-      if (oldBatchId !== undefined && newBatchId !== undefined && oldBatchId !== newBatchId) {
-        if (oldBatchId) {
+      // 2. Handle batch count changes if batchId was updated
+      if (batchChanged) {
+        if (oldBatchId && oldBatchSnap?.exists()) {
           const oldBatchRef = doc(db, COLLECTIONS.BATCHES, oldBatchId);
-          const oldBatchSnap = await transaction.get(oldBatchRef);
-          if (oldBatchSnap.exists()) {
-            const currentCount = oldBatchSnap.data()?.studentCount || 0;
-            transaction.update(oldBatchRef, { studentCount: Math.max(0, currentCount - 1) });
-          }
+          const currentCount = oldBatchSnap.data()?.studentCount || 0;
+          transaction.update(oldBatchRef, { studentCount: Math.max(0, currentCount - 1) });
         }
-        if (newBatchId) {
+        if (newBatchId && newBatchSnap?.exists()) {
           const newBatchRef = doc(db, COLLECTIONS.BATCHES, newBatchId);
-          const newBatchSnap = await transaction.get(newBatchRef);
-          if (newBatchSnap.exists()) {
-            const currentCount = newBatchSnap.data()?.studentCount || 0;
-            transaction.update(newBatchRef, { studentCount: currentCount + 1 });
-          }
+          const currentCount = newBatchSnap.data()?.studentCount || 0;
+          transaction.update(newBatchRef, { studentCount: currentCount + 1 });
         }
       }
     });

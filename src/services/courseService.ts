@@ -235,8 +235,8 @@ export const courseService = {
   async updateSubmissionGrade(courseId: string, assignmentId: string, submissionId: string, data: Partial<AssignmentSubmission>): Promise<void> {
     const docRef = doc(db, COLLECTIONS.COURSES, courseId, 'assignments', assignmentId, 'submissions', submissionId);
     await updateDoc(docRef, { 
-      ...data, 
       status: 'graded', 
+      ...data, 
       gradedAt: Timestamp.now() 
     });
   },
