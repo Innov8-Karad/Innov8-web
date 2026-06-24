@@ -705,21 +705,23 @@ export default function UsersPage() {
                             />
                         </FormField>
                     </FormRow>
-                    <FormRow>
-                        <FormField label={UI_STRINGS.USERS.TH_COURSE}>
-                            <CustomSelect
-                                options={courseOptions}
-                                value={newUser.batchId ? (batches.find(b => b.id === newUser.batchId)?.courseId || newUser.courseId || '') : newUser.courseId}
-                                onChange={(val) => setNewUser({ ...newUser, courseId: val })}
-                                placeholder="Select course..."
-                                searchable={true}
-                                disabled={!!newUser.batchId}
-                            />
-                        </FormField>
-                        <FormField label="Skills (comma-separated)">
-                            <input type="text" placeholder="React, Node.js, UI/UX" value={newUser.skills} onChange={e => setNewUser({ ...newUser, skills: e.target.value })} />
-                        </FormField>
-                    </FormRow>
+                    {!editingUser && (
+                        <FormRow>
+                            <FormField label={UI_STRINGS.USERS.TH_COURSE}>
+                                <CustomSelect
+                                    options={courseOptions}
+                                    value={newUser.batchId ? (batches.find(b => b.id === newUser.batchId)?.courseId || newUser.courseId || '') : newUser.courseId}
+                                    onChange={(val) => setNewUser({ ...newUser, courseId: val })}
+                                    placeholder="Select course..."
+                                    searchable={true}
+                                    disabled={!!newUser.batchId}
+                                />
+                            </FormField>
+                            <FormField label="Skills (comma-separated)">
+                                <input type="text" placeholder="React, Node.js, UI/UX" value={newUser.skills} onChange={e => setNewUser({ ...newUser, skills: e.target.value })} />
+                            </FormField>
+                        </FormRow>
+                    )}
                     <FormActions>
                         <button type="button" className="btn btn-secondary" onClick={() => { setShowModal(false); resetForm(); }} disabled={uploadingPhoto}>{UI_STRINGS.COMMON.CANCEL}</button>
                         <button type="submit" className="btn btn-primary" disabled={uploadingPhoto}>

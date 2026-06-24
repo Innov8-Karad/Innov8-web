@@ -216,6 +216,8 @@ export interface CourseResource {
     size?: string;              // e.g. "2.3 MB"
     fileFormat?: string;        // e.g. "PDF", "DOC", "DOCX"
     isDemo?: boolean;           // Whether inactive students can view this
+    description?: string;
+    createdBy?: string;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     createdAt?: { seconds: number; nanoseconds: number } | any;
 }
@@ -263,6 +265,8 @@ export interface Resource {
     duration?: string;
     thumbnailUrl?: string;
     isDemo?: boolean;           // Whether inactive students can view this
+    description?: string;
+    createdBy?: string;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     createdAt?: { seconds: number; nanoseconds: number } | any;
 }

@@ -16,6 +16,8 @@
 }
 
 .batches-toolbar {
+    position: relative;
+    z-index: 100;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -75,35 +77,21 @@
     min-width: 160px;
 }
 
-.filter-select {
-    width: 100%;
+.filter-select-wrapper .custom-select-trigger {
     height: 48px;
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid var(--border-subtle);
     border-radius: 14px;
-    padding: 0 40px 0 16px;
+    padding: 0 16px;
     color: var(--text-main);
     font-weight: 600;
     font-size: 0.9rem;
-    cursor: pointer;
-    appearance: none;
     transition: all 0.3s ease;
 }
 
-.filter-select:hover {
+.filter-select-wrapper .custom-select-trigger:hover {
     background: rgba(255, 255, 255, 0.06);
     border-color: rgba(255, 255, 255, 0.2);
-}
-
-.filter-select-wrapper::after {
-    content: '▾';
-    position: absolute;
-    right: 16px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--text-muted);
-    pointer-events: none;
-    font-size: 1.2rem;
 }
 
 .tab-actions {
@@ -497,6 +485,81 @@
    CURRICULUM REDESIGN
    ═══════════════════════════════════════════════════ */
 
+.curriculum-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 12px;
+    border-radius: 16px;
+}
+
+.search-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex: 1;
+    max-width: 400px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 0 16px;
+    height: 42px;
+    transition: all 0.3s ease;
+}
+
+.search-wrapper:focus-within {
+    border-color: rgba(var(--primary-rgb), 0.5);
+    background: rgba(0, 0, 0, 0.3);
+    box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.1);
+}
+
+.search-wrapper .search-icon {
+    color: var(--text-secondary);
+    margin-right: 12px;
+}
+
+.toolbar-search {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text-main);
+    font-size: 0.95rem;
+    outline: none;
+    width: 100%;
+}
+
+.toolbar-search::placeholder {
+    color: var(--text-muted);
+}
+
+.toolbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.empty-curriculum {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 64px 24px;
+    background: rgba(255, 255, 255, 0.01);
+    border: 1px dashed rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.empty-curriculum p {
+    font-size: 1rem;
+    margin-top: 16px;
+    opacity: 0.8;
+}
+
 .curriculum-layout {
     display: grid;
     grid-template-columns: 1fr 240px;
@@ -630,15 +693,23 @@
     font-weight: 600;
     font-size: 0.85rem;
     height: 100%;
+    width: 100%;
     cursor: pointer;
     appearance: none;
-    padding-right: 20px;
+    padding-right: 24px;
     outline: none;
 }
 
 .dropdown-select svg {
     color: var(--primary);
     opacity: 0.8;
+}
+
+.dropdown-select .select-arrow {
+    position: absolute;
+    right: 12px;
+    color: var(--text-secondary);
+    pointer-events: none;
 }
 
 /* ═══════════════════════════════════════════════════
@@ -666,6 +737,21 @@
     .curriculum-sidebar {
         order: -1;
         position: static;
+    }
+    .curriculum-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .search-wrapper {
+        max-width: 100%;
+    }
+    .toolbar-actions {
+        flex-wrap: wrap;
+    }
+    .toolbar-actions > div,
+    .dropdown-select {
+        flex: 1;
+        min-width: 140px;
     }
 }
 
@@ -728,11 +814,11 @@
     background: rgba(0, 0, 0, 0.04);
 }
 
-[data-theme='light'] .filter-select {
+[data-theme='light'] .filter-select-wrapper .custom-select-trigger {
     background: rgba(0, 0, 0, 0.02);
 }
 
-[data-theme='light'] .filter-select:hover {
+[data-theme='light'] .filter-select-wrapper .custom-select-trigger:hover {
     background: rgba(0, 0, 0, 0.04);
 }
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Book, Clock, User, Star, Edit2, Trash2, ShoppingBag } from 'lucide-react';
+import { Book, Clock, User, Star, Edit2, Trash2, ShoppingBag, FileText } from 'lucide-react';
 import { courseService } from '../services/courseService';
 import type { Course } from '../types';
 import { UI_STRINGS } from '../constants';
@@ -11,6 +11,7 @@ import { FormField, FormRow, FormActions } from '../components/FormField';
 import { useToast } from '../hooks/useToast';
 import CurriculumBuilder from '../components/CurriculumBuilder';
 import AssignmentBuilder from '../components/AssignmentBuilder';
+import NotesBuilder from '../components/NotesBuilder';
 
 export default function CoursesPage() {
     const [courses, setCourses] = useState<Course[]>([]);
@@ -19,7 +20,7 @@ export default function CoursesPage() {
     const [showModal, setShowModal] = useState(false);
     const [editingCourse, setEditingCourse] = useState<Course | null>(null);
     const [deletingCourse, setDeletingCourse] = useState<Course | null>(null);
-    const [activeTab, setActiveTab] = useState<'info' | 'curriculum' | 'assignments'>('info');
+    const [activeTab, setActiveTab] = useState<'info' | 'curriculum' | 'assignments' | 'notes'>('info');
     const { showToast } = useToast();
     
     const [newCourse, setNewCourse] = useState({
@@ -232,6 +233,13 @@ export default function CoursesPage() {
                             >
                                 <Clock size={16} /> Assignments
                             </button>
+                            <button 
+                                type="button"
+                                className={`tab-btn ${activeTab === 'notes' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('notes')}
+                            >
+                                <FileText size={16} /> Notes
+                            </button>
                         </div>
                     )}
 
@@ -287,6 +295,14 @@ export default function CoursesPage() {
                                 <h3 className="section-label mb-1">Assignments</h3>
                                 <p className="text-sm text-muted mb-4">Manage course assignments (auto-saved)</p>
                                 <AssignmentBuilder courseId={editingCourse.id} />
+                            </div>
+                        )}
+
+                        {editingCourse && activeTab === 'notes' && (
+                            <div className="animate-in">
+                                <h3 className="section-label mb-1">Notes</h3>
+                                <p className="text-sm text-muted mb-4">Manage course notes (auto-saved)</p>
+                                <NotesBuilder courseId={editingCourse.id} />
                             </div>
                         )}
                     </div>
