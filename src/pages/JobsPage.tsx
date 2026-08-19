@@ -16,6 +16,7 @@ import { FormField, FormRow, FormActions } from '../components/FormField';
 import CustomSelect from '../components/CustomSelect';
 import CustomDatePicker from '../components/CustomDatePicker';
 import CustomTimePicker from '../components/CustomTimePicker';
+import JobImportPanel from '../components/JobImportPanel';
 
 type ViewMode = 'list' | 'detail';
 
@@ -457,6 +458,11 @@ export default function JobsPage() {
         </div>
       </section>
 
+      {/* Job Import Panel */}
+      <section className="mb-xl">
+        <JobImportPanel onEditJob={handleEditJob} />
+      </section>
+
       {/* Filters & Search */}
       <section className="controls-row mb-lg">
         <div className="search-box-premium">
@@ -531,6 +537,11 @@ export default function JobsPage() {
                   <span className={`tag-mini ${job.jobType === 'Full-time' ? 'full' : 'intern'}`}>
                     {job.jobType}
                   </span>
+                  {job.source && job.source !== 'manual' && (
+                    <span className="tag-mini adzuna-tag">
+                      {job.source}
+                    </span>
+                  )}
                   {isJobExpired(job) && (
                     <span className="tag-mini expired">Expired</span>
                   )}
@@ -814,6 +825,7 @@ export default function JobsPage() {
         }
         .tag-mini.full { background: rgba(16, 185, 129, 0.1); color: #10B981; }
         .tag-mini.intern { background: rgba(59, 130, 246, 0.1); color: #3B82F6; }
+        .tag-mini.adzuna-tag { background: rgba(16, 185, 129, 0.1); color: #10B981; }
         .tag-mini.expired { background: rgba(239, 68, 68, 0.1); color: #EF4444; }
 
         .footer-actions { display: flex; gap: 0.5rem; }
