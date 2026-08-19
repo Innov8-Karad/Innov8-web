@@ -393,6 +393,9 @@ export interface Job {
     postedDate: Date;
     deadline?: Date;
     isActive: boolean;
+    source?: 'manual' | 'naukri' | 'adzuna';
+    sourceUrl?: string;
+    pendingApproval?: boolean;
     createdAt?: { seconds: number; nanoseconds: number };
     updatedAt?: { seconds: number; nanoseconds: number };
 }

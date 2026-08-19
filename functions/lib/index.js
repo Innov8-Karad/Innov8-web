@@ -3,7 +3,7 @@
 // Innov8 Cloud Functions — Entry Point
 // ═══════════════════════════════════════════════════════════════════════════════
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteStudent = exports.generateCloudinarySignature = exports.submitExam = exports.verifySignupOTP = exports.sendSignupOTP = exports.deleteCloudinaryAsset = exports.onSendNotification = exports.onDeviceApproved = exports.onDeviceCreated = exports.onFeeCreated = exports.onAssignmentGraded = exports.onAnnouncementCreated = exports.onUserUpdated = exports.onUserCreated = void 0;
+exports.searchAdzunaJobs = exports.scheduledAdzunaImport = exports.deleteStudent = exports.generateCloudinarySignature = exports.submitExam = exports.verifySignupOTP = exports.sendSignupOTP = exports.deleteCloudinaryAsset = exports.onSendNotification = exports.onDeviceApproved = exports.onDeviceCreated = exports.onFeeCreated = exports.onAssignmentGraded = exports.onAnnouncementCreated = exports.onUserUpdated = exports.onUserCreated = void 0;
 var onUserCreated_1 = require("./triggers/onUserCreated");
 Object.defineProperty(exports, "onUserCreated", { enumerable: true, get: function () { return onUserCreated_1.onUserCreated; } });
 var onUserUpdated_1 = require("./triggers/onUserUpdated");
@@ -32,4 +32,8 @@ var generateCloudinarySignature_1 = require("./callable/generateCloudinarySignat
 Object.defineProperty(exports, "generateCloudinarySignature", { enumerable: true, get: function () { return generateCloudinarySignature_1.generateCloudinarySignature; } });
 var deleteStudent_1 = require("./callable/deleteStudent");
 Object.defineProperty(exports, "deleteStudent", { enumerable: true, get: function () { return deleteStudent_1.deleteStudent; } });
+var scheduledAdzunaImport_1 = require("./callable/scheduledAdzunaImport");
+Object.defineProperty(exports, "scheduledAdzunaImport", { enumerable: true, get: function () { return scheduledAdzunaImport_1.scheduledAdzunaImport; } });
+var searchAdzunaJobs_1 = require("./callable/searchAdzunaJobs");
+Object.defineProperty(exports, "searchAdzunaJobs", { enumerable: true, get: function () { return searchAdzunaJobs_1.searchAdzunaJobs; } });
 //# sourceMappingURL=index.js.map

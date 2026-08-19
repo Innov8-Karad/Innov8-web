@@ -547,5 +547,41 @@ service cloud.firestore {
     match /otp_verifications/{docId} {
       allow read, write: if false;
     }
+
+    // ═════════════════════════════════════════════════════════════════════
+    // 20. JOBS
+    // ─────────────────────────────────────────────────────────────────────
+    // Web Admin:  Full CRUD on all jobs
+    // Mobile:     Reads only active, non-pending jobs
+    //             Creates applications in subcollection
+    // Cloud Fns:  Creates draft jobs (pendingApproval: true) via Admin SDK
+    // ═════════════════════════════════════════════════════════════════════
+    match /jobs/{jobId} {
+      // Admins can read everything; students can only read active, approved jobs
+      allow read: if isAdmin()
+                  || (isActiveUser()
+                      && resource.data.isActive == true
+                      && resource.data.get('pendingApproval', false) == false);
+
+      allow create, update, delete: if isAdmin();
+
+      // Applications subcollection
+      match /applications/{applicationId} {
+        allow read: if isAdmin()
+                    || (isAuthenticated() && resource.data.userId == request.auth.uid);
+        allow create: if isAuthenticated()
+                      && request.resource.data.userId == request.auth.uid;
+        allow update, delete: if isAdmin();
+      }
+    }
+
+    // ═════════════════════════════════════════════════════════════════════
+    // 21. CONFIG (Adzuna import settings, etc.)
+    // ─────────────────────────────────────────────────────────────────────
+    // Admin-only read/write. Cloud Functions read via Admin SDK.
+    // ═════════════════════════════════════════════════════════════════════
+    match /config/{configId} {
+      allow read, write: if isAdmin();
+    }
   }
 }

@@ -16,4 +16,5 @@ export { verifySignupOTP } from "./triggers/verifySignupOTP";
 export { submitExam } from "./callable/submitExam";
 export { generateCloudinarySignature } from "./callable/generateCloudinarySignature";
 export { deleteStudent } from "./callable/deleteStudent";
-
+export { scheduledAdzunaImport } from "./callable/scheduledAdzunaImport";
+export { searchAdzunaJobs } from "./callable/searchAdzunaJobs";
