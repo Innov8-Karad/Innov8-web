@@ -12,7 +12,8 @@ vi.mock('../../lib/firebase', () => ({
   },
   auth: {
     currentUser: { uid: 'admin-123' }
-  }
+  },
+  functions: {}
 }));
 
 vi.mock('firebase/functions', () => ({

@@ -12,8 +12,8 @@ import {
   runTransaction,
   type DocumentData 
 } from 'firebase/firestore';
-import { getFunctions, httpsCallable } from 'firebase/functions';
-import { db } from '../lib/firebase';
+import { httpsCallable } from 'firebase/functions';
+import { db, functions } from '../lib/firebase';
 import { uploadWithFallback, deleteFromCloudinary } from '../lib/cloudinary';
 import { COLLECTIONS } from '../constants';
 import type { User } from '../types';
@@ -188,7 +188,6 @@ export const userService = {
   },
 
   async deleteUser(id: string): Promise<void> {
-    const functions = getFunctions(undefined, 'asia-south1');
     const deleteStudentFn = httpsCallable<{ studentId: string }, { success: boolean }>(functions, 'deleteStudent');
     await deleteStudentFn({ studentId: id });
   },

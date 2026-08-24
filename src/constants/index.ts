@@ -1,3 +1,5 @@
+export const FIREBASE_REGION = import.meta.env.VITE_FIREBASE_REGION || 'asia-south1';
+
 export const COLLECTIONS = {
   ANNOUNCEMENTS: 'announcements',
   USERS: 'users',
@@ -54,6 +56,10 @@ export const PRIORITY_COLORS = {
   [PRIORITY_LEVELS.MEDIUM]: '#F59E0B',
   [PRIORITY_LEVELS.LOW]: '#10B981',
   DEFAULT: '#6B7280',
+} as const;
+
+export const DEFAULT_MEDIA_FALLBACKS = {
+  VIDEO_THUMBNAIL: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?q=80&w=1000&auto=format&fit=crop',
 } as const;
 
 export const DEFAULT_VALUES = {

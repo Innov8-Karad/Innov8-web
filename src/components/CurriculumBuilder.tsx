@@ -15,6 +15,7 @@ import CloudinaryUpload from './CloudinaryUpload';
 import { FormField, FormActions } from './FormField';
 import { detectPlatform, validateVideoUrl, getEmbedUrl, getThumbnailUrl, getPlatformLabel, getPlatformColor } from '../lib/videoUtils';
 import type { VideoPlatform } from '../lib/videoUtils';
+import { DEFAULT_MEDIA_FALLBACKS } from '../constants';
 import CustomSelect from './CustomSelect';
 
 interface CurriculumBuilderProps {
@@ -453,13 +454,13 @@ export default function CurriculumBuilder({ targetId, targetType, courseThumbnai
                                                             {resource.type === 'video' ? (
                                                                 <div style={{ position: 'relative', flexShrink: 0 }}>
                                                                     <img
-                                                                        src={courseThumbnail || resource.thumbnailUrl || 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?q=80&w=1000&auto=format&fit=crop'}
+                                                                        src={courseThumbnail || resource.thumbnailUrl || DEFAULT_MEDIA_FALLBACKS.VIDEO_THUMBNAIL}
                                                                         alt=""
                                                                         className="curriculum-thumb"
                                                                         style={{ width: '60px', height: '40px', borderRadius: '4px', objectFit: 'cover' }}
                                                                         onError={(e) => {
                                                                             const target = e.target as HTMLImageElement;
-                                                                            target.src = 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?q=80&w=1000&auto=format&fit=crop';
+                                                                            target.src = DEFAULT_MEDIA_FALLBACKS.VIDEO_THUMBNAIL;
                                                                         }}
                                                                     />
                                                                 </div>

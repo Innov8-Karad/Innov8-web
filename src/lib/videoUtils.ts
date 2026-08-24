@@ -160,3 +160,10 @@ export function getPlatformColor(platform: VideoPlatform): string {
     };
     return colors[platform] || '#6B7280';
 }
+
+/**
+ * Generate a Google Docs viewer URL for viewing remote PDFs/documents in browser.
+ */
+export function getGoogleDocsViewerUrl(url: string, embedded: boolean = true): string {
+    return `https://docs.google.com/viewer?url=${encodeURIComponent(url)}${embedded ? '&embedded=true' : ''}`;
+}

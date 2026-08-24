@@ -9,7 +9,8 @@ vi.mock('../../lib/firebase', () => ({
     collection: vi.fn(),
     doc: vi.fn(),
   },
-  app: {}
+  app: {},
+  functions: {}
 }));
 
 vi.mock('firebase/firestore', () => {
