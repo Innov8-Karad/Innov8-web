@@ -4,6 +4,7 @@ import { courseService } from '../services/courseService';
 import { batchService } from '../services/batchService';
 import type { AssignmentSubmission } from '../types';
 import { useToast } from '../hooks/useToast';
+import { getGoogleDocsViewerUrl } from '../lib/videoUtils';
 import Modal from './Modal';
 
 interface GradingPanelProps {
@@ -29,7 +30,7 @@ export default function GradingPanel({ courseId, targetType = 'course', assignme
         }
 
         // For PDFs, we use the Google Docs Viewer as a proxy to bypass the "Origins must match" block
-        const proxyUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(submission.fileUrl)}&embedded=true`;
+        const proxyUrl = getGoogleDocsViewerUrl(submission.fileUrl);
         window.open(proxyUrl, '_blank', 'noopener,noreferrer');
     };
 

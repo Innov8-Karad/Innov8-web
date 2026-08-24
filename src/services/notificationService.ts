@@ -5,7 +5,7 @@
 // notification history from Firestore.
 // ═══════════════════════════════════════════════════════════════════════════════
 
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { httpsCallable } from 'firebase/functions';
 import {
     collection,
     query,
@@ -18,7 +18,7 @@ import {
     doc,
     deleteDoc,
 } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { db, functions } from '../lib/firebase';
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -47,10 +47,6 @@ export interface NotificationRecord {
     tokenCount: number;
     createdAt: Date;
 }
-
-// ── Service Functions ───────────────────────────────────────────────────────
-
-const functions = getFunctions(undefined, 'asia-south1');
 
 /**
  * Send a push notification via the onSendNotification Cloud Function.

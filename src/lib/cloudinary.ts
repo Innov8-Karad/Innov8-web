@@ -205,7 +205,7 @@ export async function uploadWithFallback(
   file: File,
   options: UploadOptions = {}
 ): Promise<CloudinaryUploadResult> {
-  const { preset = 'Innov8_unsigned', folder = 'innov8/uploads', publicId, onProgress } = options;
+  const { preset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || 'Innov8_unsigned', folder = 'innov8/uploads', publicId, onProgress } = options;
 
   if (!CLOUD_NAME) {
     throw new Error('Cloudinary is not properly configured. Check VITE_CLOUDINARY_CLOUD_NAME in .env');
