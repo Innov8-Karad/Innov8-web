@@ -2,8 +2,45 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 // Innov8 Cloud Functions — Entry Point
 // ═══════════════════════════════════════════════════════════════════════════════
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.searchAdzunaJobs = exports.scheduledAdzunaImport = exports.deleteStudent = exports.generateCloudinarySignature = exports.submitExam = exports.verifySignupOTP = exports.sendSignupOTP = exports.deleteCloudinaryAsset = exports.onSendNotification = exports.onDeviceApproved = exports.onDeviceCreated = exports.onFeeCreated = exports.onAssignmentGraded = exports.onAnnouncementCreated = exports.onUserUpdated = exports.onUserCreated = void 0;
+exports.seedInterviewConfig = exports.evaluateInterview = exports.generateInterviewQuestions = exports.searchAdzunaJobs = exports.scheduledAdzunaImport = exports.deleteStudent = exports.generateCloudinarySignature = exports.submitExam = exports.verifySignupOTP = exports.sendSignupOTP = exports.deleteCloudinaryAsset = exports.onSendNotification = exports.onDeviceApproved = exports.onDeviceCreated = exports.onFeeCreated = exports.onAssignmentGraded = exports.onAnnouncementCreated = exports.onUserUpdated = exports.onUserCreated = void 0;
+const admin = __importStar(require("firebase-admin"));
+if (!admin.apps.length) {
+    admin.initializeApp();
+}
 var onUserCreated_1 = require("./triggers/onUserCreated");
 Object.defineProperty(exports, "onUserCreated", { enumerable: true, get: function () { return onUserCreated_1.onUserCreated; } });
 var onUserUpdated_1 = require("./triggers/onUserUpdated");
@@ -36,4 +73,10 @@ var scheduledAdzunaImport_1 = require("./callable/scheduledAdzunaImport");
 Object.defineProperty(exports, "scheduledAdzunaImport", { enumerable: true, get: function () { return scheduledAdzunaImport_1.scheduledAdzunaImport; } });
 var searchAdzunaJobs_1 = require("./callable/searchAdzunaJobs");
 Object.defineProperty(exports, "searchAdzunaJobs", { enumerable: true, get: function () { return searchAdzunaJobs_1.searchAdzunaJobs; } });
+var generateInterviewQuestions_1 = require("./callable/generateInterviewQuestions");
+Object.defineProperty(exports, "generateInterviewQuestions", { enumerable: true, get: function () { return generateInterviewQuestions_1.generateInterviewQuestions; } });
+var evaluateInterview_1 = require("./callable/evaluateInterview");
+Object.defineProperty(exports, "evaluateInterview", { enumerable: true, get: function () { return evaluateInterview_1.evaluateInterview; } });
+var seedInterviewConfig_1 = require("./callable/seedInterviewConfig");
+Object.defineProperty(exports, "seedInterviewConfig", { enumerable: true, get: function () { return seedInterviewConfig_1.seedInterviewConfig; } });
 //# sourceMappingURL=index.js.map

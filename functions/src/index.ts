@@ -2,6 +2,12 @@
 // Innov8 Cloud Functions — Entry Point
 // ═══════════════════════════════════════════════════════════════════════════════
 
+import * as admin from "firebase-admin";
+
+if (!admin.apps.length) {
+    admin.initializeApp();
+}
+
 export { onUserCreated } from "./triggers/onUserCreated";
 export { onUserUpdated } from "./triggers/onUserUpdated";
 export { onAnnouncementCreated } from "./triggers/onAnnouncementCreated";
@@ -18,3 +24,6 @@ export { generateCloudinarySignature } from "./callable/generateCloudinarySignat
 export { deleteStudent } from "./callable/deleteStudent";
 export { scheduledAdzunaImport } from "./callable/scheduledAdzunaImport";
 export { searchAdzunaJobs } from "./callable/searchAdzunaJobs";
+export { generateInterviewQuestions } from "./callable/generateInterviewQuestions";
+export { evaluateInterview } from "./callable/evaluateInterview";
+export { seedInterviewConfig } from "./callable/seedInterviewConfig";
