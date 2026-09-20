@@ -22,7 +22,8 @@ import {
     TrendingUp,
     CalendarCheck,
     GraduationCap,
-    ClipboardCheck
+    ClipboardCheck,
+    Sparkles
 } from 'lucide-react';
 import logo from '../assets/logo.png';
 import { ThemeToggle } from './ThemeToggle';
@@ -80,6 +81,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         { icon: CreditCard, label: UI_STRINGS.NAV.FEES, path: '/fees' },
         { icon: BookOpen, label: UI_STRINGS.NAV.COURSES, path: '/courses' },
         { icon: FileText, label: UI_STRINGS.NAV.EXAMS, path: '/exams' },
+        { icon: Sparkles, label: 'Practice Mock', path: '/practice-mock-config' },
         { icon: ClipboardList, label: UI_STRINGS.EXAM_RESULTS.TITLE, path: '/exam-results' },
         { icon: CalendarCheck, label: UI_STRINGS.NAV.MOCK_SCHEDULING, path: '/mock-scheduling' },
         { icon: CreditCard, label: 'Purchase Requests', path: '/course-purchases', badge: pendingPurchasesCount },

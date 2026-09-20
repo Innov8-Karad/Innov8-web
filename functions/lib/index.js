@@ -36,7 +36,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.seedInterviewConfig = exports.evaluateInterview = exports.generateInterviewQuestions = exports.searchAdzunaJobs = exports.scheduledAdzunaImport = exports.deleteStudent = exports.generateCloudinarySignature = exports.submitExam = exports.verifySignupOTP = exports.sendSignupOTP = exports.deleteCloudinaryAsset = exports.onSendNotification = exports.onDeviceApproved = exports.onDeviceCreated = exports.onFeeCreated = exports.onAssignmentGraded = exports.onAnnouncementCreated = exports.onUserUpdated = exports.onUserCreated = void 0;
+exports.extractQuestionsFromPdf = exports.getPracticeMockStatus = exports.submitPracticeMock = exports.startPracticeMockSession = exports.seedLinuxMCQs = exports.seedInterviewConfig = exports.evaluateInterview = exports.generateInterviewQuestions = exports.searchAdzunaJobs = exports.scheduledAdzunaImport = exports.deleteStudent = exports.generateCloudinarySignature = exports.submitExam = exports.verifySignupOTP = exports.sendSignupOTP = exports.deleteCloudinaryAsset = exports.onSendNotification = exports.onDeviceApproved = exports.onDeviceCreated = exports.onFeeCreated = exports.onAssignmentGraded = exports.onAnnouncementCreated = exports.onUserUpdated = exports.onUserCreated = void 0;
 const admin = __importStar(require("firebase-admin"));
 if (!admin.apps.length) {
     admin.initializeApp();
@@ -79,4 +79,14 @@ var evaluateInterview_1 = require("./callable/evaluateInterview");
 Object.defineProperty(exports, "evaluateInterview", { enumerable: true, get: function () { return evaluateInterview_1.evaluateInterview; } });
 var seedInterviewConfig_1 = require("./callable/seedInterviewConfig");
 Object.defineProperty(exports, "seedInterviewConfig", { enumerable: true, get: function () { return seedInterviewConfig_1.seedInterviewConfig; } });
+var seedLinuxMCQs_1 = require("./callable/seedLinuxMCQs");
+Object.defineProperty(exports, "seedLinuxMCQs", { enumerable: true, get: function () { return seedLinuxMCQs_1.seedLinuxMCQs; } });
+var startPracticeMockSession_1 = require("./callable/startPracticeMockSession");
+Object.defineProperty(exports, "startPracticeMockSession", { enumerable: true, get: function () { return startPracticeMockSession_1.startPracticeMockSession; } });
+var submitPracticeMock_1 = require("./callable/submitPracticeMock");
+Object.defineProperty(exports, "submitPracticeMock", { enumerable: true, get: function () { return submitPracticeMock_1.submitPracticeMock; } });
+var getPracticeMockStatus_1 = require("./callable/getPracticeMockStatus");
+Object.defineProperty(exports, "getPracticeMockStatus", { enumerable: true, get: function () { return getPracticeMockStatus_1.getPracticeMockStatus; } });
+var extractQuestionsFromPdf_1 = require("./callable/extractQuestionsFromPdf");
+Object.defineProperty(exports, "extractQuestionsFromPdf", { enumerable: true, get: function () { return extractQuestionsFromPdf_1.extractQuestionsFromPdf; } });
 //# sourceMappingURL=index.js.map

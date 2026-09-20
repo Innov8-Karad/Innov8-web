@@ -32,6 +32,7 @@ const BatchesPage = React.lazy(() => import('./pages/Batches'));
 const MockSchedulingPage = React.lazy(() => import('./pages/MockScheduling'));
 const CoursePurchasesPage = React.lazy(() => import('./pages/CoursePurchases'));
 const AttendancePage = React.lazy(() => import('./pages/Attendance'));
+const PracticeMockConfigPage = React.lazy(() => import('./pages/PracticeMockConfigPage'));
 
 // ── Loading Fallback ───────────────────────────────────────────────────
 function PageLoader() {
@@ -74,6 +75,7 @@ function App() {
                   <Route path="/users" element={<PrivateRoute><Layout><UsersPage /></Layout></PrivateRoute>} />
                   <Route path="/fees" element={<PrivateRoute><Layout><FeesPage /></Layout></PrivateRoute>} />
                   <Route path="/exams" element={<PrivateRoute><Layout><ExamsPage /></Layout></PrivateRoute>} />
+                  <Route path="/practice-mock-config" element={<PrivateRoute><Layout><PracticeMockConfigPage /></Layout></PrivateRoute>} />
                   <Route path="/certifications" element={<PrivateRoute><Layout><CertificationsPage /></Layout></PrivateRoute>} />
                   <Route path="/announcements" element={<PrivateRoute><Layout><AnnouncementsPage /></Layout></PrivateRoute>} />
                   <Route path="/courses" element={<PrivateRoute><Layout><CoursesPage /></Layout></PrivateRoute>} />
