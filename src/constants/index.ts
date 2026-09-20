@@ -26,6 +26,12 @@ export const COLLECTIONS = {
   COURSE_PURCHASES: 'course_purchases',
   PAYMENT_SETTINGS: 'payment_settings',
   ATTENDANCE: 'attendance',
+  PRACTICE_MOCK_CONFIG: 'practice_mock_config',
+  PRACTICE_MOCK_QUESTIONS: 'practice_mock_questions',
+  PRACTICE_MOCK_ANSWERS: 'practice_mock_answers',
+  PRACTICE_MOCK_USER_TRACKING: 'practice_mock_user_tracking',
+  PRACTICE_MOCK_SESSIONS: 'practice_mock_sessions',
+  PRACTICE_MOCK_RESULTS: 'practice_mock_results',
 } as const;
 
 export const FEE_STATUS = {

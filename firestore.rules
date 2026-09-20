@@ -192,6 +192,48 @@ service cloud.firestore {
 
 
     // ═════════════════════════════════════════════════════════════════════
+    // 5B. PRACTICE MOCK
+    // ─────────────────────────────────────────────────────────────────────
+    // Config:        All authenticated users can read, only admin can write
+    // Questions:     All authenticated users can read, only admin can write
+    // Answers:       ADMIN ONLY read/write (Server evaluates scores)
+    // User Tracking: Owner and admin can read, admin/backend writes
+    // Sessions:      Owner and admin can read, admin/backend writes
+    // Results:       Owner and admin can read, admin/backend writes
+    // ═════════════════════════════════════════════════════════════════════
+    match /practice_mock_config/{configId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    match /practice_mock_questions/{questionId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    match /practice_mock_answers/{questionId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    match /practice_mock_user_tracking/{userId} {
+      allow read, write: if isOwner(userId) || isAdmin();
+    }
+
+    match /practice_mock_sessions/{sessionId} {
+      allow read: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
+    }
+
+    match /practice_mock_results/{resultId} {
+      allow read: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
+      allow create: if isActiveUser() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAdmin();
+    }
+
+
+    // ═════════════════════════════════════════════════════════════════════
     // 6. ANNOUNCEMENTS
     // ─────────────────────────────────────────────────────────────────────
     // Web Admin:  Full CRUD
