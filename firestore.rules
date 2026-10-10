@@ -69,7 +69,7 @@ service cloud.firestore {
                     || (isUserDocOwner(userId)
                         // Students can only update specific profile fields
                         && request.resource.data.diff(resource.data).affectedKeys()
-                            .hasOnly(['firstName', 'middleName', 'surname', 'phone', 'profilePhoto', 'profilePhotoPublicId', 'skills', 'fcmTokens', 'activeDeviceDocId', 'updatedAt'])
+                            .hasOnly(['firstName', 'middleName', 'surname', 'phone', 'profilePhoto', 'profilePhotoPublicId', 'skills', 'fcmTokens', 'activeDeviceDocId', 'updatedAt', 'batch', 'batchId', 'batches', 'batchIds'])
                         // Basic safeguards
                         && request.resource.data.get('role', '') == resource.data.get('role', '')
                         && request.resource.data.get('email', '') == resource.data.get('email', '')

@@ -18,6 +18,8 @@ export interface User {
     phone: string;
     batch: string;
     batchId?: string;
+    batches?: string[];              // All enrolled batch names
+    batchIds?: string[];             // All enrolled batch doc IDs
     course: string;
     courseId?: string;
     enrollmentDate: Date;

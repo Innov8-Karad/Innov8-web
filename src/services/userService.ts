@@ -65,18 +65,33 @@ export const userService = {
   },
 
   async fetchUsersByBatch(batchId: string): Promise<User[]> {
-    const q = query(collection(db, COLLECTIONS.USERS), where('batchId', '==', batchId));
-    const snap = await getDocs(q);
-    return snap.docs.map(doc => {
-      const data = doc.data() as DocumentData;
-      const user = {
-        id: doc.id,
-        ...data,
-        enrollmentDate: data.enrollmentDate?.toDate() || new Date(),
-      } as User;
-      user.name = getUserDisplayName(user);
-      return user;
-    });
+    // Support both multi-batch array queries and legacy scalar queries
+    const arrayQuery = query(collection(db, COLLECTIONS.USERS), where('batchIds', 'array-contains', batchId));
+    const legacyQuery = query(collection(db, COLLECTIONS.USERS), where('batchId', '==', batchId));
+    
+    const [arraySnap, legacySnap] = await Promise.all([
+      getDocs(arrayQuery),
+      getDocs(legacyQuery)
+    ]);
+
+    const userMap = new Map<string, User>();
+    const processDoc = (document: DocumentData) => {
+      if (!userMap.has(document.id)) {
+        const data = document.data() as DocumentData;
+        const user = {
+          id: document.id,
+          ...data,
+          enrollmentDate: data.enrollmentDate?.toDate() || new Date(),
+        } as User;
+        user.name = getUserDisplayName(user);
+        userMap.set(document.id, user);
+      }
+    };
+
+    arraySnap.docs.forEach(processDoc);
+    legacySnap.docs.forEach(processDoc);
+
+    return Array.from(userMap.values());
   },
 
   async updateStudentStatus(id: string, status: 'active' | 'inactive'): Promise<void> {
@@ -100,6 +115,10 @@ export const userService = {
         enrollmentDate: Timestamp.now(),
         createdAt: Timestamp.now()
       };
+      if (data.batchId) {
+        if (!docData.batchIds) docData.batchIds = [data.batchId];
+        if (!docData.batches && data.batch) docData.batches = [data.batch];
+      }
       transaction.set(userRef, docData);
 
       // 2. Increment studentCount on batch if assigned
