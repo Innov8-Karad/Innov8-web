@@ -194,7 +194,8 @@ export const courseService = {
 
   async updateAssignment(courseId: string, assignmentId: string, data: Partial<AssignmentType>): Promise<void> {
     const docRef = doc(db, COLLECTIONS.COURSES, courseId, 'assignments', assignmentId);
-    await updateDoc(docRef, { ...data, updatedAt: Timestamp.now() });
+    const cleaned = cleanObject(data as Record<string, unknown>);
+    await updateDoc(docRef, { ...cleaned, updatedAt: Timestamp.now() });
   },
 
   async deleteAssignment(courseId: string, assignmentId: string): Promise<void> {
