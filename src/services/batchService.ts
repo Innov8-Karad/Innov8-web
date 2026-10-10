@@ -23,6 +23,13 @@ import { deleteFromCloudinary } from '../lib/cloudinary';
 import { COLLECTIONS } from '../constants';
 import type { Batch, EnrollmentRequest, CourseModule, CourseResource, AssignmentType, AssignmentSubmission } from '../types';
 
+// Helper to remove undefined/null/empty-string values that Firestore rejects
+const cleanObject = <T extends Record<string, unknown>>(obj: T): Partial<T> => {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([, v]) => v !== undefined && v !== null && v !== '')
+  ) as Partial<T>;
+};
+
 export const batchService = {
   // ── Batch Management ──
 
@@ -68,7 +75,8 @@ export const batchService = {
 
   async updateBatch(id: string, data: Partial<Batch>): Promise<void> {
     const docRef = doc(db, COLLECTIONS.BATCHES, id);
-    await updateDoc(docRef, { ...data, updatedAt: Timestamp.now() });
+    const cleaned = cleanObject(data as Record<string, unknown>);
+    await updateDoc(docRef, { ...cleaned, updatedAt: Timestamp.now() });
   },
 
   async deleteBatch(id: string): Promise<void> {
@@ -459,7 +467,8 @@ export const batchService = {
 
   async updateModule(batchId: string, moduleId: string, data: Partial<CourseModule>): Promise<void> {
     const docRef = doc(db, COLLECTIONS.BATCHES, batchId, 'modules', moduleId);
-    await updateDoc(docRef, { ...data, updatedAt: Timestamp.now() });
+    const cleaned = cleanObject(data as Record<string, unknown>);
+    await updateDoc(docRef, { ...cleaned, updatedAt: Timestamp.now() });
   },
 
   async deleteModule(batchId: string, moduleId: string): Promise<void> {
@@ -496,7 +505,8 @@ export const batchService = {
 
   async updateResource(batchId: string, resourceId: string, data: Partial<CourseResource>): Promise<void> {
     const docRef = doc(db, COLLECTIONS.BATCHES, batchId, 'resources', resourceId);
-    await updateDoc(docRef, { ...data, updatedAt: Timestamp.now() });
+    const cleaned = cleanObject(data as Record<string, unknown>);
+    await updateDoc(docRef, { ...cleaned, updatedAt: Timestamp.now() });
   },
 
   async deleteResource(batchId: string, resourceId: string): Promise<void> {
@@ -594,7 +604,8 @@ export const batchService = {
 
   async updateAssignment(batchId: string, assignmentId: string, data: Partial<AssignmentType>): Promise<void> {
     const docRef = doc(db, COLLECTIONS.BATCHES, batchId, 'assignments', assignmentId);
-    await updateDoc(docRef, { ...data, updatedAt: Timestamp.now() });
+    const cleaned = cleanObject(data as Record<string, unknown>);
+    await updateDoc(docRef, { ...cleaned, updatedAt: Timestamp.now() });
   },
 
   async deleteAssignment(batchId: string, assignmentId: string): Promise<void> {

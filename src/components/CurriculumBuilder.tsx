@@ -233,21 +233,22 @@ export default function CurriculumBuilder({ targetId, targetType, courseThumbnai
 
         try {
             const payload: Omit<CourseResource, 'id'> = {
-                title: resourceForm.title,
-                url: resourceForm.url,
+                title: resourceForm.title.trim(),
+                url: resourceForm.url.trim(),
                 type: resourceForm.type,
-                ...(resourceForm.type === 'video' && {
-                    platform: resourceForm.platform || detectedPlatform || undefined,
-                    duration: resourceForm.duration || undefined,
-                    thumbnailUrl: resourceForm.thumbnailUrl || undefined,
-                }),
-                ...(resourceForm.type === 'pdf' && {
-                    cloudinaryPublicId: resourceForm.cloudinaryPublicId || undefined,
-                    size: resourceForm.size || undefined,
-                    fileFormat: resourceForm.fileFormat || undefined,
-                }),
-                isDemo: resourceForm.isDemo,
+                isDemo: Boolean(resourceForm.isDemo),
             };
+
+            if (resourceForm.type === 'video') {
+                const platform = resourceForm.platform || detectedPlatform;
+                if (platform) payload.platform = platform;
+                if (resourceForm.duration?.trim()) payload.duration = resourceForm.duration.trim();
+                if (resourceForm.thumbnailUrl?.trim()) payload.thumbnailUrl = resourceForm.thumbnailUrl.trim();
+            } else if (resourceForm.type === 'pdf') {
+                if (resourceForm.cloudinaryPublicId?.trim()) payload.cloudinaryPublicId = resourceForm.cloudinaryPublicId.trim();
+                if (resourceForm.size?.trim()) payload.size = resourceForm.size.trim();
+                if (resourceForm.fileFormat?.trim()) payload.fileFormat = resourceForm.fileFormat.trim();
+            }
 
             if (editingResource) {
                 await service.updateResource(targetId, editingResource.id, payload);
@@ -259,7 +260,8 @@ export default function CurriculumBuilder({ targetId, targetType, courseThumbnai
             setShowResourceModal(false);
             setEditingResource(null);
             setActiveModuleId(null);
-        } catch {
+        } catch (error) {
+            console.error("Failed to save resource:", error);
             showToast("Failed to save resource", "error");
         }
     };

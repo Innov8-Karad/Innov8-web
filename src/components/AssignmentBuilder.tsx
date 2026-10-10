@@ -121,7 +121,8 @@ export default function AssignmentBuilder({ courseId, targetId, targetType = 'co
                 showToast("Assignment added", "success");
             }
             closeModal();
-        } catch {
+        } catch (error) {
+            console.error("Failed to save assignment:", error);
             showToast("Failed to save assignment", "error");
         }
     };
