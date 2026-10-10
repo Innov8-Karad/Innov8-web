@@ -618,6 +618,11 @@ export default function BatchesPage() {
                                                                 <div className="flex flex-col">
                                                                     <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>{student.name || 'Unknown'}</span>
                                                                     <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{student.email}</span>
+                                                                    {student.batches && student.batches.length > 1 && (
+                                                                        <span style={{ fontSize: '10px', color: 'var(--primary)', marginTop: '2px' }}>
+                                                                            All Batches: {student.batches.join(', ')}
+                                                                        </span>
+                                                                    )}
                                                                 </div>
                                                             </td>
                                                             <td style={{ padding: '16px', textAlign: 'center' }}>
